@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>De Lijn Realtime - Cloudflare Functions</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 5px; border: none; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #ffcc00; color: black; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        .status { color: #ffcc00; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>De Lijn Live (Functions)</h1>
+    <div id="status" class="status">Data laden...</div>
+    <input type="text" id="search" placeholder="Zoek voertuignummer..." onkeyup="filteren()">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Voertuig</th>
+                <th>Vertraging</th>
+                <th>Trip ID</th>
+            </tr>
+        </thead>
+        <tbody id="tabel-body"></tbody>
+    </table>
+
+    <script>
+        let alleVoertuigen = [];
+
+        async function laadData() {
+            try {
+                // We roepen onze eigen Cloudflare Function aan op /api
+                const res = await fetch('/api');
+                const json = await res.json();
+                alleVoertuigen = json.entity;
+                filteren();
+            } catch (e) {
+                document.getElementById('status').innerText = "Fout bij laden.";
+            }
+        }
+
+        function filteren() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const tbody = document.getElementById('tabel-body');
+            tbody.innerHTML = '';
+
+            const gefilterd = alleVoertuigen.filter(item => {
+                const id = (item.vehicle?.vehicle?.id || item.trip_update?.vehicle?.id || "");
+                return id.toLowerCase().includes(query);
+            });
+
+            document.getElementById('status').innerText = `Totaal: ${alleVoertuigen.length} | Gevonden: ${gefilterd.length}`;
+
+            gefilterd.forEach(item => {
+                const vId = item.vehicle?.vehicle?.id || item.trip_update?.vehicle?.id || "???";
+                const delay = item.trip_update?.stop_time_update?.[0]?.arrival?.delay || 0;
+                const trip = item.trip_update?.trip?.trip_id || "-";
+
+                tbody.innerHTML += `<tr>
+                    <td><b>${vId}</b></td>
+                    <td>${Math.round(delay/60)} min</td>
+                    <td style="font-size:10px">${trip}</td>
+                </tr>`;
+            });
+        }
+
+        laadData();
+        setInterval(laadData, 30000);
+    </script>
+</body>
+</html>
