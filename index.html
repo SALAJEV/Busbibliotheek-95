@@ -373,21 +373,25 @@ async function updateRealtime(id){
 
     const v=gps.vehicle;
     const tripid = gps.vehicle.trip?.tripId || "Geen trip";
-    
-    // Zoek trip info
+
+    // Zoek trip en route info
     const tripData = trips.find(t => t.trip_id === tripid);
     const routeId = tripData?.route_id || "";
     const routeData = routes.find(r => r.route_id === routeId);
-    const routeName = routeData?.route_short_name || "?";
-    const routeLongName = routeData?.route_long_name || "";
+    const routeShort = routeData?.route_short_name || "?";
+    const routeLong = routeData?.route_long_name || "";
+    const tripShort = tripData?.trip_short_name || tripData?.trip_headsign || "";
+
+    const shortTripId = (tripid && tripid.length>50) ? tripid.substring(0,50)+"..." : tripid;
 
     realtime.innerHTML=`
       <p>
-        <b>Lijn:</b> ${routeName} ${routeLongName}<br>
+        <b>Lijn:</b> ${routeShort} ${routeLong}<br>
+        <b>Bestemming:</b> ${tripShort}<br>
         <b>Latitude:</b> ${v.position.latitude}<br>
         <b>Longitude:</b> ${v.position.longitude}<br>
         <b>Richting:</b> ${v.position.bearing}°<br>
-        <b>Trip ID:</b> ${tripid.substring(0, 50)}...
+        <b>Trip ID:</b> ${shortTripId}
       </p>
     `;
 
@@ -397,7 +401,7 @@ async function updateRealtime(id){
     if(marker) marker.setLatLng([v.position.latitude,v.position.longitude]);
     else marker=L.marker([v.position.latitude,v.position.longitude])
       .addTo(map)
-      .bindPopup(`Voertuig ${id}<br>Lijn ${routeName}: ${routeLongName}`)
+      .bindPopup(`Voertuig ${id}<br>Lijn ${routeShort}: ${routeLong}<br>Bestemming: ${tripShort}`)
       .openPopup();
 
   }catch(e){ console.error(e); realtime.innerHTML="⚠️ Fout bij realtime data."; }
