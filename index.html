@@ -134,6 +134,7 @@ button:hover {
   opacity: 0;
   transform: translateY(20px);
   transition: 0.5s;
+  position: relative;
 }
 
 .grid.show { opacity: 1; transform: translateY(0); }
@@ -198,9 +199,54 @@ td { padding: 0.4rem 0; }
 .delay-late { color: #257beb; }
 
 /* ===============================
-   BUTTON TERUG
+   BUTTON CLOSE
 ================================ */
-.back-btn { margin-top: 1rem; cursor: pointer; }
+.close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  margin-top: 0 !important;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.close-btn:hover {
+  transform: scale(1.1);
+  color: var(--accent);
+  box-shadow: none;
+}
+
+/* ===============================
+   LOADING SPINNER
+================================ */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
 /* ===============================
    LOADING
@@ -213,33 +259,43 @@ td { padding: 0.4rem 0; }
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <div>
       <h1>Busbibliotheek</h1>
-      <p>Zoek een voertuig en volg 'm live.</p>
+      <p>Zoekt een voertuig op en volg het in realtime.</p>
     </div>
-    <button id="backBtn" class="btn back-btn" style="display:none;" onclick="terug()">⬅ Terug</button>
   </div>
 
   <input id="voertuignummer" placeholder="Voertuignummer" 
          oninput="toonSuggesties()" 
-         onkeydown="if(event.key==='Enter'){zoekAlles();}">
+         onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
   <ul id="suggestielijst"></ul>
 
   <div class="grid" id="resultsGrid">
+    <button class="close-btn" id="closeBtn" style="display:none; position: absolute; top: 2rem; right: 1.5rem; z-index: 100;" onclick="terug()" title="Venster sluiten" aria-label="Sluiten">×</button>
     <div class="card">
-      <h2>Voertuig informatie</h2>
-      <div id="vasteData">Nog geen voertuig geselecteerd.</div>
+      <h2>Voertuiginformatie</h2>
+      <div id="vasteData">Geen voertuig geselecteerd.</div>
     </div>
 
     <div class="card">
-      <h2>Realtime informatie</h2>
-      <div id="realtime" class="loading">Nog geen data.</div>
+      <h2>Realtimegegevens</h2>
+      <div id="realtime" class="loading">Geen gegevens beschikbaar.</div>
       <div id="map"></div>
     </div>
   </div>
+
+  <footer style="margin-top: 4rem; padding: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem;">
+    <h3>Disclaimer</h3>
+    <p style="margin-top: 0.5rem; line-height: 1.6;">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertraging, fouten of onnauwkeurigheden in realtime gegevens. Gebruikers raadplegen deze informatie geheel op eigen risico. Raadpleeg voor officiële ritinformatie de bevoegde vervoersmaatschappij.</p>
+  </footer>
 
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+// Constants
+const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
+const API_URL = "https://busbibliotheek95.pages.dev/api";
+const TIME_UPDATE = 10000; // 10 seconds
+
 let voertuigen = [];
 let trips = [];
 let routes = [];
@@ -278,10 +334,7 @@ const busIcon = L.divIcon({
 });
 
 async function laadVoertuigen() {
-  const res = await fetch(
-    "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/vehicles.txt",
-    { cache: "no-store" }
-  );
+  const res = await fetch(`${BASE_URL}/vehicles.txt`, { cache: "no-store" });
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
   const headers = regels[0].split(";");
@@ -292,18 +345,12 @@ async function laadVoertuigen() {
     headers.forEach((h,i)=>obj[h.trim()] = v[i]?.trim() || "/");
     return obj;
   });
-
-  console.log("✅ voertuigen geladen:", voertuigen.length);
 }
 
 async function laadTrips() {
-  const res = await fetch(
-    "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/trips.txt",
-    { cache: "no-store" }
-  );
+  const res = await fetch(`${BASE_URL}/trips.txt`, { cache: "no-store" });
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
-
   const headers = parseCSVLine(regels[0]).map(h => h.trim());
 
   trips = regels.slice(1).map(r => {
@@ -312,18 +359,12 @@ async function laadTrips() {
     headers.forEach((h, i) => obj[h] = values[i] || "/");
     return obj;
   });
-
-  console.log("✅ trips geladen:", trips.length);
 }
 
 async function laadRoutes() {
-  const res = await fetch(
-    "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/routes.txt",
-    { cache: "no-store" }
-  );
+  const res = await fetch(`${BASE_URL}/routes.txt`, { cache: "no-store" });
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
-
   const headers = parseCSVLine(regels[0]).map(h => h.trim());
 
   routes = regels.slice(1).map(r => {
@@ -332,8 +373,6 @@ async function laadRoutes() {
     headers.forEach((h, i) => obj[h] = values[i] || "/");
     return obj;
   });
-
-  console.log("✅ routes geladen:", routes.length);
 }
 
 laadVoertuigen();
@@ -366,22 +405,22 @@ function zoekAlles() {
 
   suggestielijst.innerHTML = "";
   document.getElementById("resultsGrid").classList.add("show");
-  document.getElementById("backBtn").style.display = "inline-block";
+  document.getElementById("closeBtn").style.display = "block";
 
   toonVasteData(id);
 
-  realtime.innerHTML = "<span class='loading'>⏳ Data laden...</span>";
+  realtime.innerHTML = "<span class='spinner'></span><span class='loading'>Gegevens laden...</span>";
 
   updateRealtime(id);
   if(refresh) clearInterval(refresh);
-  refresh = setInterval(()=>updateRealtime(id),10000);
+  refresh = setInterval(()=>updateRealtime(id), TIME_UPDATE);
 }
 
 function terug() {
   document.getElementById("resultsGrid").classList.remove("show");
-  document.getElementById("backBtn").style.display = "none";
-  realtime.innerHTML = "Nog geen data.";
-  vasteData.innerHTML = "Nog geen voertuig geselecteerd.";
+  document.getElementById("closeBtn").style.display = "none";
+  realtime.innerHTML = "Geen gegevens beschikbaar.";
+  vasteData.innerHTML = "Geen voertuig geselecteerd.";
   voertuignummer.value = "";
   if(marker){ map.removeLayer(marker); marker=null; }
 }
@@ -395,7 +434,7 @@ function toonVasteData(id){
   );
 
   if(!bus){
-    vasteData.innerHTML="❌ Geen voertuigdata gevonden.";
+    vasteData.innerHTML="Geen voertuiggegevens gevonden.";
     return;
   }
 
@@ -486,12 +525,12 @@ function initMap(lat,lon){
 
 async function updateRealtime(id){
   try{
-    const res = await fetch("https://busbibliotheek95.pages.dev/api");
+    const res = await fetch(API_URL);
     const data = await res.json();
 
     const gps = data.entity.reverse().find(e=>e.vehicle?.vehicle?.id==id && e.vehicle.position);
 
-    if(!gps){ realtime.innerHTML="❌ Geen realtime data."; document.getElementById("map").classList.add("hidden"); return; }
+    if(!gps){ realtime.innerHTML="Geen realtimegegevens beschikbaar."; document.getElementById("map").classList.add("hidden"); return; }
 
     const v=gps.vehicle;
     const tripid = gps.vehicle.trip?.tripId || gps.vehicle.trip?.trip_id || "Geen trip";
@@ -531,19 +570,10 @@ async function updateRealtime(id){
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
 
-    // Extract delay in seconds and convert to minutes
-    let delaySeconds = gps.vehicle.trip?.delay || 0;
-    if (!delaySeconds && v.vehicle?.stopStatus?.delay) delaySeconds = v.vehicle.stopStatus.delay;
-    const delayMinutes = Math.round(delaySeconds / 60);
-    let delayText = "Op tijd";
-    let delayClass = "delay-ontime";
-    if (delayMinutes < 0) {
-      delayText = `${Math.abs(delayMinutes)} min te vroeg`;
-      delayClass = "delay-early";
-    } else if (delayMinutes > 0) {
-      delayText = `${delayMinutes} min vertraging`;
-      delayClass = "delay-late";
-    }
+    const msgDelay = delayMinutes < 0 ? `${Math.abs(delayMinutes)} minuut${Math.abs(delayMinutes)!==1?'en':''} te vroeg` 
+                   : delayMinutes > 0 ? `${delayMinutes} minuut${delayMinutes!==1?'en':''} vertraging`
+                   : "Op tijd";
+    let delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
 
     realtime.innerHTML=`
       <p>
@@ -582,7 +612,7 @@ async function updateRealtime(id){
       }
     }
 
-  }catch(e){ console.error(e); realtime.innerHTML="⚠️ Fout bij realtime data."; }
+  }catch(e){ console.error(e); realtime.innerHTML="Fout bij ophalen van realtimegegevens."; }
 }
 </script>
 
@@ -590,8 +620,7 @@ async function updateRealtime(id){
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js')
-    .then(reg => console.log('✅ Service Worker registered'))
-    .catch(err => console.error('Service Worker registration failed:', err));
+    .catch(err => console.error('Service Worker registratie mislukt:', err));
 }
 </script>
 </body>

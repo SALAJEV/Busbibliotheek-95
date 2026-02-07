@@ -1,7 +1,7 @@
 {
   "name": "Busbibliotheek",
   "short_name": "Busbibliotheek",
-  "description": "Zoek een voertuig en volg 'm live.",
+  "description": "Zoekt een voertuig op en volg dit in realtime via live GPS-gegevens.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
