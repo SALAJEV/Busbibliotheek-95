@@ -302,6 +302,7 @@ let routes = [];
 let map, marker, refresh;
 let userInteracted = false;
 let centerControl;
+let delayMinutes = 0;
 
 // Helper: CSV parser that respects quoted fields
 function parseCSVLine(line){
@@ -573,7 +574,7 @@ async function updateRealtime(id){
     // Extract delay in seconds and convert to minutes
     let delaySeconds = gps.vehicle.trip?.delay || 0;
     if (!delaySeconds && v.vehicle?.stopStatus?.delay) delaySeconds = v.vehicle.stopStatus.delay;
-    const delayMinutes = Math.round(delaySeconds / 60);
+    delayMinutes = Math.round(delaySeconds / 60);
     
     const msgDelay = delayMinutes < 0 ? `${Math.abs(delayMinutes)} minuut${Math.abs(delayMinutes)!==1?'en':''} te vroeg` 
                    : delayMinutes > 0 ? `${delayMinutes} minuut${delayMinutes!==1?'en':''} vertraging`
