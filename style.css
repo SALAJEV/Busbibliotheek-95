@@ -1,9 +1,12 @@
 /* ==================================================
-   APPLE LIQUID GLASS – BASE SYSTEM
+   APPLE LIQUID GLASS – FULL DESIGN
 ================================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
 
+/* ===============================
+   ROOT VARIABLES
+================================ */
 :root {
   --glass-bg: color-mix(in srgb, #ffffff 35%, transparent);
   --glass-border: color-mix(in srgb, #ffffff 55%, transparent);
@@ -31,10 +34,9 @@ body.dark {
   --text-soft: #aaa;
 }
 
-/* ==================================================
+/* ===============================
    BASE
-================================================== */
-
+================================ */
 * {
   box-sizing: border-box;
 }
@@ -44,6 +46,7 @@ body {
   font-family: "Inter", sans-serif;
   background: linear-gradient(180deg, #e9ecf1, #dfe3ea);
   color: var(--text-main);
+  transition: background .4s, color .4s;
 }
 
 body.dark {
@@ -60,10 +63,9 @@ h1, h2 {
   font-weight: 600;
 }
 
-/* ==================================================
-   LIQUID GLASS CARD
-================================================== */
-
+/* ===============================
+   LIQUID GLASS CARDS
+================================ */
 .card {
   position: relative;
   background: var(--glass-bg);
@@ -77,15 +79,33 @@ h1, h2 {
     inset -1px -1px 0 var(--glass-border),
     0 20px 40px var(--glass-shadow);
 
-  transition:
-    transform .25s cubic-bezier(.2,.8,.2,1),
-    box-shadow .25s;
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s;
+  overflow: hidden;
 }
 
-/* ==================================================
-   GRID
-================================================== */
+/* Shine effect (pseudo-element) */
+.card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.25) 0%,
+    rgba(255,255,255,0.0) 60%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: inherit;
+  transition: transform 0.2s ease;
+}
 
+/* ===============================
+   GRID
+================================ */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -99,10 +119,9 @@ h1, h2 {
   }
 }
 
-/* ==================================================
-   INPUTS & BUTTONS – LIQUID GLASS
-================================================== */
-
+/* ===============================
+   INPUTS & BUTTONS
+================================ */
 input,
 button {
   width: 100%;
@@ -123,6 +142,30 @@ button {
     transform .25s cubic-bezier(.2,.8,.2,1),
     box-shadow .25s,
     background .25s;
+
+  position: relative;
+  overflow: hidden; /* shine clip */
+}
+
+/* Shine pseudo-element for inputs/buttons */
+input::after,
+button::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.25) 0%,
+    rgba(255,255,255,0.0) 60%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: inherit;
+  transition: transform 0.2s ease;
 }
 
 /* INPUT */
@@ -166,10 +209,9 @@ button:active {
     0 8px 18px rgba(0,0,0,0.25);
 }
 
-/* ==================================================
+/* ===============================
    SUGGESTIES – GLASS LIST
-================================================== */
-
+================================ */
 ul {
   list-style: none;
   padding: 0;
@@ -200,10 +242,9 @@ ul li:hover {
   transform: translateY(-1px);
 }
 
-/* ==================================================
+/* ===============================
    TABLE
-================================================== */
-
+================================ */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -220,10 +261,9 @@ th, td {
   font-weight: 700;
 }
 
-/* ==================================================
+/* ===============================
    MAP
-================================================== */
-
+================================ */
 #map {
   height: 320px;
   border-radius: var(--radius);
@@ -235,10 +275,9 @@ th, td {
     0 20px 40px var(--glass-shadow);
 }
 
-/* ==================================================
+/* ===============================
    TEXT
-================================================== */
-
+================================ */
 p {
   color: var(--text-soft);
 }
