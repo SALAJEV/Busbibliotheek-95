@@ -380,18 +380,23 @@ async function updateRealtime(id){
 
     console.log("Realtime lookup", { tripid, tripsLoaded: trips.length, routesLoaded: routes.length });
 
-    // Robuuste matching: probeer exact, endsWith, includes
-    let tripData = trips.find(t => t.trip_id === tripid);
-    if(!tripData && tripid){
-      tripData = trips.find(t => t.trip_id && (
-        t.trip_id === tripid ||
-        t.trip_id.endsWith(tripid) ||
-        tripid.endsWith(t.trip_id) ||
-        t.trip_id.includes(tripid) ||
-        tripid.includes(t.trip_id)
-      ));
+    // Robuuste matching: normaliseer en probeer exact / endsWith / includes
+    const normalize = s => (s||"").toString().replace(/"/g, "").trim();
+    const nTripId = normalize(tripid);
+    let tripData = trips.find(t => normalize(t.trip_id) === nTripId);
+    if(!tripData && nTripId){
+      tripData = trips.find(t => {
+        const tId = normalize(t.trip_id);
+        return tId && (
+          tId === nTripId ||
+          tId.endsWith(nTripId) ||
+          nTripId.endsWith(tId) ||
+          tId.includes(nTripId) ||
+          nTripId.includes(tId)
+        );
+      });
     }
-    console.log("Gevonden tripData:", tripData?.trip_id || null);
+    console.log("Gevonden tripData:", tripData ? { trip_id: normalize(tripData.trip_id), trip_short_name: tripData.trip_short_name, trip_headsign: tripData.trip_headsign } : null);
 
     const routeId = tripData?.route_id || "";
     let routeData = routes.find(r => r.route_id === routeId);
@@ -405,7 +410,9 @@ async function updateRealtime(id){
 
     const routeShort = routeData?.route_short_name || "?";
     const routeLong = routeData?.route_long_name || "";
-    const tripShort = tripData?.trip_short_name || tripData?.trip_headsign || "";
+    const tripShort = tripData ? (tripData.trip_short_name || tripData.trip_headsign || "") : "";
+
+    console.log("Resolved destination and line:", { routeShort, routeLong, tripShort });
 
     const shortTripId = (tripid && tripid.length>50) ? tripid.substring(0,50)+"..." : tripid;
 
