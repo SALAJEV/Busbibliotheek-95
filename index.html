@@ -207,5 +207,52 @@
       }
     }
   </script>
+  <script>
+/* ===============================
+   LIQUID GLASS PARALLAX
+================================ */
+
+const glassItems = document.querySelectorAll(".card, button, input");
+
+glassItems.forEach(el => {
+  let rect;
+
+  function move(e) {
+    if (!rect) rect = el.getBoundingClientRect();
+
+    const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
+
+    const midX = rect.width / 2;
+    const midY = rect.height / 2;
+
+    const rotateX = ((y - midY) / midY) * -6;
+    const rotateY = ((x - midX) / midX) * 6;
+
+    el.style.transform = `
+      perspective(800px)
+      rotateX(${rotateX}deg)
+      rotateY(${rotateY}deg)
+      translateZ(6px)
+    `;
+  }
+
+  function reset() {
+    rect = null;
+    el.style.transform = `
+      perspective(800px)
+      rotateX(0deg)
+      rotateY(0deg)
+      translateZ(0)
+    `;
+  }
+
+  el.addEventListener("mousemove", move);
+  el.addEventListener("mouseleave", reset);
+
+  el.addEventListener("touchmove", move, { passive: true });
+  el.addEventListener("touchend", reset);
+});
+</script>
 </body>
 </html>
