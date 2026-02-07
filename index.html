@@ -52,7 +52,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script>
-    /* dark mode */
+    /* DARK MODE */
     if (window.matchMedia('(prefers-color-scheme: dark)').matches)
       document.body.classList.add('dark');
 
@@ -64,7 +64,9 @@
     let voertuigen = [];
     let map, marker, refresh;
 
-    /* LAAD VOERTUIGEN */
+    /* ===============================
+       LAAD VOERTUIGEN (CSV MET KOMMA)
+    =============================== */
     async function laadVoertuigen() {
       const res = await fetch(
         "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/vehicles.txt",
@@ -72,13 +74,15 @@
       );
 
       const text = await res.text();
-      const regels = text.trim().split("\n");
-      const headers = regels[0].split(";");
+      const regels = text.trim().split(/\r?\n/);
+      const headers = regels[0].split(",");
 
       voertuigen = regels.slice(1).map(r => {
-        const v = r.split(";");
+        const v = r.split(",");
         const o = {};
-        headers.forEach((h, i) => o[h] = v[i]?.trim() || "/");
+        headers.forEach((h, i) => {
+          o[h.trim()] = v[i]?.trim() || "/";
+        });
         return o;
       });
 
@@ -86,20 +90,25 @@
     }
     laadVoertuigen();
 
-    /* SUGGESTIES */
+    /* ===============================
+       SUGGESTIES
+    =============================== */
     function toonSuggesties() {
       const q = voertuignummer.value.toLowerCase();
       suggestielijst.innerHTML = "";
       if (!q) return;
 
       voertuigen
-        .filter(v => v["Voertuignummer"].toLowerCase().startsWith(q))
+        .filter(v =>
+          v["Voertuignummer"] &&
+          v["Voertuignummer"].toLowerCase().startsWith(q)
+        )
         .slice(0, 8)
         .forEach(v => {
           const li = document.createElement("li");
-          li.textContent = `${v.Voertuignummer} – ${v.Type}`;
+          li.textContent = `${v["Voertuignummer"]} – ${v["Type"] || ""}`;
           li.onclick = () => {
-            voertuignummer.value = v.Voertuignummer;
+            voertuignummer.value = v["Voertuignummer"];
             suggestielijst.innerHTML = "";
             zoekAlles();
           };
@@ -107,7 +116,9 @@
         });
     }
 
-    /* ZOEK ALLES */
+    /* ===============================
+       ZOEK ALLES
+    =============================== */
     function zoekAlles() {
       const id = voertuignummer.value.trim();
       if (!id) return;
@@ -119,15 +130,17 @@
       refresh = setInterval(() => updateRealtime(id), 10000);
     }
 
-    /* VASTE DATA */
+    /* ===============================
+       VASTE DATA
+    =============================== */
     function toonVasteData(id) {
       const q = id.toLowerCase();
 
       const bus = voertuigen.find(v =>
-        v["Voertuignummer"].toLowerCase() === q ||
-        v["Hansea nummer"].toLowerCase() === q ||
-        v["Oude voertuignummers"].toLowerCase().split(/[, ]+/).includes(q) ||
-        v["Oude nummerplaten"].toLowerCase().split(/[, ]+/).includes(q)
+        v["Voertuignummer"]?.toLowerCase() === q ||
+        v["Hansea nummer"]?.toLowerCase() === q ||
+        v["Oude voertuignummers"]?.toLowerCase().split(/[, ]+/).includes(q) ||
+        v["Oude nummerplaten"]?.toLowerCase().split(/[, ]+/).includes(q)
       );
 
       if (!bus) {
@@ -150,7 +163,9 @@
       vasteData.innerHTML = html;
     }
 
-    /* MAP */
+    /* ===============================
+       MAP
+    =============================== */
     function initMap(lat, lon) {
       map = L.map("map").setView([lat, lon], 14);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -158,7 +173,9 @@
       }).addTo(map);
     }
 
-    /* REALTIME */
+    /* ===============================
+       REALTIME
+    =============================== */
     async function updateRealtime(id) {
       try {
         const res = await fetch("https://busbibliotheek95.pages.dev/api");
@@ -207,52 +224,52 @@
       }
     }
   </script>
+
   <script>
-/* ===============================
-   LIQUID GLASS PARALLAX
-================================ */
+    /* ===============================
+       LIQUID GLASS EFFECT
+    =============================== */
+    const glassItems = document.querySelectorAll(".card, button, input");
 
-const glassItems = document.querySelectorAll(".card, button, input");
+    glassItems.forEach(el => {
+      let rect;
 
-glassItems.forEach(el => {
-  let rect;
+      function move(e) {
+        if (!rect) rect = el.getBoundingClientRect();
 
-  function move(e) {
-    if (!rect) rect = el.getBoundingClientRect();
+        const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
 
-    const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
-    const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
+        const midX = rect.width / 2;
+        const midY = rect.height / 2;
 
-    const midX = rect.width / 2;
-    const midY = rect.height / 2;
+        const rotateX = ((y - midY) / midY) * -6;
+        const rotateY = ((x - midX) / midX) * 6;
 
-    const rotateX = ((y - midY) / midY) * -6;
-    const rotateY = ((x - midX) / midX) * 6;
+        el.style.transform = `
+          perspective(800px)
+          rotateX(${rotateX}deg)
+          rotateY(${rotateY}deg)
+          translateZ(6px)
+        `;
+      }
 
-    el.style.transform = `
-      perspective(800px)
-      rotateX(${rotateX}deg)
-      rotateY(${rotateY}deg)
-      translateZ(6px)
-    `;
-  }
+      function reset() {
+        rect = null;
+        el.style.transform = `
+          perspective(800px)
+          rotateX(0deg)
+          rotateY(0deg)
+          translateZ(0)
+        `;
+      }
 
-  function reset() {
-    rect = null;
-    el.style.transform = `
-      perspective(800px)
-      rotateX(0deg)
-      rotateY(0deg)
-      translateZ(0)
-    `;
-  }
+      el.addEventListener("mousemove", move);
+      el.addEventListener("mouseleave", reset);
+      el.addEventListener("touchmove", move, { passive: true });
+      el.addEventListener("touchend", reset);
+    });
+  </script>
 
-  el.addEventListener("mousemove", move);
-  el.addEventListener("mouseleave", reset);
-
-  el.addEventListener("touchmove", move, { passive: true });
-  el.addEventListener("touchend", reset);
-});
-</script>
 </body>
 </html>
