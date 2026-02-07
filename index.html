@@ -570,16 +570,21 @@ async function updateRealtime(id){
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
 
+    // Extract delay in seconds and convert to minutes
+    let delaySeconds = gps.vehicle.trip?.delay || 0;
+    if (!delaySeconds && v.vehicle?.stopStatus?.delay) delaySeconds = v.vehicle.stopStatus.delay;
+    const delayMinutes = Math.round(delaySeconds / 60);
+    
     const msgDelay = delayMinutes < 0 ? `${Math.abs(delayMinutes)} minuut${Math.abs(delayMinutes)!==1?'en':''} te vroeg` 
                    : delayMinutes > 0 ? `${delayMinutes} minuut${delayMinutes!==1?'en':''} vertraging`
                    : "Op tijd";
-    let delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
+    const delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
 
     realtime.innerHTML=`
       <p>
         <b>Lijn:</b> ${routeShort}<br>
         <b>Bestemming:</b> ${tripShort}<br>
-        <span class="delay-status ${delayClass}">${delayText}</span>
+        <span class="delay-status ${delayClass}">${msgDelay}</span>
       </p>
     `;
     document.getElementById("map").classList.remove("hidden");
@@ -592,7 +597,7 @@ async function updateRealtime(id){
 
     if(marker) {
       marker.setLatLng([v.position.latitude,v.position.longitude]);
-      marker.setPopupContent(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}<br>Vertraging: ${delayText}`);
+      marker.setPopupContent(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}<br>Vertraging: ${msgDelay}`);
       // update rotation of img inside divIcon
       const el = marker.getElement && marker.getElement();
       if(el){
@@ -602,7 +607,7 @@ async function updateRealtime(id){
     } else {
       marker = L.marker([v.position.latitude,v.position.longitude], { icon: busIcon })
         .addTo(map)
-        .bindPopup(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}<br>Vertraging: ${delayText}`)
+        .bindPopup(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}<br>Vertraging: ${msgDelay}`)
         .openPopup();
       // set initial rotation
       const el = marker.getElement && marker.getElement();
