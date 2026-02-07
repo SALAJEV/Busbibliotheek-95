@@ -1,47 +1,48 @@
 /* ===============================
-   ROOT VARS
+   ROOT
 ================================ */
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.22);
-  --glass-bg-dark: rgba(0, 0, 0, 0.40);
-  --glass-border: rgba(255, 255, 255, 0.25);
-
+  --glass-bg: rgba(255,255,255,0.22);
+  --glass-bg-dark: rgba(0,0,0,0.45);
+  --glass-border: rgba(255,255,255,0.25);
   --text-main: #111;
 }
 
 /* ===============================
-   BODY + BACKGROUND IMAGE
+   RESET
 ================================ */
 html, body {
   height: 100%;
+  margin: 0;
 }
 
 body {
-  margin: 0;
   font-family: "Inter", system-ui, sans-serif;
   color: var(--text-main);
-
-  background: url("2894.jpeg") center / cover no-repeat fixed;
-  position: relative;
   overflow-x: hidden;
 }
 
-/* BLUR ENKEL OP ACHTERGROND */
-body::after {
-  content: "";
+/* ===============================
+   BACKGROUND LAYER (ACHTER ALLES)
+================================ */
+.background {
   position: fixed;
   inset: 0;
+  z-index: -1;
 
-  backdrop-filter: blur(20px) saturate(120%);
-  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  background-image: url("2894.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
-  background: rgba(0,0,0,0.25);
-  z-index: 0;
+  filter: blur(22px) saturate(120%);
+  transform: scale(1.1); /* voorkomt blur-randen */
+
   pointer-events: none;
 }
 
 /* ===============================
-   APP KADER (HOOFDGLAS)
+   APP KADER (VOORGROND)
 ================================ */
 .app {
   position: relative;
@@ -51,7 +52,7 @@ body::after {
   margin: 3rem auto;
   padding: 2rem;
 
-  border-radius: 26px;
+  border-radius: 28px;
   background: var(--glass-bg-dark);
 
   border: 1px solid var(--glass-border);
@@ -61,7 +62,7 @@ body::after {
 }
 
 /* ===============================
-   CARDS (SCHERP, GEEN BLUR)
+   CARDS (GEEN BLUR)
 ================================ */
 .card {
   background: var(--glass-bg);
@@ -69,12 +70,12 @@ body::after {
   border: 1px solid rgba(255,255,255,.22);
 
   padding: 1.2rem;
+  position: relative;
+  overflow: hidden;
+
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.25),
     0 10px 30px rgba(0,0,0,.25);
-
-  position: relative;
-  overflow: hidden;
 }
 
 /* ===============================
@@ -86,17 +87,17 @@ button {
   padding: 0.9rem 1.1rem;
 
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.28);
+  border: 1px solid rgba(255,255,255,.3);
 
-  background: rgba(255,255,255,.30);
+  background: rgba(255,255,255,.35);
   color: #000;
-  font-size: 1rem;
 
+  font-size: 1rem;
   outline: none;
   position: relative;
   overflow: hidden;
 
-  transition: background .25s ease, box-shadow .25s ease;
+  transition: background .25s ease;
 }
 
 button {
@@ -105,7 +106,7 @@ button {
 }
 
 /* ===============================
-   WITTE GLANS (HOVER / TOUCH)
+   WITTE LICHT-GLANS (GEEN BEWEGING)
 ================================ */
 .card::before,
 button::before,
@@ -117,7 +118,7 @@ input::before {
   background: linear-gradient(
     120deg,
     transparent 35%,
-    rgba(255,255,255,.55) 50%,
+    rgba(255,255,255,.6) 50%,
     transparent 65%
   );
 
@@ -135,37 +136,25 @@ button:active::before {
 }
 
 /* ===============================
-   SUGGESTIELIJST
+   SUGGESTIES
 ================================ */
 ul {
   list-style: none;
   padding: 0;
-  margin: .5rem 0 0 0;
+  margin: .5rem 0 0;
 }
 
 ul li {
-  margin-top: .4rem;
   padding: .7rem 1rem;
+  margin-top: .4rem;
 
   border-radius: 14px;
-  background: rgba(255,255,255,.30);
-
+  background: rgba(255,255,255,.35);
   cursor: pointer;
-  transition: background .2s ease;
 }
 
 ul li:hover {
-  background: rgba(255,255,255,.45);
-}
-
-/* ===============================
-   MAP
-================================ */
-#map {
-  height: 320px;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.5);
 }
 
 /* ===============================
@@ -182,6 +171,16 @@ ul li:hover {
   .grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===============================
+   MAP
+================================ */
+#map {
+  height: 320px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.25);
 }
 
 /* ===============================
