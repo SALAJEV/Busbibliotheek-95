@@ -217,6 +217,8 @@ td { padding: 0.4rem 0; }
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 let voertuigen = [];
+let trips = [];
+let routes = [];
 let map, marker, refresh;
 
 async function laadVoertuigen() {
@@ -237,7 +239,48 @@ async function laadVoertuigen() {
 
   console.log("✅ voertuigen geladen:", voertuigen.length);
 }
+
+async function laadTrips() {
+  const res = await fetch(
+    "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/trips.txt",
+    { cache: "no-store" }
+  );
+  const text = await res.text();
+  const regels = text.trim().split(/\r?\n/);
+  const headers = regels[0].split(",").map(h => h.replace(/"/g, ""));
+
+  trips = regels.slice(1).map(r => {
+    const values = r.match(/"[^"]*"|[^,]*/g).map(v => v.replace(/"/g, "").trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = values[i] || "/");
+    return obj;
+  });
+
+  console.log("✅ trips geladen:", trips.length);
+}
+
+async function laadRoutes() {
+  const res = await fetch(
+    "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/routes.txt",
+    { cache: "no-store" }
+  );
+  const text = await res.text();
+  const regels = text.trim().split(/\r?\n/);
+  const headers = regels[0].split(",").map(h => h.replace(/"/g, ""));
+
+  routes = regels.slice(1).map(r => {
+    const values = r.match(/"[^"]*"|[^,]*/g).map(v => v.replace(/"/g, "").trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = values[i] || "/");
+    return obj;
+  });
+
+  console.log("✅ routes geladen:", routes.length);
+}
+
 laadVoertuigen();
+laadTrips();
+laadRoutes();
 
 function toonSuggesties() {
   const q = voertuignummer.value.toLowerCase();
@@ -330,13 +373,21 @@ async function updateRealtime(id){
 
     const v=gps.vehicle;
     const tripid = gps.vehicle.trip?.tripId || "Geen trip";
+    
+    // Zoek trip info
+    const tripData = trips.find(t => t.trip_id === tripid);
+    const routeId = tripData?.route_id || "";
+    const routeData = routes.find(r => r.route_id === routeId);
+    const routeName = routeData?.route_short_name || "?";
+    const routeLongName = routeData?.route_long_name || "";
 
     realtime.innerHTML=`
       <p>
+        <b>Lijn:</b> ${routeName} ${routeLongName}<br>
         <b>Latitude:</b> ${v.position.latitude}<br>
         <b>Longitude:</b> ${v.position.longitude}<br>
         <b>Richting:</b> ${v.position.bearing}°<br>
-        <b>Trip ID:</b> ${tripid}
+        <b>Trip ID:</b> ${tripid.substring(0, 50)}...
       </p>
     `;
 
@@ -346,7 +397,7 @@ async function updateRealtime(id){
     if(marker) marker.setLatLng([v.position.latitude,v.position.longitude]);
     else marker=L.marker([v.position.latitude,v.position.longitude])
       .addTo(map)
-      .bindPopup(`Voertuig ${id}<br>Trip: ${tripid}`)
+      .bindPopup(`Voertuig ${id}<br>Lijn ${routeName}: ${routeLongName}`)
       .openPopup();
 
   }catch(e){ console.error(e); realtime.innerHTML="⚠️ Fout bij realtime data."; }
