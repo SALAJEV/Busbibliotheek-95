@@ -173,6 +173,20 @@ td { padding: 0.4rem 0; }
 
 .leaflet-container { background: #000; border-radius: var(--radius); }
 
+/* Dark mode: dark tile layer for Leaflet */
+@media (prefers-color-scheme: dark) {
+  .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg); }
+}
+
+/* Delay status styling */
+.delay-status {
+  font-weight: 600;
+  margin-top: 0.4rem;
+}
+.delay-early { color: #dc2626; }
+.delay-ontime { color: var(--text); }
+.delay-late { color: #257beb; }
+
 /* ===============================
    BUTTON TERUG
 ================================ */
@@ -375,9 +389,11 @@ function toonVasteData(id){
     return;
   }
 
-  let html=`<p class="voertuignummer-display">${bus.Voertuignummer}</p><table>`;
+  let html=`<p class="voertuignummer-display">${bus.Voertuignummer}</p>`;
+  if(bus.Type) html += `<p style="font-size:0.95rem;color:var(--muted);margin-bottom:0.8rem;">📌 ${bus.Type}</p>`;
+  html+="<table>";
   for(const [k,v] of Object.entries(bus)){
-    if(k==="Vervoersmaatschappij"||k==="Voertuignummer") continue;
+    if(k==="Vervoersmaatschappij"||k==="Voertuignummer"||k==="Type") continue;
 
     let waarde = v;
     const key = k.toLowerCase();
@@ -505,12 +521,24 @@ async function updateRealtime(id){
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
 
-    
+    // Extract delay in seconds and convert to minutes
+    const delaySeconds = gps.vehicle.currentStopSequence ? (v.vehicle?.stopStatus?.delay || 0) : 0;
+    const delayMinutes = Math.round((gps.vehicle.trip?.delay || delaySeconds) / 60) || 0;
+    let delayText = "Op tijd";
+    let delayClass = "delay-ontime";
+    if (delayMinutes < 0) {
+      delayText = `${Math.abs(delayMinutes)} min te vroeg`;
+      delayClass = "delay-early";
+    } else if (delayMinutes > 0) {
+      delayText = `${delayMinutes} min vertraging`;
+      delayClass = "delay-late";
+    }
 
     realtime.innerHTML=`
       <p>
         <b>Lijn:</b> ${routeShort}<br>
-        <b>Bestemming:</b> ${tripShort}
+        <b>Bestemming:</b> ${tripShort}<br>
+        <span class="delay-status ${delayClass}">${delayText}</span>
       </p>
     `;
 
@@ -522,6 +550,7 @@ async function updateRealtime(id){
 
     if(marker) {
       marker.setLatLng([v.position.latitude,v.position.longitude]);
+      marker.setPopupContent(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}<br>Vertraging: ${delayText}`);
       // update rotation of img inside divIcon
       const el = marker.getElement && marker.getElement();
       if(el){
@@ -531,7 +560,7 @@ async function updateRealtime(id){
     } else {
       marker = L.marker([v.position.latitude,v.position.longitude], { icon: busIcon })
         .addTo(map)
-        .bindPopup(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}`)
+        .bindPopup(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}<br>Vertraging: ${delayText}`)
         .openPopup();
       // set initial rotation
       const el = marker.getElement && marker.getElement();
