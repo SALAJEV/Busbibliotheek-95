@@ -1,121 +1,185 @@
-/* ==================================================
-   APPLE LIQUID GLASS – STATIC HIGHLIGHT
-================================================== */
-
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
-
 /* ===============================
-   ROOT VARIABLES
+   ROOT VARS
 ================================ */
 :root {
-  --glass-bg: color-mix(in srgb, #ffffff 35%, transparent);
-  --glass-border: color-mix(in srgb, #ffffff 55%, transparent);
-  --glass-highlight: rgba(255,255,255,0.25);
-  --glass-shadow: rgba(0,0,0,0.18);
-
-  --accent: #007bff;
-  --danger: #d63031;
+  --glass-bg: rgba(255, 255, 255, 0.18);
+  --glass-bg-dark: rgba(0, 0, 0, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-highlight: rgba(255, 255, 255, 0.45);
 
   --text-main: #111;
-  --text-soft: #555;
-
-  --blur: 14px;
-  --radius: 1.25rem;
-
-  --background-img: url('2894.jpg');
-}
-
-/* DARK MODE */
-body.dark {
-  --glass-bg: color-mix(in srgb, #1e1e1e 60%, transparent);
-  --glass-border: color-mix(in srgb, #ffffff 15%, transparent);
-  --glass-highlight: rgba(255,255,255,0.15);
-  --glass-shadow: rgba(0,0,0,0.6);
-
-  --text-main: #fff;
-  --text-soft: #aaa;
+  --text-sub: #444;
 }
 
 /* ===============================
-   BODY & BACKGROUND IMAGE
+   BODY + BLURRED BACKGROUND
 ================================ */
-body {
-  margin: 0;
-  font-family: "Inter", sans-serif;
-  color: var(--text-main);
-  background: var(--background-img) center/cover no-repeat;
-  position: relative;
+html, body {
+  height: 100%;
 }
 
-/* Blur overlay */
-body::before {
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--text-main);
+
+  background: url("2894.jpg") center / cover no-repeat fixed;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* BLUR OVER BACKGROUND */
+body::after {
   content: "";
   position: fixed;
   inset: 0;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: -1;
+
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  background: rgba(0, 0, 0, 0.25);
+
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ===============================
-   CONTAINER
+   APP WRAPPER (HOOFDKADER)
 ================================ */
-.container {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 1rem;
-}
-
-/* ===============================
-   HEADINGS
-================================ */
-h1, h2 {
-  font-weight: 600;
-}
-
-/* ===============================
-   LIQUID GLASS CARDS
-================================ */
-.card {
+.app {
   position: relative;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
-  border-radius: var(--radius);
-  padding: 1.2rem;
+  z-index: 1;
+
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 2rem;
+
+  border-radius: 24px;
+
+  background: var(--glass-bg-dark);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+
+  border: 1px solid var(--glass-border);
 
   box-shadow:
-    inset 1px 1px 0 var(--glass-highlight),
-    inset -1px -1px 0 var(--glass-border),
-    0 20px 40px var(--glass-shadow);
+    0 30px 80px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.2);
+}
 
+/* ===============================
+   GLASS CARDS
+================================ */
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.22);
+
+  padding: 1.2rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.25),
+    0 10px 30px rgba(0,0,0,.25);
+
+  position: relative;
   overflow: hidden;
 }
 
-/* Subtle shine on hover/touch */
-.card::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    120deg,
-    rgba(255,255,255,0.25) 0%,
-    rgba(255,255,255,0.0) 60%
-  );
-  transform: rotate(25deg);
-  pointer-events: none;
-  z-index: 2;
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+/* ===============================
+   INPUTS & BUTTONS (ROND + VAST)
+================================ */
+input,
+button {
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.28);
+
+  background: rgba(255,255,255,.25);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+
+  color: #000;
+  font-size: 1rem;
+
+  outline: none;
+  position: relative;
+  overflow: hidden;
+
+  transition: background .25s ease, box-shadow .25s ease;
 }
 
-.card:hover::after,
-.card:active::after {
+button {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ===============================
+   WITTE GLANS (HOVER / TOUCH)
+================================ */
+.card::before,
+button::before,
+input::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255,255,255,.45) 50%,
+    transparent 70%
+  );
+
+  opacity: 0;
+  transition: opacity .25s ease;
+  pointer-events: none;
+}
+
+.card:hover::before,
+button:hover::before,
+input:focus::before,
+.card:active::before,
+button:active::before {
   opacity: 1;
+}
+
+/* ===============================
+   SUGGESTIE LIJST
+================================ */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: .5rem 0 0 0;
+}
+
+ul li {
+  margin-top: .4rem;
+  padding: .7rem 1rem;
+
+  border-radius: 14px;
+  background: rgba(255,255,255,.22);
+  backdrop-filter: blur(10px);
+
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+ul li:hover {
+  background: rgba(255,255,255,.35);
+}
+
+/* ===============================
+   MAP
+================================ */
+#map {
+  height: 320px;
+  border-radius: 18px;
+  overflow: hidden;
+
+  border: 1px solid rgba(255,255,255,.2);
 }
 
 /* ===============================
@@ -124,120 +188,14 @@ h1, h2 {
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.2rem;
-  margin-top: 1.2rem;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* ===============================
-   INPUTS & BUTTONS
-================================ */
-input,
-button {
-  width: 100%;
-  font-family: inherit;
-  font-size: 1rem;
-  border-radius: 999px; /* pill shape */
-  padding: 1.1rem 1.5rem;
-  margin-top: .6rem;
-
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  border: 1px solid var(--glass-border);
-  color: var(--text-main);
-
-  position: relative;
-  overflow: hidden;
-  transition: background .25s;
-}
-
-/* Shine overlay for inputs/buttons */
-input::after,
-button::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    120deg,
-    rgba(255,255,255,0.25) 0%,
-    rgba(255,255,255,0.0) 60%
-  );
-  transform: rotate(25deg);
-  pointer-events: none;
-  z-index: 2;
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-input:hover::after,
-input:active::after,
-button:hover::after,
-button:active::after {
-  opacity: 1;
-}
-
-/* INPUT placeholder */
-input::placeholder {
-  color: var(--text-soft);
-}
-
-/* BUTTON */
-button {
-  border: none;
-  font-weight: 600;
-  letter-spacing: .3px;
-  cursor: pointer;
-
-  background: linear-gradient(180deg, #4da3ff, var(--accent));
-  color: white;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.45),
-    inset 0 -1px 0 rgba(0,0,0,0.1),
-    0 18px 35px rgba(0,123,255,0.35);
-}
-
-/* ===============================
-   SUGGESTIES LIST
-================================ */
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-ul li {
-  margin-top: .35rem;
-  padding: .7rem 1rem;
-  border-radius: .9rem;
-  cursor: pointer;
-
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-
-  box-shadow:
-    inset 1px 1px 0 var(--glass-highlight),
-    inset -1px -1px 0 var(--glass-border);
-
-  transition: background .25s;
-}
-
-ul li:hover {
-  background: color-mix(in srgb, var(--glass-bg) 80%, var(--accent));
-  color: white;
 }
 
 /* ===============================
@@ -249,33 +207,11 @@ table {
 }
 
 th, td {
-  padding: .45rem;
-  border-bottom: 1px solid var(--glass-border);
-  text-align: left;
+  padding: .6rem;
+  border-bottom: 1px solid rgba(255,255,255,.25);
 }
 
 .hansea {
-  color: var(--danger);
+  color: #ff3b3b;
   font-weight: 700;
-}
-
-/* ===============================
-   MAP
-================================ */
-#map {
-  height: 320px;
-  border-radius: var(--radius);
-  margin-top: .8rem;
-  overflow: hidden;
-
-  box-shadow:
-    inset 1px 1px 0 var(--glass-highlight),
-    0 20px 40px var(--glass-shadow);
-}
-
-/* ===============================
-   TEXT
-================================ */
-p {
-  color: var(--text-soft);
 }
