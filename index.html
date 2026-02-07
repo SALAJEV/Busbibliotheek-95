@@ -10,22 +10,11 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-  body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
-  .container { max-width: 800px; margin: 2rem auto; padding: 1rem; }
-  input { width: 100%; padding: 1rem; font-size: 1.2rem; margin-bottom: .5rem; }
-  ul { list-style: none; padding: 0; margin: 0 0 1rem 0; border: 1px solid #ccc; border-radius: 6px; }
-  li { padding: .5rem 1rem; cursor: pointer; }
-  li:hover { background: #eee; }
-  .grid { display: flex; gap: 1rem; margin-top: 1rem; opacity: 0; transform: translateY(20px); transition: 0.5s; }
-  .grid.show { opacity: 1; transform: translateY(0); }
-  .card { flex: 1; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-  #map { height: 300px; margin-top: .5rem; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: .3rem .5rem; }
-  th { font-weight: 600; }
-  .back-btn { margin-top: 1rem; padding: .5rem 1rem; cursor: pointer; background: #eee; border: none; border-radius: 6px; }
-  .back-btn:hover { background: #ddd; }
-  .voertuignummer-display { font-size: 1.5rem; font-weight: 700; }
+/* Basale animatie voor cards en grid */
+.grid { display: flex; gap: 1rem; margin-top: 1rem; opacity: 0; transform: translateY(20px); transition: 0.5s; }
+.grid.show { opacity: 1; transform: translateY(0); }
+.back-btn { margin-top: 1rem; padding: .5rem 1rem; cursor: pointer; }
+.voertuignummer-display { font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem; }
 </style>
 </head>
 
@@ -56,7 +45,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
 let voertuigen = [];
 let map, marker, refresh;
@@ -153,19 +141,29 @@ function toonVasteData(id) {
     return;
   }
 
+  // Groot voertuignummer
   let html = `<p class="voertuignummer-display">${bus.Voertuignummer}</p><table>`;
+
   for (const [k, v] of Object.entries(bus)) {
-    if (k === "Vervoersmaatschappij") continue;
+    if (k === "Vervoersmaatschappij" || k === "Voertuignummer") continue;
 
     let waarde = v;
+
+    // Datumvelden in lange vorm
     if (k.toLowerCase().includes("datum") && v !== "/") {
       waarde = new Date(v).toLocaleDateString("nl-NL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    } else if (v === "/") {
-      waarde = k.toLowerCase().includes("uit dienst") ? "Niet uit dienst" : "Niet afgeschreven";
+    }
+
+    // Alleen "Uit dienst" veld toont "Niet uit dienst" bij /
+    if (k.toLowerCase().includes("uit dienst")) {
+      if (v === "/") waarde = "Niet uit dienst";
+    } else {
+      if (v === "/") continue; // overige velden negeren
     }
 
     html += `<tr><th>${k}</th><td>${waarde}</td></tr>`;
   }
+
   html += "</table>";
   vasteData.innerHTML = html;
 }
