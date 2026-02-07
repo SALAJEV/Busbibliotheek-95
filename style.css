@@ -1,25 +1,133 @@
-/* ===============================
-   LIQUID GLASS CONTROLS
-================================ */
+/* ==================================================
+   APPLE LIQUID GLASS – BASE SYSTEM
+================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
+
+:root {
+  --glass-bg: color-mix(in srgb, #ffffff 35%, transparent);
+  --glass-border: color-mix(in srgb, #ffffff 55%, transparent);
+  --glass-highlight: rgba(255,255,255,0.65);
+  --glass-shadow: rgba(0,0,0,0.18);
+
+  --accent: #007bff;
+  --danger: #d63031;
+
+  --text-main: #111;
+  --text-soft: #555;
+
+  --blur: 14px;
+  --radius: 1.25rem;
+}
+
+/* DARK MODE */
+body.dark {
+  --glass-bg: color-mix(in srgb, #1e1e1e 60%, transparent);
+  --glass-border: color-mix(in srgb, #ffffff 15%, transparent);
+  --glass-highlight: rgba(255,255,255,0.25);
+  --glass-shadow: rgba(0,0,0,0.6);
+
+  --text-main: #fff;
+  --text-soft: #aaa;
+}
+
+/* ==================================================
+   BASE
+================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: linear-gradient(180deg, #e9ecf1, #dfe3ea);
+  color: var(--text-main);
+}
+
+body.dark {
+  background: linear-gradient(180deg, #121212, #0b0b0b);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+h1, h2 {
+  font-weight: 600;
+}
+
+/* ==================================================
+   LIQUID GLASS CARD
+================================================== */
+
+.card {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+
+  box-shadow:
+    inset 1px 1px 0 var(--glass-highlight),
+    inset -1px -1px 0 var(--glass-border),
+    0 20px 40px var(--glass-shadow);
+
+  transition:
+    transform .25s cubic-bezier(.2,.8,.2,1),
+    box-shadow .25s;
+}
+
+/* ==================================================
+   GRID
+================================================== */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  margin-top: 1.2rem;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================================================
+   INPUTS & BUTTONS – LIQUID GLASS
+================================================== */
 
 input,
 button {
-  border-radius: 999px; /* volledig rond */
-}
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+  border-radius: 999px; /* pill shape */
+  padding: 1.1rem 1.5rem;
+  margin-top: .6rem;
 
-/* INPUT – zoekveld */
-input {
-  padding: 1.1rem 1.4rem;
-  font-weight: 500;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 
-  box-shadow:
-    inset 0 1px 1px rgba(255,255,255,0.35),
-    inset 0 -1px 1px rgba(0,0,0,0.05),
-    0 12px 25px rgba(0,0,0,0.12);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
 
   transition:
-    box-shadow .3s ease,
-    transform .25s ease;
+    transform .25s cubic-bezier(.2,.8,.2,1),
+    box-shadow .25s,
+    background .25s;
+}
+
+/* INPUT */
+input::placeholder {
+  color: var(--text-soft);
 }
 
 input:focus {
@@ -33,22 +141,104 @@ input:focus {
 
 /* BUTTON */
 button {
-  padding: 1.1rem 1.6rem;
+  border: none;
+  font-weight: 600;
   letter-spacing: .3px;
+  cursor: pointer;
+
+  background: linear-gradient(180deg, #4da3ff, var(--accent));
+  color: white;
 
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.45),
     inset 0 -1px 0 rgba(0,0,0,0.1),
     0 18px 35px rgba(0,123,255,0.35);
+}
 
-  transition:
-    transform .25s cubic-bezier(.2,.8,.2,1),
-    box-shadow .25s;
+button:hover {
+  filter: brightness(1.1);
 }
 
 button:active {
   transform: scale(0.97);
   box-shadow:
-    inset 0 2px 4px rgba(0,0,0,0.2),
+    inset 0 2px 4px rgba(0,0,0,0.25),
     0 8px 18px rgba(0,0,0,0.25);
+}
+
+/* ==================================================
+   SUGGESTIES – GLASS LIST
+================================================== */
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+ul li {
+  margin-top: .35rem;
+  padding: .7rem 1rem;
+  border-radius: .9rem;
+  cursor: pointer;
+
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    inset 1px 1px 0 var(--glass-highlight),
+    inset -1px -1px 0 var(--glass-border);
+
+  transition: background .2s, transform .2s;
+}
+
+ul li:hover {
+  background: color-mix(in srgb, var(--glass-bg) 80%, var(--accent));
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==================================================
+   TABLE
+================================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: .45rem;
+  border-bottom: 1px solid var(--glass-border);
+  text-align: left;
+}
+
+.hansea {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* ==================================================
+   MAP
+================================================== */
+
+#map {
+  height: 320px;
+  border-radius: var(--radius);
+  margin-top: .8rem;
+  overflow: hidden;
+
+  box-shadow:
+    inset 1px 1px 0 var(--glass-highlight),
+    0 20px 40px var(--glass-shadow);
+}
+
+/* ==================================================
+   TEXT
+================================================== */
+
+p {
+  color: var(--text-soft);
 }
