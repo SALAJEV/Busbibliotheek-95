@@ -191,7 +191,7 @@ td { padding: 0.4rem 0; }
       <h1>Busbibliotheek</h1>
       <p>Zoek een voertuig en volg 'm live.</p>
     </div>
-    <button id="backBtn" class="back-btn" style="display:none; margin: 0;" onclick="terug()">⬅ Terug</button>
+    <button id="backBtn" class="btn back-btn" style="display:none;" onclick="terug()">⬅ Terug</button>
   </div>
 
   <input id="voertuignummer" placeholder="Voertuignummer" 
@@ -433,7 +433,7 @@ function toonVasteData(id){
   }
   html+="</table>";
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent('#dl' + id);
-  html += `<p class="ig-btn-wrap"><a class="ig-btn" href="${igUrl}" target="_blank" rel="noopener">Zoek op Instagram</a></p>`;
+  html += `<p class="ig-btn-wrap"><a class="btn ig-btn" href="${igUrl}" target="_blank" rel="noopener">Zoek op Instagram</a></p>`;
   vasteData.innerHTML=html;
 }
 

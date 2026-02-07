@@ -68,7 +68,7 @@ input {
 
 input::placeholder { color: var(--muted); }
 
-button {
+button, .btn {
   margin-top: 0.8rem;
   padding: 0.85rem 1.4rem;
   border-radius: var(--radius);
@@ -78,25 +78,19 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
 }
 
-button:hover {
+button:hover, .btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
 /* Instagram button styles */
 .ig-btn-wrap { margin-top: 10px; }
-.ig-btn {
-  display: inline-block;
-  padding: 0.6rem 1rem;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), #60a5fa);
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
+.ig-btn { /* keeps semantic hook but visuals come from .btn */ }
 .ig-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
 
 .back-btn {
