@@ -10,11 +10,34 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-/* Basale animatie voor cards en grid */
+/* Basale animatie en layout */
 .grid { display: flex; gap: 1rem; margin-top: 1rem; opacity: 0; transform: translateY(20px); transition: 0.5s; }
 .grid.show { opacity: 1; transform: translateY(0); }
+
+.card {
+  flex: 1;
+  min-height: 300px;  /* alle cards minstens even groot */
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+#map {
+  flex: 1;
+  min-height: 200px; /* stabiele kaarthoogte */
+  margin-top: 0.5rem;
+}
+
 .back-btn { margin-top: 1rem; padding: .5rem 1rem; cursor: pointer; }
 .voertuignummer-display { font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem; }
+
+.loading {
+  color: #888;
+  font-style: italic;
+}
 </style>
 </head>
 
@@ -24,7 +47,9 @@
   <h1>🚌 Busbibliotheek Live</h1>
   <p>Zoek een voertuig en volg ‘m live.</p>
 
-  <input id="voertuignummer" placeholder="Voertuignummer" oninput="toonSuggesties()" onkeydown="if(event.key==='Enter'){zoekAlles();}">
+  <input id="voertuignummer" placeholder="Voertuignummer" 
+         oninput="toonSuggesties()" 
+         onkeydown="if(event.key==='Enter'){zoekAlles();}">
   <ul id="suggestielijst"></ul>
 
   <div class="grid" id="resultsGrid">
@@ -35,7 +60,7 @@
 
     <div class="card">
       <h2>📍 Realtime</h2>
-      <div id="realtime">Nog geen data.</div>
+      <div id="realtime" class="loading">Nog geen data.</div>
       <div id="map"></div>
     </div>
   </div>
@@ -107,8 +132,11 @@ function zoekAlles() {
   document.getElementById("backBtn").style.display = "inline-block";
 
   toonVasteData(id);
-  updateRealtime(id);
 
+  // Loading indicator
+  realtime.innerHTML = "<span class='loading'>⏳ Data laden...</span>";
+
+  updateRealtime(id);
   if (refresh) clearInterval(refresh);
   refresh = setInterval(() => updateRealtime(id), 10000);
 }
@@ -141,7 +169,6 @@ function toonVasteData(id) {
     return;
   }
 
-  // Groot voertuignummer
   let html = `<p class="voertuignummer-display">${bus.Voertuignummer}</p><table>`;
 
   for (const [k, v] of Object.entries(bus)) {
@@ -149,12 +176,10 @@ function toonVasteData(id) {
 
     let waarde = v;
 
-    // Datumvelden in lange vorm
     if (k.toLowerCase().includes("datum") && v !== "/") {
       waarde = new Date(v).toLocaleDateString("nl-NL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }
 
-    // Alleen "Uit dienst" veld toont "Niet uit dienst" bij /
     if (k.toLowerCase().includes("uit dienst")) {
       if (v === "/") waarde = "Niet uit dienst";
     } else {
@@ -172,10 +197,12 @@ function toonVasteData(id) {
    MAP
 ================================ */
 function initMap(lat, lon) {
-  map = L.map("map").setView([lat, lon], 14);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap"
-  }).addTo(map);
+  if (!map) {
+    map = L.map("map").setView([lat, lon], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
+  }
 }
 
 /* ===============================
@@ -205,7 +232,7 @@ async function updateRealtime(id) {
       </p>
     `;
 
-    if (!map) initMap(v.position.latitude, v.position.longitude);
+    initMap(v.position.latitude, v.position.longitude);
     map.setView([v.position.latitude, v.position.longitude], 15);
 
     if (marker)
