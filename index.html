@@ -9,70 +9,41 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-:root {
-  --primary:#007bff;
-  --bg:#f9fafb;
-  --bg-dark:#121212;
-  --card:#fff;
-  --card-dark:#1e1e1e;
-}
-
 body {
   margin:0;
   font-family:Inter,sans-serif;
-  background:var(--bg);
+  background:#f9fafb;
 }
-
-body.dark { background:var(--bg-dark); color:#fff; }
-
 .container {
   max-width:1200px;
   margin:2rem auto;
   padding:1rem;
 }
-
-input,button {
-  width:100%;
-  padding:1rem;
-  border-radius:.75rem;
-  margin-top:.5rem;
-}
-
-button {
-  background:var(--primary);
-  color:#fff;
-  border:none;
-  font-weight:600;
-}
-
 .grid {
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:1rem;
-  margin-top:1rem;
 }
-
 .card {
-  background:var(--card);
+  background:#fff;
   padding:1rem;
   border-radius:1rem;
 }
-
-body.dark .card { background:var(--card-dark); }
-
+input,button {
+  width:100%;
+  padding:1rem;
+  margin-top:.5rem;
+}
 table {
   width:100%;
   border-collapse:collapse;
 }
-
 th,td {
   padding:.5rem;
   border-bottom:1px solid #ccc;
-  text-align:left;
 }
-
 #map {
-  height:320px;
+  height:300px;
   margin-top:1rem;
   border-radius:1rem;
 }
@@ -84,7 +55,7 @@ th,td {
 
 <h1>🚌 Busbibliotheek Live</h1>
 
-<input id="input" placeholder="Voertuignummer">
+<input id="input" placeholder="Voertuignummer / Hansea / oud nummer">
 <button onclick="zoek()">Zoeken</button>
 
 <div class="grid">
@@ -107,103 +78,99 @@ th,td {
 let voertuigen = [];
 let map, marker, timer;
 
-/* ==== VEHICLES LADEN (ROBUST) ==== */
+/* ==== LOAD VEHICLES ==== */
 async function laadVoertuigen() {
   const res = await fetch(
     "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/vehicles.txt",
     { cache:"no-store" }
   );
-
   const text = await res.text();
   const lines = text.trim().split("\n");
 
-  // headers normaliseren
-  const rawHeaders = lines[0].split(";").map(h =>
-    h.replace(/\ufeff/g,"").trim().toLowerCase()
+  const headers = lines[0].split(";").map(h =>
+    h.replace(/\ufeff/g,"").trim()
   );
 
   voertuigen = lines.slice(1).map(line => {
     const vals = line.split(";");
     const obj = {};
-    rawHeaders.forEach((h,i)=>{
-      obj[h] = (vals[i] || "").trim();
-    });
+    headers.forEach((h,i)=>obj[h]=vals[i]?.trim()||"");
     return obj;
   });
-
-  console.log("geladen voertuigen:", voertuigen[0]);
 }
-
 laadVoertuigen();
 
-/* ==== ZOEKEN IN VOERTUIGEN ==== */
-function zoek() {
+/* ==== SEARCH ==== */
+function zoek(){
   const q = input.value.trim().toLowerCase();
   if(!q) return;
 
   const bus = voertuigen.find(v =>
-    v.voertuignummer === q ||
-    v["hansea nummer"] === q ||
-    v["oude voertuignummers"]?.split(/[, ]+/).includes(q) ||
-    v["oude nummerplaten"]?.split(/[, ]+/).includes(q)
+    v["Voertuignummer"]?.toLowerCase() === q ||
+    v["Hansea nummer"]?.toLowerCase() === q ||
+    v["Oude voertuignummers"]?.toLowerCase().split(/[, ]+/).includes(q) ||
+    v["Oude nummerplaten"]?.toLowerCase().split(/[, ]+/).includes(q)
   );
 
-  if(!bus) {
+  if(!bus){
     vaste.innerHTML = "❌ Geen voertuig gevonden.";
     return;
   }
 
-  let html = "<table>";
+  /* vaste data */
+  let html="<table>";
   Object.entries(bus).forEach(([k,v])=>{
-    if(v && v !== "/"){
-      html += `<tr><th>${k}</th><td>${v}</td></tr>`;
-    }
+    if(v && v!=="/")
+      html+=`<tr><th>${k}</th><td>${v}</td></tr>`;
   });
-  html += "</table>";
+  html+="</table>";
+  vaste.innerHTML=html;
 
-  vaste.innerHTML = html;
-
-  startRealtime(q);
+  /* realtime starten met ECHT voertuignummer */
+  startRealtime(bus["Voertuignummer"]);
 }
 
 /* ==== MAP ==== */
 function initMap(lat,lon){
-  map = L.map("map").setView([lat,lon],14);
+  map=L.map("map").setView([lat,lon],14);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
 /* ==== REALTIME ==== */
-async function startRealtime(id){
+async function startRealtime(vehicleId){
   if(timer) clearInterval(timer);
-  await updateRealtime(id);
-  timer = setInterval(()=>updateRealtime(id),10000);
+  await updateRealtime(vehicleId);
+  timer=setInterval(()=>updateRealtime(vehicleId),10000);
 }
 
-async function updateRealtime(id){
+async function updateRealtime(vehicleId){
   try{
-    const res = await fetch("https://busbibliotheek95.pages.dev/api");
-    const data = await res.json();
+    const res=await fetch("https://busbibliotheek95.pages.dev/api");
+    const data=await res.json();
 
-    const gps = [...data.entity]
+    const gps=[...data.entity]
       .reverse()
-      .find(e => e.vehicle?.vehicle?.id == id && e.vehicle?.position);
+      .find(e =>
+        e.vehicle?.vehicle?.id == vehicleId &&
+        e.vehicle?.position
+      );
 
     if(!gps){
-      rt.innerHTML = "Geen GPS.";
+      rt.innerHTML="Geen realtime data voor dit voertuig.";
       return;
     }
 
-    const p = gps.vehicle.position;
-    rt.innerHTML = `Lat ${p.latitude}<br>Lon ${p.longitude}`;
+    const p=gps.vehicle.position;
+    rt.innerHTML=`Lat ${p.latitude}<br>Lon ${p.longitude}`;
 
     if(!map) initMap(p.latitude,p.longitude);
     map.setView([p.latitude,p.longitude],15);
 
     if(marker) marker.setLatLng([p.latitude,p.longitude]);
-    else marker = L.marker([p.latitude,p.longitude]).addTo(map);
+    else marker=L.marker([p.latitude,p.longitude]).addTo(map);
 
   }catch(e){
-    rt.innerHTML = "Realtime fout.";
+    rt.innerHTML="Realtime fout.";
   }
 }
 </script>
