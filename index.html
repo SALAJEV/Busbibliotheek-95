@@ -372,12 +372,37 @@ async function updateRealtime(id){
     if(!gps){ realtime.innerHTML="❌ Geen realtime data."; return; }
 
     const v=gps.vehicle;
-    const tripid = gps.vehicle.trip?.tripId || "Geen trip";
+    const tripid = gps.vehicle.trip?.tripId || gps.vehicle.trip?.trip_id || "Geen trip";
 
-    // Zoek trip en route info
-    const tripData = trips.find(t => t.trip_id === tripid);
+    // Zorg dat trips/routes geladen zijn
+    if(trips.length===0) await laadTrips();
+    if(routes.length===0) await laadRoutes();
+
+    console.log("Realtime lookup", { tripid, tripsLoaded: trips.length, routesLoaded: routes.length });
+
+    // Robuuste matching: probeer exact, endsWith, includes
+    let tripData = trips.find(t => t.trip_id === tripid);
+    if(!tripData && tripid){
+      tripData = trips.find(t => t.trip_id && (
+        t.trip_id === tripid ||
+        t.trip_id.endsWith(tripid) ||
+        tripid.endsWith(t.trip_id) ||
+        t.trip_id.includes(tripid) ||
+        tripid.includes(t.trip_id)
+      ));
+    }
+    console.log("Gevonden tripData:", tripData?.trip_id || null);
+
     const routeId = tripData?.route_id || "";
-    const routeData = routes.find(r => r.route_id === routeId);
+    let routeData = routes.find(r => r.route_id === routeId);
+    if(!routeData && routeId){
+      routeData = routes.find(r => r.route_id && (
+        r.route_id === routeId ||
+        r.route_id.includes(routeId) ||
+        routeId.includes(r.route_id)
+      ));
+    }
+
     const routeShort = routeData?.route_short_name || "?";
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData?.trip_short_name || tripData?.trip_headsign || "";
