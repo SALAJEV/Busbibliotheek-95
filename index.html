@@ -325,12 +325,14 @@ async function updateRealtime(id){
     if(!gps){ realtime.innerHTML="❌ Geen realtime data."; return; }
 
     const v=gps.vehicle;
+    const tripid=gps.trip?.trip?.id || "N/A";
 
     realtime.innerHTML=`
       <p>
         <b>Latitude:</b> ${v.position.latitude}<br>
         <b>Longitude:</b> ${v.position.longitude}<br>
-        <b>Richting:</b> ${v.position.bearing}°
+        <b>Richting:</b> ${v.position.bearing}°<br>
+        <b>Trip ID:</b> ${tripid}
       </p>
     `;
 
@@ -340,7 +342,7 @@ async function updateRealtime(id){
     if(marker) marker.setLatLng([v.position.latitude,v.position.longitude]);
     else marker=L.marker([v.position.latitude,v.position.longitude])
       .addTo(map)
-      .bindPopup(`Voertuig ${id}`)
+      .bindPopup(`Voertuig ${id}<br>Trip: ${tripid}`)
       .openPopup();
 
   }catch(e){ console.error(e); realtime.innerHTML="⚠️ Fout bij realtime data."; }
