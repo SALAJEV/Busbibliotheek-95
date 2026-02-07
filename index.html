@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Busbibliotheek Live</title>
+<title>Busbibliotheek</title>
 
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
@@ -186,9 +186,13 @@ td { padding: 0.4rem 0; }
 </head>
 <body>
 <div class="container">
-
-  <h1>🚌 Busbibliotheek Live</h1>
-  <p>Zoek een voertuig en volg ‘m live.</p>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <h1>Busbibliotheek</h1>
+      <p>Zoek een voertuig en volg 'm live.</p>
+    </div>
+    <button id="backBtn" class="back-btn" style="display:none; margin: 0;" onclick="terug()">⬅ Terug</button>
+  </div>
 
   <input id="voertuignummer" placeholder="Voertuignummer" 
          oninput="toonSuggesties()" 
@@ -197,18 +201,16 @@ td { padding: 0.4rem 0; }
 
   <div class="grid" id="resultsGrid">
     <div class="card">
-      <h2>📋 Voertuiginfo</h2>
+      <h2>Voertuig informatie</h2>
       <div id="vasteData">Nog geen voertuig geselecteerd.</div>
     </div>
 
     <div class="card">
-      <h2>📍 Realtime</h2>
+      <h2>Realtime informatie</h2>
       <div id="realtime" class="loading">Nog geen data.</div>
       <div id="map"></div>
     </div>
   </div>
-
-  <button id="backBtn" class="back-btn" style="display:none;" onclick="terug()">⬅ Terug</button>
 
 </div>
 
@@ -250,6 +252,7 @@ function toonSuggesties() {
       li.onclick=()=>{
         voertuignummer.value=v.Voertuignummer;
         suggestielijst.innerHTML="";
+        voertuignummer.blur(); // Focus weghalen zodat geen enter meer nodig is
         zoekAlles();
       };
       suggestielijst.appendChild(li);
@@ -260,6 +263,7 @@ function zoekAlles() {
   const id = voertuignummer.value.trim();
   if(!id) return;
 
+  suggestielijst.innerHTML = "";
   document.getElementById("resultsGrid").classList.add("show");
   document.getElementById("backBtn").style.display = "inline-block";
 
@@ -326,7 +330,7 @@ async function updateRealtime(id){
 
     const v=gps.vehicle;
     console.log("GPS object:", gps);
-    const tripid=gps.trip?.trip?.id || "N/A";
+    const tripid=gps.tripUpdate?.trip?.id || gps.trip?.trip?.id || gps.trip?.id || "Geen trip";
 
     realtime.innerHTML=`
       <p>
