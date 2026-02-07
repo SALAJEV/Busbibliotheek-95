@@ -223,10 +223,32 @@ let map, marker, refresh;
 let userInteracted = false;
 let centerControl;
 
+// Helper: CSV parser that respects quoted fields
+function parseCSVLine(line){
+  const fields = [];
+  let cur = "";
+  let inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if(ch === ',' && !inQuotes){
+      fields.push(cur);
+      cur = "";
+    } else { cur += ch; }
+  }
+  fields.push(cur);
+  return fields.map(f => f.trim().replace(/^"|"$/g, ''));
+}
+
+// Helper: normalize ids/strings for matching
+const normalize = s => (s||"").toString().replace(/"/g, "").trim();
+
 // Custom bus pin as DivIcon so we can rotate the image based on bearing
 const busIcon = L.divIcon({
   className: 'bus-div-icon',
-  html: `<img src="navicon.png" style="width:36px;height:36px;transform:rotate(0deg);display:block;"/>`,
+  html: `<img src="navicon.png" style="width:36px;height:36px;transform:rotate(0deg);display:block;transform-origin:18px 28px;transition: transform 0.25s linear;"/>`,
   iconSize: [36,36],
   iconAnchor: [18,36]
 });
@@ -394,10 +416,19 @@ function toonVasteData(id){
   for(const [k,v] of Object.entries(bus)){
     if(k==="Vervoersmaatschappij"||k==="Voertuignummer") continue;
 
-    let waarde=v;
-    if(k.toLowerCase().includes("datum") && v!=="/") waarde=new Date(v).toLocaleDateString("nl-NL",{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    if(k.toLowerCase().includes("uit dienst")) { if(v==="/") waarde="Niet uit dienst"; }
-    else { if(v==="/") continue; }
+    let waarde = v;
+    const key = k.toLowerCase();
+
+    if(key.includes("datum in dienst") && v!=="/") {
+      waarde = new Date(v).toLocaleDateString("nl-NL",{year:'numeric',month:'long',day:'numeric'});
+    } else if(key.includes("uit dienst")) {
+      if(v==="/") waarde = "Niet uit dienst";
+      else waarde = new Date(v).toLocaleDateString("nl-NL",{year:'numeric',month:'long',day:'numeric'});
+    } else if(key.includes("datum") && v!=="/") {
+      waarde = new Date(v).toLocaleDateString("nl-NL",{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    } else {
+      if(v==="/") continue;
+    }
     html+=`<tr><th>${k}</th><td>${waarde}</td></tr>`;
   }
   html+="</table>";
@@ -478,10 +509,7 @@ async function updateRealtime(id){
     if(trips.length===0) await laadTrips();
     if(routes.length===0) await laadRoutes();
 
-    console.log("Realtime lookup", { tripid, tripsLoaded: trips.length, routesLoaded: routes.length });
-
     // Robuuste matching: normaliseer en probeer exact / endsWith / includes
-    const normalize = s => (s||"").toString().replace(/"/g, "").trim();
     const nTripId = normalize(tripid);
     let tripData = trips.find(t => normalize(t.trip_id) === nTripId);
     if(!tripData && nTripId){
@@ -496,7 +524,7 @@ async function updateRealtime(id){
         );
       });
     }
-    console.log("Gevonden tripData:", tripData ? { trip_id: normalize(tripData.trip_id), trip_short_name: tripData.trip_short_name, trip_headsign: tripData.trip_headsign } : null);
+    
 
     const routeId = tripData?.route_id || "";
     let routeData = routes.find(r => r.route_id === routeId);
@@ -512,7 +540,7 @@ async function updateRealtime(id){
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
 
-    console.log("Resolved destination and line:", { routeShort, routeLong, tripShort });
+    
 
     const shortTripId = (tripid && tripid.length>50) ? tripid.substring(0,50)+"..." : tripid;
 
@@ -528,7 +556,7 @@ async function updateRealtime(id){
     `;
 
     initMap(v.position.latitude,v.position.longitude);
-    map.setView([v.position.latitude,v.position.longitude],15);
+    if(!userInteracted) map.setView([v.position.latitude,v.position.longitude],15);
 
     const bearing = v.position.bearing || 0;
 
