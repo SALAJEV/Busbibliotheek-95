@@ -280,25 +280,6 @@ async function laadTrips() {
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
 
-  // Simple CSV line parser that respects quotes
-  function parseCSVLine(line){
-    const fields = [];
-    let cur = "";
-    let inQuotes = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){
-        if(inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-        else { inQuotes = !inQuotes; }
-      } else if(ch === ',' && !inQuotes){
-        fields.push(cur);
-        cur = "";
-      } else { cur += ch; }
-    }
-    fields.push(cur);
-    return fields.map(f => f.trim().replace(/^"|"$/g, ''));
-  }
-
   const headers = parseCSVLine(regels[0]).map(h => h.trim());
 
   trips = regels.slice(1).map(r => {
@@ -318,24 +299,6 @@ async function laadRoutes() {
   );
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
-
-  function parseCSVLine(line){
-    const fields = [];
-    let cur = "";
-    let inQuotes = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){
-        if(inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-        else { inQuotes = !inQuotes; }
-      } else if(ch === ',' && !inQuotes){
-        fields.push(cur);
-        cur = "";
-      } else { cur += ch; }
-    }
-    fields.push(cur);
-    return fields.map(f => f.trim().replace(/^"|"$/g, ''));
-  }
 
   const headers = parseCSVLine(regels[0]).map(h => h.trim());
 
@@ -433,7 +396,7 @@ function toonVasteData(id){
   }
   html+="</table>";
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent('#dl' + id);
-  html += `<p class="ig-btn-wrap"><a class="btn ig-btn" href="${igUrl}" target="_blank" rel="noopener">Zoek op Instagram</a></p>`;
+  html += `<p class="ig-btn-wrap"><a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener">Zoek op Instagram</a></p>`;
   vasteData.innerHTML=html;
 }
 
@@ -544,13 +507,10 @@ async function updateRealtime(id){
 
     
 
-    const shortTripId = (tripid && tripid.length>50) ? tripid.substring(0,50)+"..." : tripid;
-
     realtime.innerHTML=`
       <p>
         <b>Lijn:</b> ${routeShort}<br>
-        <b>Bestemming:</b> ${tripShort}<br>
-        <b>Trip ID:</b> ${shortTripId}
+        <b>Bestemming:</b> ${tripShort}
       </p>
     `;
 
