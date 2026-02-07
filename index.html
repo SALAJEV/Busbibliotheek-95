@@ -432,6 +432,8 @@ function toonVasteData(id){
     html+=`<tr><th>${k}</th><td>${waarde}</td></tr>`;
   }
   html+="</table>";
+  const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent('#dl' + id);
+  html += `<p class="ig-btn-wrap"><a class="ig-btn" href="${igUrl}" target="_blank" rel="noopener">Zoek op Instagram</a></p>`;
   vasteData.innerHTML=html;
 }
 
@@ -548,15 +550,13 @@ async function updateRealtime(id){
       <p>
         <b>Lijn:</b> ${routeShort}<br>
         <b>Bestemming:</b> ${tripShort}<br>
-        <b>Latitude:</b> ${v.position.latitude}<br>
-        <b>Longitude:</b> ${v.position.longitude}<br>
-        <b>Richting:</b> ${v.position.bearing}°<br>
         <b>Trip ID:</b> ${shortTripId}
       </p>
     `;
 
     initMap(v.position.latitude,v.position.longitude);
-    if(!userInteracted) map.setView([v.position.latitude,v.position.longitude],15);
+    // Always center the map on each realtime update
+    map.setView([v.position.latitude,v.position.longitude],15);
 
     const bearing = v.position.bearing || 0;
 

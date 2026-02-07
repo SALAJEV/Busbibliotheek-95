@@ -85,6 +85,20 @@ button:hover {
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
+/* Instagram button styles */
+.ig-btn-wrap { margin-top: 10px; }
+.ig-btn {
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #60a5fa);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ig-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+
 .back-btn {
   margin: 0 !important;
   margin-left: auto;
