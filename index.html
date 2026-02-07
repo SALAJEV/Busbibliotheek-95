@@ -325,6 +325,7 @@ async function updateRealtime(id){
     if(!gps){ realtime.innerHTML="❌ Geen realtime data."; return; }
 
     const v=gps.vehicle;
+    console.log("GPS object:", gps);
     const tripid=gps.trip?.trip?.id || "N/A";
 
     realtime.innerHTML=`
