@@ -1,76 +1,284 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <title>De Lijn Realtime - Cloudflare Functions</title>
-    <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 5px; border: none; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #ffcc00; color: black; padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #333; }
-        .status { color: #ffcc00; margin-bottom: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Busbibliotheek Live</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary:#007bff;
+  --bg-light:#f9fafb;
+  --bg-dark:#121212;
+  --card-light:#fff;
+  --card-dark:#1e1e1e;
+  --text-light:#111;
+  --text-dark:#fff;
+  --red:#d63031;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background:var(--bg-light);
+  color:var(--text-light);
+}
+
+body.dark { background:var(--bg-dark); color:var(--text-dark); }
+
+.container {
+  max-width:1200px;
+  margin:2rem auto;
+  padding:1rem;
+}
+
+header {
+  margin-bottom:1rem;
+}
+
+input, button {
+  width:100%;
+  padding:1rem;
+  border-radius:.75rem;
+  font-size:1rem;
+  margin-top:.5rem;
+}
+
+input {
+  border:1px solid #ccc;
+  background:#f1f1f1;
+}
+
+body.dark input {
+  background:#333;
+  color:#fff;
+  border-color:#555;
+}
+
+button {
+  border:none;
+  background:var(--primary);
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  max-height:200px;
+  overflow-y:auto;
+}
+
+ul li {
+  padding:.6rem;
+  background:#eee;
+  border-radius:.5rem;
+  margin-top:.25rem;
+  cursor:pointer;
+}
+
+body.dark ul li { background:#333; }
+
+.grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:1rem;
+}
+
+.card {
+  background:var(--card-light);
+  padding:1rem;
+  border-radius:1rem;
+  box-shadow:0 10px 25px rgba(0,0,0,.1);
+}
+
+body.dark .card { background:var(--card-dark); }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+th, td {
+  padding:.5rem;
+  border-bottom:1px solid #ccc;
+  text-align:left;
+}
+
+body.dark th, body.dark td { border-color:#555; }
+
+.hansea { color:var(--red); font-weight:700; }
+
+#map {
+  height:300px;
+  border-radius:1rem;
+  margin-top:1rem;
+}
+
+.late { color:#1a73e8; font-weight:700; }
+.early { color:#e53935; font-weight:700; }
+
+@media(max-width:900px){
+  .grid { grid-template-columns:1fr; }
+}
+</style>
 </head>
+
 <body>
+<div class="container">
 
-    <h1>De Lijn Live (Functions)</h1>
-    <div id="status" class="status">Data laden...</div>
-    <input type="text" id="search" placeholder="Zoek voertuignummer..." onkeyup="filteren()">
+<header>
+  <h1>🚌 Busbibliotheek Live</h1>
+  <input id="voertuignummer" placeholder="Voertuignummer" oninput="suggesties()">
+  <ul id="suggesties"></ul>
+  <button onclick="zoekAlles()">Zoeken</button>
+</header>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Voertuig</th>
-                <th>Vertraging</th>
-                <th>Trip ID</th>
-            </tr>
-        </thead>
-        <tbody id="tabel-body"></tbody>
-    </table>
+<div class="grid">
 
-    <script>
-        let alleVoertuigen = [];
+<!-- LINKS: vaste data -->
+<div class="card">
+  <h2>📋 Voertuiginfo</h2>
+  <div id="vasteData">Nog geen voertuig geselecteerd.</div>
+</div>
 
-        async function laadData() {
-            try {
-                // We roepen onze eigen Cloudflare Function aan op /api
-                const res = await fetch('/api');
-                const json = await res.json();
-                alleVoertuigen = json.entity;
-                filteren();
-            } catch (e) {
-                document.getElementById('status').innerText = "Fout bij laden.";
-            }
-        }
+<!-- RECHTS: realtime -->
+<div class="card">
+  <h2>📍 Realtime tracking</h2>
+  <div id="realtime">Nog geen data.</div>
+  <div id="map"></div>
+</div>
 
-        function filteren() {
-            const query = document.getElementById('search').value.toLowerCase();
-            const tbody = document.getElementById('tabel-body');
-            tbody.innerHTML = '';
+</div>
+</div>
 
-            const gefilterd = alleVoertuigen.filter(item => {
-                const id = (item.vehicle?.vehicle?.id || item.trip_update?.vehicle?.id || "");
-                return id.toLowerCase().includes(query);
-            });
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+/* dark mode */
+if (window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.body.classList.add('dark');
 
-            document.getElementById('status').innerText = `Totaal: ${alleVoertuigen.length} | Gevonden: ${gefilterd.length}`;
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',
+  e => document.body.classList.toggle('dark', e.matches)
+);
 
-            gefilterd.forEach(item => {
-                const vId = item.vehicle?.vehicle?.id || item.trip_update?.vehicle?.id || "???";
-                const delay = item.trip_update?.stop_time_update?.[0]?.arrival?.delay || 0;
-                const trip = item.trip_update?.trip?.trip_id || "-";
+let voertuigen = [];
+let map, marker, interval;
 
-                tbody.innerHTML += `<tr>
-                    <td><b>${vId}</b></td>
-                    <td>${Math.round(delay/60)} min</td>
-                    <td style="font-size:10px">${trip}</td>
-                </tr>`;
-            });
-        }
+/* laad voertuigenlijst */
+async function laadVoertuigen(){
+  const res = await fetch("https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev/vehicles.txt",{cache:"no-store"});
+  const txt = await res.text();
+  const r = txt.trim().split("\n");
+  const h = r[0].split(";");
+  voertuigen = r.slice(1).map(l=>{
+    const v=l.split(";");
+    const o={};
+    h.forEach((k,i)=>o[k]=v[i]?.trim()||"/");
+    return o;
+  });
+}
+laadVoertuigen();
 
-        laadData();
-        setInterval(laadData, 30000);
-    </script>
+/* suggesties */
+function suggesties(){
+  const q = voertuignummer.value.toLowerCase();
+  suggesties.innerHTML="";
+  if(!q) return;
+
+  voertuigen.filter(v=>v["Voertuignummer"].startsWith(q))
+    .slice(0,8)
+    .forEach(v=>{
+      const li=document.createElement("li");
+      li.textContent=`${v.Voertuignummer} – ${v.Type}`;
+      li.onclick=()=>{
+        voertuignummer.value=v.Voertuignummer;
+        suggesties.innerHTML="";
+        zoekAlles();
+      };
+      suggesties.appendChild(li);
+    });
+}
+
+/* alles zoeken */
+function zoekAlles(){
+  const id = voertuignummer.value.trim();
+  if(!id) return;
+  toonVasteData(id);
+  realtime(id);
+  if(interval) clearInterval(interval);
+  interval=setInterval(()=>realtime(id),10000);
+}
+
+/* vaste data */
+function toonVasteData(id){
+  const bus = voertuigen.find(v=>v["Voertuignummer"]===id);
+  if(!bus){
+    vasteData.innerHTML="❌ Niet gevonden.";
+    return;
+  }
+
+  let html="<table>";
+  Object.entries(bus).forEach(([k,v])=>{
+    if(v!=="/" && k!=="Vervoersmaatschappij")
+      html+=`<tr><th>${k}</th><td class="${k==="Hansea nummer"?"hansea":""}">${v}</td></tr>`;
+  });
+  html+="</table>";
+  vasteData.innerHTML=html;
+}
+
+/* kaart */
+function initMap(lat,lon){
+  map=L.map("map").setView([lat,lon],14);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+}
+
+/* realtime */
+async function realtime(id){
+  try{
+    const res=await fetch("https://busbibliotheek95.pages.dev/api");
+    const data=await res.json();
+
+    const m=data.entity.filter(e=>
+      e.vehicle?.vehicle?.id==id ||
+      e.tripUpdate?.vehicle?.id==id
+    );
+
+    if(!m.length){
+      realtime.innerHTML="❌ Geen realtime data.";
+      return;
+    }
+
+    const gps=[...m].reverse().find(e=>e.vehicle?.position);
+    if(!gps){
+      realtime.innerHTML="Geen GPS.";
+      return;
+    }
+
+    const v=gps.vehicle;
+    let html=`<p><b>Lat:</b> ${v.position.latitude}<br>
+              <b>Lon:</b> ${v.position.longitude}<br>
+              <b>Richting:</b> ${v.position.bearing}°</p>`;
+
+    realtime.innerHTML=html;
+
+    if(!map) initMap(v.position.latitude,v.position.longitude);
+    map.setView([v.position.latitude,v.position.longitude],15);
+
+    if(marker) marker.setLatLng([v.position.latitude,v.position.longitude]);
+    else marker=L.marker([v.position.latitude,v.position.longitude]).addTo(map);
+
+  }catch(e){
+    realtime.innerHTML="⚠️ Fout bij ophalen.";
+  }
+}
+</script>
 </body>
 </html>
