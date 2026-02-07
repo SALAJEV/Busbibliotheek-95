@@ -247,10 +247,30 @@ async function laadTrips() {
   );
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
-  const headers = regels[0].split(",").map(h => h.replace(/"/g, ""));
+
+  // Simple CSV line parser that respects quotes
+  function parseCSVLine(line){
+    const fields = [];
+    let cur = "";
+    let inQuotes = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch === '"'){
+        if(inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if(ch === ',' && !inQuotes){
+        fields.push(cur);
+        cur = "";
+      } else { cur += ch; }
+    }
+    fields.push(cur);
+    return fields.map(f => f.trim().replace(/^"|"$/g, ''));
+  }
+
+  const headers = parseCSVLine(regels[0]).map(h => h.trim());
 
   trips = regels.slice(1).map(r => {
-    const values = r.match(/"[^"]*"|[^,]*/g).map(v => v.replace(/"/g, "").trim());
+    const values = parseCSVLine(r);
     const obj = {};
     headers.forEach((h, i) => obj[h] = values[i] || "/");
     return obj;
@@ -266,10 +286,29 @@ async function laadRoutes() {
   );
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
-  const headers = regels[0].split(",").map(h => h.replace(/"/g, ""));
+
+  function parseCSVLine(line){
+    const fields = [];
+    let cur = "";
+    let inQuotes = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch === '"'){
+        if(inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if(ch === ',' && !inQuotes){
+        fields.push(cur);
+        cur = "";
+      } else { cur += ch; }
+    }
+    fields.push(cur);
+    return fields.map(f => f.trim().replace(/^"|"$/g, ''));
+  }
+
+  const headers = parseCSVLine(regels[0]).map(h => h.trim());
 
   routes = regels.slice(1).map(r => {
-    const values = r.match(/"[^"]*"|[^,]*/g).map(v => v.replace(/"/g, "").trim());
+    const values = parseCSVLine(r);
     const obj = {};
     headers.forEach((h, i) => obj[h] = values[i] || "/");
     return obj;
