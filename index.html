@@ -449,7 +449,7 @@ async function updateRealtime(id){
 
     const routeShort = routeData?.route_short_name || "?";
     const routeLong = routeData?.route_long_name || "";
-    const tripShort = tripData ? (tripData.trip_short_name || tripData.trip_headsign || "") : "";
+    const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
 
     console.log("Resolved destination and line:", { routeShort, routeLong, tripShort });
 
