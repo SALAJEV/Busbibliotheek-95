@@ -1,193 +1,193 @@
 /* =========================================
-   MODERN BUS LIVE STYLING
+   MODERN BUS LIVE - LIQUID GLASS EDITION
    ========================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,100..1000&family=Inter:wght@400;600&display=swap');
+
 :root {
-  --primary: #ffcc00; /* Bus geel */
-  --primary-dark: #e6b800;
-  --bg-color: #f4f7f6;
-  --card-bg: #ffffff;
-  --text-main: #2d3436;
-  --text-muted: #636e72;
-  --accent: #0984e3;
-  --radius: 12px;
-  --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    /* Kleurenpalet & Variabelen */
+    --c-glass: #bbbbbc;
+    --c-light: #fff;
+    --c-dark: #000;
+    --c-primary: #ffcc00; /* Bus Geel */
+    --c-content: #2d3436;
+    --c-bg: #f4f7f6;
+    
+    --glass-reflex-dark: 1;
+    --glass-reflex-light: 1;
+    --saturation: 150%;
+    --radius: 20px;
+    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* DARK MODE VOORKEUR (Systeem) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --c-bg: #1b1b1d;
+        --c-content: #e1e1e1;
+        --glass-reflex-dark: 2;
+        --glass-reflex-light: 0.3;
+        --c-glass: #4a4a4a;
+    }
 }
 
+/* BASIS STYLING */
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-main);
-  line-height: 1.6;
-  padding: 20px;
+    margin: 0;
+    font-family: "DM Sans", "Inter", sans-serif;
+    background-color: var(--c-bg);
+    color: var(--c-content);
+    transition: background 0.4s ease, color 0.4s ease;
+    min-height: 100vh;
+    padding: 40px 20px;
 }
 
 .container {
-  max-width: 1100px;
-  margin: 0 auto;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
-/* Header */
+/* HEADER & TYPOGRAFIE */
 h1 {
-  font-weight: 600;
-  font-size: 2rem;
-  margin-bottom: 8px;
-  color: var(--text-main);
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
 }
 
 p {
-  color: var(--text-muted);
-  margin-bottom: 25px;
+    opacity: 0.8;
+    margin-bottom: 30px;
 }
 
-/* Zoekveld & Suggesties */
-.search-wrapper {
-  position: relative;
-  margin-bottom: 30px;
+/* LIQUID GLASS CARD EFFECT */
+.card, #voertuignummer {
+    background: color-mix(in srgb, var(--c-glass) 12%, transparent);
+    backdrop-filter: blur(12px) saturate(var(--saturation));
+    -webkit-backdrop-filter: blur(12px) saturate(var(--saturation));
+    border-radius: var(--radius);
+    
+    /* Het complexe glas-reflectie effect uit je CSS */
+    box-shadow: 
+        inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+        inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent), 
+        0px 8px 16px 0px rgba(0,0,0,0.1);
+    
+    border: none;
+    padding: 25px;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
 }
 
-input#voertuignummer {
-  width: 100%;
-  max-width: 400px;
-  padding: 14px 20px;
-  font-size: 1rem;
-  border: 2px solid transparent;
-  border-radius: var(--radius);
-  background: var(--card-bg);
-  box-shadow: var(--shadow);
-  outline: none;
-  transition: border-color 0.3s;
+/* ZOEKVELD SPECIFIEK */
+.search-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 40px;
+    position: relative;
 }
 
-input#voertuignummer:focus {
-  border-color: var(--primary);
+#voertuignummer {
+    flex: 1;
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    color: var(--c-content);
+    outline: none;
+    margin-bottom: 0; /* reset card margin */
+}
+
+#voertuignummer:focus {
+    box-shadow: 0 0 0 3px var(--c-primary);
 }
 
 button {
-  padding: 14px 28px;
-  font-size: 1rem;
-  font-weight: 600;
-  background-color: var(--primary);
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-  margin-left: 10px;
-  transition: transform 0.2s, background 0.2s;
-  box-shadow: var(--shadow);
+    background: var(--c-primary);
+    color: #000;
+    border: none;
+    padding: 0 30px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 button:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
+    transform: scale(1.05);
+    filter: brightness(1.1);
 }
 
+/* SUGGESTIELIJST */
 #suggestielijst {
-  list-style: none;
-  background: white;
-  max-width: 400px;
-  border-radius: 0 0 var(--radius) var(--radius);
-  margin-top: -5px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  position: absolute;
-  z-index: 1000;
-  width: 100%;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: calc(100% - 150px);
+    background: var(--c-bg);
+    border-radius: 12px;
+    list-style: none;
+    z-index: 100;
+    box-shadow: var(--shadow);
 }
 
 #suggestielijst li {
-  padding: 12px 20px;
-  cursor: pointer;
-  border-bottom: 1px solid #eee;
-}
-
-#suggestielijst li:last-child {
-  border-bottom: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 #suggestielijst li:hover {
-  background-color: #fff9db;
+    background: var(--c-primary);
+    color: #000;
 }
 
-/* Grid Layout */
+/* GRID LAYOUT */
 .grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 25px;
-  margin-top: 30px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
 }
 
 @media (max-width: 850px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+    .grid { grid-template-columns: 1fr; }
 }
 
-/* Cards */
-.card {
-  background: var(--card-bg);
-  padding: 25px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.card h2 {
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-bottom: 2px solid var(--bg-color);
-  padding-bottom: 10px;
-}
-
-/* Tabel styling voor Voertuiginfo */
+/* TABEL & INFO */
 table {
-  width: 100%;
-  border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 th {
-  text-align: left;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 8px 0;
-  width: 40%;
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.6;
+    padding: 10px 0;
 }
 
 td {
-  padding: 8px 0;
-  font-weight: 600;
-  color: var(--text-main);
+    text-align: right;
+    font-weight: 600;
+    padding: 10px 0;
 }
 
-tr:not(:last-child) {
-  border-bottom: 1px solid #f1f1f1;
+tr {
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
 }
 
-/* Realtime & Kaart */
-#realtime {
-  margin-bottom: 15px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
+/* MAP STYLING */
 #map {
-  height: 450px;
-  width: 100%;
-  border-radius: var(--radius);
-  z-index: 1;
+    height: 500px;
+    width: 100%;
+    border-radius: 15px;
+    z-index: 1;
 }
 
-/* Custom Marker Popup styling */
-.leaflet-popup-content-wrapper {
-  border-radius: 8px;
+/* VOERTUIG INFO THEME FIX */
+.card h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
