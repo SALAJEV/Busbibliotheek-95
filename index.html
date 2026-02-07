@@ -173,10 +173,13 @@ td { padding: 0.4rem 0; }
 
 .leaflet-container { background: #000; border-radius: var(--radius); }
 
-/* Dark mode: dark tile layer for Leaflet */
+/* Dark mode: lighter tile layer for Leaflet */
 @media (prefers-color-scheme: dark) {
-  .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg); }
+  .leaflet-tile-pane { filter: invert(0.8) hue-rotate(180deg) brightness(1.1); opacity: 0.9; }
 }
+
+/* Hide map when no data */
+#map.hidden { display: none; }
 
 /* Delay status styling */
 .delay-status {
@@ -390,7 +393,7 @@ function toonVasteData(id){
   }
 
   let html=`<p class="voertuignummer-display">${bus.Voertuignummer}</p>`;
-  if(bus.Type) html += `<p style="font-size:0.95rem;color:var(--muted);margin-bottom:0.8rem;">📌 ${bus.Type}</p>`;
+  if(bus.Type) html += `<p style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.8rem;">${bus.Type}</p>`;
   html+="<table>";
   for(const [k,v] of Object.entries(bus)){
     if(k==="Vervoersmaatschappij"||k==="Voertuignummer"||k==="Type") continue;
@@ -481,7 +484,7 @@ async function updateRealtime(id){
 
     const gps = data.entity.reverse().find(e=>e.vehicle?.vehicle?.id==id && e.vehicle.position);
 
-    if(!gps){ realtime.innerHTML="❌ Geen realtime data."; return; }
+    if(!gps){ realtime.innerHTML="❌ Geen realtime data."; document.getElementById("map").classList.add("hidden"); return; }
 
     const v=gps.vehicle;
     const tripid = gps.vehicle.trip?.tripId || gps.vehicle.trip?.trip_id || "Geen trip";
@@ -522,8 +525,9 @@ async function updateRealtime(id){
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
 
     // Extract delay in seconds and convert to minutes
-    const delaySeconds = gps.vehicle.currentStopSequence ? (v.vehicle?.stopStatus?.delay || 0) : 0;
-    const delayMinutes = Math.round((gps.vehicle.trip?.delay || delaySeconds) / 60) || 0;
+    let delaySeconds = gps.vehicle.trip?.delay || 0;
+    if (!delaySeconds && v.vehicle?.stopStatus?.delay) delaySeconds = v.vehicle.stopStatus.delay;
+    const delayMinutes = Math.round(delaySeconds / 60);
     let delayText = "Op tijd";
     let delayClass = "delay-ontime";
     if (delayMinutes < 0) {
@@ -541,6 +545,7 @@ async function updateRealtime(id){
         <span class="delay-status ${delayClass}">${delayText}</span>
       </p>
     `;
+    document.getElementById("map").classList.remove("hidden");
 
     initMap(v.position.latitude,v.position.longitude);
     // Always center the map on each realtime update
