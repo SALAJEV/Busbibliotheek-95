@@ -1,5 +1,5 @@
 /* ==================================================
-   APPLE LIQUID GLASS – STATIC WITH SHINE
+   APPLE LIQUID GLASS – STATIC HIGHLIGHT
 ================================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
@@ -10,7 +10,7 @@
 :root {
   --glass-bg: color-mix(in srgb, #ffffff 35%, transparent);
   --glass-border: color-mix(in srgb, #ffffff 55%, transparent);
-  --glass-highlight: rgba(255,255,255,0.65);
+  --glass-highlight: rgba(255,255,255,0.25);
   --glass-shadow: rgba(0,0,0,0.18);
 
   --accent: #007bff;
@@ -21,13 +21,15 @@
 
   --blur: 14px;
   --radius: 1.25rem;
+
+  --background-img: url('2894.jpg');
 }
 
 /* DARK MODE */
 body.dark {
   --glass-bg: color-mix(in srgb, #1e1e1e 60%, transparent);
   --glass-border: color-mix(in srgb, #ffffff 15%, transparent);
-  --glass-highlight: rgba(255,255,255,0.25);
+  --glass-highlight: rgba(255,255,255,0.15);
   --glass-shadow: rgba(0,0,0,0.6);
 
   --text-main: #fff;
@@ -41,9 +43,11 @@ body {
   margin: 0;
   font-family: "Inter", sans-serif;
   color: var(--text-main);
-  background: url('https://images.unsplash.com/photo-1602524813032-ecb0a8c51c23?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  background: var(--background-img) center/cover no-repeat;
+  position: relative;
 }
 
+/* Blur overlay */
 body::before {
   content: "";
   position: fixed;
@@ -85,16 +89,11 @@ h1, h2 {
     inset -1px -1px 0 var(--glass-border),
     0 20px 40px var(--glass-shadow);
 
-  transition: box-shadow .25s, background .25s;
   overflow: hidden;
 }
 
-/* ===============================
-   SHINE EFFECT ON HOVER / TOUCH
-================================ */
-.card::after,
-button::after,
-input::after {
+/* Subtle shine on hover/touch */
+.card::after {
   content: "";
   position: absolute;
   top: -50%;
@@ -115,11 +114,7 @@ input::after {
 }
 
 .card:hover::after,
-.card:active::after,
-button:hover::after,
-button:active::after,
-input:hover::after,
-input:active::after {
+.card:active::after {
   opacity: 1;
 }
 
@@ -158,22 +153,43 @@ button {
   border: 1px solid var(--glass-border);
   color: var(--text-main);
 
-  transition: box-shadow .25s, background .25s;
   position: relative;
   overflow: hidden;
+  transition: background .25s;
 }
 
-/* INPUT */
+/* Shine overlay for inputs/buttons */
+input::after,
+button::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.25) 0%,
+    rgba(255,255,255,0.0) 60%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+input:hover::after,
+input:active::after,
+button:hover::after,
+button:active::after {
+  opacity: 1;
+}
+
+/* INPUT placeholder */
 input::placeholder {
   color: var(--text-soft);
-}
-
-input:focus {
-  outline: none;
-  box-shadow:
-    inset 0 1px 1px rgba(255,255,255,0.5),
-    0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent),
-    0 18px 40px rgba(0,123,255,0.25);
 }
 
 /* BUTTON */
@@ -192,19 +208,8 @@ button {
     0 18px 35px rgba(0,123,255,0.35);
 }
 
-button:hover {
-  filter: brightness(1.1);
-}
-
-button:active {
-  transform: scale(0.97);
-  box-shadow:
-    inset 0 2px 4px rgba(0,0,0,0.25),
-    0 8px 18px rgba(0,0,0,0.25);
-}
-
 /* ===============================
-   SUGGESTIES – GLASS LIST
+   SUGGESTIES LIST
 ================================ */
 ul {
   list-style: none;
@@ -227,13 +232,12 @@ ul li {
     inset 1px 1px 0 var(--glass-highlight),
     inset -1px -1px 0 var(--glass-border);
 
-  transition: background .2s, transform .2s;
+  transition: background .25s;
 }
 
 ul li:hover {
   background: color-mix(in srgb, var(--glass-bg) 80%, var(--accent));
   color: white;
-  transform: translateY(-1px);
 }
 
 /* ===============================
