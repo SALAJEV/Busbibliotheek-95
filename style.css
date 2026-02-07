@@ -2,17 +2,15 @@
    ROOT VARS
 ================================ */
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.18);
-  --glass-bg-dark: rgba(0, 0, 0, 0.35);
+  --glass-bg: rgba(255, 255, 255, 0.22);
+  --glass-bg-dark: rgba(0, 0, 0, 0.40);
   --glass-border: rgba(255, 255, 255, 0.25);
-  --glass-highlight: rgba(255, 255, 255, 0.45);
 
   --text-main: #111;
-  --text-sub: #444;
 }
 
 /* ===============================
-   BODY + BLURRED BACKGROUND
+   BODY + BACKGROUND IMAGE
 ================================ */
 html, body {
   height: 100%;
@@ -23,27 +21,27 @@ body {
   font-family: "Inter", system-ui, sans-serif;
   color: var(--text-main);
 
-  background: url("2894.jpg") center / cover no-repeat fixed;
+  background: url("2894.jpeg") center / cover no-repeat fixed;
   position: relative;
   overflow-x: hidden;
 }
 
-/* BLUR OVER BACKGROUND */
+/* BLUR ENKEL OP ACHTERGROND */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
 
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
 
+  background: rgba(0,0,0,0.25);
   z-index: 0;
   pointer-events: none;
 }
 
 /* ===============================
-   APP WRAPPER (HOOFDKADER)
+   APP KADER (HOOFDGLAS)
 ================================ */
 .app {
   position: relative;
@@ -53,27 +51,20 @@ body::after {
   margin: 3rem auto;
   padding: 2rem;
 
-  border-radius: 24px;
-
+  border-radius: 26px;
   background: var(--glass-bg-dark);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
 
   border: 1px solid var(--glass-border);
-
   box-shadow:
     0 30px 80px rgba(0,0,0,.45),
     inset 0 1px 0 rgba(255,255,255,.2);
 }
 
 /* ===============================
-   GLASS CARDS
+   CARDS (SCHERP, GEEN BLUR)
 ================================ */
 .card {
   background: var(--glass-bg);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,.22);
 
@@ -87,7 +78,7 @@ body::after {
 }
 
 /* ===============================
-   INPUTS & BUTTONS (ROND + VAST)
+   INPUTS & BUTTONS
 ================================ */
 input,
 button {
@@ -97,10 +88,7 @@ button {
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.28);
 
-  background: rgba(255,255,255,.25);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-
+  background: rgba(255,255,255,.30);
   color: #000;
   font-size: 1rem;
 
@@ -128,9 +116,9 @@ input::before {
 
   background: linear-gradient(
     120deg,
-    transparent 30%,
-    rgba(255,255,255,.45) 50%,
-    transparent 70%
+    transparent 35%,
+    rgba(255,255,255,.55) 50%,
+    transparent 65%
   );
 
   opacity: 0;
@@ -147,7 +135,7 @@ button:active::before {
 }
 
 /* ===============================
-   SUGGESTIE LIJST
+   SUGGESTIELIJST
 ================================ */
 ul {
   list-style: none;
@@ -160,15 +148,14 @@ ul li {
   padding: .7rem 1rem;
 
   border-radius: 14px;
-  background: rgba(255,255,255,.22);
-  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,.30);
 
   cursor: pointer;
   transition: background .2s ease;
 }
 
 ul li:hover {
-  background: rgba(255,255,255,.35);
+  background: rgba(255,255,255,.45);
 }
 
 /* ===============================
@@ -178,8 +165,7 @@ ul li:hover {
   height: 320px;
   border-radius: 18px;
   overflow: hidden;
-
-  border: 1px solid rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.25);
 }
 
 /* ===============================
