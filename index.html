@@ -220,6 +220,16 @@ let voertuigen = [];
 let trips = [];
 let routes = [];
 let map, marker, refresh;
+let userInteracted = false;
+let centerControl;
+
+// Custom bus pin as DivIcon so we can rotate the image based on bearing
+const busIcon = L.divIcon({
+  className: 'bus-div-icon',
+  html: `<img src="navicon.png" style="width:36px;height:36px;transform:rotate(0deg);display:block;"/>`,
+  iconSize: [36,36],
+  iconAnchor: [18,36]
+});
 
 async function laadVoertuigen() {
   const res = await fetch(
@@ -397,7 +407,58 @@ function toonVasteData(id){
 function initMap(lat,lon){
   if(!map){
     map=L.map("map").setView([lat,lon],14);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(map);
+
+    // Cleaner base map suitable for transit (CartoDB Positron)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors &amp; <a href="https://carto.com/">CARTO</a>'
+    }).addTo(map);
+
+    // Optional transport overlay (rail/lines) - may enhance transit visualization
+    const transportOverlay = L.tileLayer('https://a.tile.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenRailwayMap'
+    });
+    transportOverlay.addTo(map);
+
+    // Detect user interactions to stop auto-centering
+    map.on('dragstart zoomstart movestart touchstart', ()=>{
+      userInteracted = true;
+      if(centerControl) centerControl.getContainer().style.display = 'block';
+    });
+
+    // Create a custom control (button) to re-center the map
+    const CenterControl = L.Control.extend({
+      onAdd: function(map){
+        const el = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        const btn = L.DomUtil.create('a', '', el);
+        btn.innerHTML = 'C';
+        btn.title = 'Centreren';
+        btn.href = '#';
+        btn.style.display = 'none';
+        btn.style.width = '30px';
+        btn.style.height = '30px';
+        btn.style.lineHeight = '30px';
+        btn.style.textAlign = 'center';
+        btn.style.fontWeight = '700';
+        btn.style.background = 'white';
+        btn.style.color = '#333';
+        btn.style.textDecoration = 'none';
+
+        L.DomEvent.on(btn, 'click', L.DomEvent.stopPropagation)
+                 .on(btn, 'click', L.DomEvent.preventDefault)
+                 .on(btn, 'click', ()=>{
+                   if(marker){
+                     map.setView(marker.getLatLng(), Math.max(map.getZoom(), 15));
+                     userInteracted = false;
+                     btn.style.display = 'none';
+                   }
+                 });
+
+        return el;
+      }
+    });
+
+    centerControl = new CenterControl({ position: 'topright' });
+    centerControl.addTo(map);
   }
 }
 
@@ -457,7 +518,7 @@ async function updateRealtime(id){
 
     realtime.innerHTML=`
       <p>
-        <b>Lijn:</b> ${routeShort} ${routeLong}<br>
+        <b>Lijn:</b> ${routeShort}<br>
         <b>Bestemming:</b> ${tripShort}<br>
         <b>Latitude:</b> ${v.position.latitude}<br>
         <b>Longitude:</b> ${v.position.longitude}<br>
@@ -469,11 +530,28 @@ async function updateRealtime(id){
     initMap(v.position.latitude,v.position.longitude);
     map.setView([v.position.latitude,v.position.longitude],15);
 
-    if(marker) marker.setLatLng([v.position.latitude,v.position.longitude]);
-    else marker=L.marker([v.position.latitude,v.position.longitude])
-      .addTo(map)
-      .bindPopup(`Voertuig ${id}<br>Lijn ${routeShort}: ${routeLong}<br>Bestemming: ${tripShort}`)
-      .openPopup();
+    const bearing = v.position.bearing || 0;
+
+    if(marker) {
+      marker.setLatLng([v.position.latitude,v.position.longitude]);
+      // update rotation of img inside divIcon
+      const el = marker.getElement && marker.getElement();
+      if(el){
+        const img = el.querySelector('img');
+        if(img) img.style.transform = `rotate(${bearing}deg)`;
+      }
+    } else {
+      marker = L.marker([v.position.latitude,v.position.longitude], { icon: busIcon })
+        .addTo(map)
+        .bindPopup(`Voertuig ${id}<br>Lijn ${routeShort}<br>Bestemming: ${tripShort}`)
+        .openPopup();
+      // set initial rotation
+      const el = marker.getElement && marker.getElement();
+      if(el){
+        const img = el.querySelector('img');
+        if(img) img.style.transform = `rotate(${bearing}deg)`;
+      }
+    }
 
   }catch(e){ console.error(e); realtime.innerHTML="⚠️ Fout bij realtime data."; }
 }
