@@ -1,5 +1,5 @@
 /* ==================================================
-   APPLE LIQUID GLASS – FULL DESIGN
+   APPLE LIQUID GLASS – STATIC WITH SHINE
 ================================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
@@ -35,30 +35,36 @@ body.dark {
 }
 
 /* ===============================
-   BASE
+   BODY & BACKGROUND IMAGE
 ================================ */
-* {
-  box-sizing: border-box;
-}
-
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
-  background: linear-gradient(180deg, #e9ecf1, #dfe3ea);
   color: var(--text-main);
-  transition: background .4s, color .4s;
+  background: url('https://images.unsplash.com/photo-1602524813032-ecb0a8c51c23?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
 }
 
-body.dark {
-  background: linear-gradient(180deg, #121212, #0b0b0b);
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: -1;
 }
 
+/* ===============================
+   CONTAINER
+================================ */
 .container {
   max-width: 1200px;
   margin: 2rem auto;
   padding: 1rem;
 }
 
+/* ===============================
+   HEADINGS
+================================ */
 h1, h2 {
   font-weight: 600;
 }
@@ -79,12 +85,16 @@ h1, h2 {
     inset -1px -1px 0 var(--glass-border),
     0 20px 40px var(--glass-shadow);
 
-  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s;
+  transition: box-shadow .25s, background .25s;
   overflow: hidden;
 }
 
-/* Shine effect (pseudo-element) */
-.card::after {
+/* ===============================
+   SHINE EFFECT ON HOVER / TOUCH
+================================ */
+.card::after,
+button::after,
+input::after {
   content: "";
   position: absolute;
   top: -50%;
@@ -100,7 +110,17 @@ h1, h2 {
   pointer-events: none;
   z-index: 2;
   border-radius: inherit;
-  transition: transform 0.2s ease;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.card:hover::after,
+.card:active::after,
+button:hover::after,
+button:active::after,
+input:hover::after,
+input:active::after {
+  opacity: 1;
 }
 
 /* ===============================
@@ -138,34 +158,9 @@ button {
   border: 1px solid var(--glass-border);
   color: var(--text-main);
 
-  transition:
-    transform .25s cubic-bezier(.2,.8,.2,1),
-    box-shadow .25s,
-    background .25s;
-
+  transition: box-shadow .25s, background .25s;
   position: relative;
-  overflow: hidden; /* shine clip */
-}
-
-/* Shine pseudo-element for inputs/buttons */
-input::after,
-button::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    120deg,
-    rgba(255,255,255,0.25) 0%,
-    rgba(255,255,255,0.0) 60%
-  );
-  transform: rotate(25deg);
-  pointer-events: none;
-  z-index: 2;
-  border-radius: inherit;
-  transition: transform 0.2s ease;
+  overflow: hidden;
 }
 
 /* INPUT */
@@ -175,7 +170,6 @@ input::placeholder {
 
 input:focus {
   outline: none;
-  transform: scale(1.015);
   box-shadow:
     inset 0 1px 1px rgba(255,255,255,0.5),
     0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent),
