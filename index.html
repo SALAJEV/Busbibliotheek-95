@@ -1,13 +1,32 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Busbibliotheek Live</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Busbibliotheek Live</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+  body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+  .container { max-width: 800px; margin: 2rem auto; padding: 1rem; }
+  input { width: 100%; padding: 1rem; font-size: 1.2rem; margin-bottom: .5rem; }
+  ul { list-style: none; padding: 0; margin: 0 0 1rem 0; border: 1px solid #ccc; border-radius: 6px; }
+  li { padding: .5rem 1rem; cursor: pointer; }
+  li:hover { background: #eee; }
+  .grid { display: flex; gap: 1rem; margin-top: 1rem; opacity: 0; transform: translateY(20px); transition: 0.5s; }
+  .grid.show { opacity: 1; transform: translateY(0); }
+  .card { flex: 1; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  #map { height: 300px; margin-top: .5rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: .3rem .5rem; }
+  th { font-weight: 600; }
+  .back-btn { margin-top: 1rem; padding: .5rem 1rem; cursor: pointer; background: #eee; border: none; border-radius: 6px; }
+  .back-btn:hover { background: #ddd; }
+  .voertuignummer-display { font-size: 1.5rem; font-weight: 700; }
+</style>
 </head>
 
 <body>
@@ -16,12 +35,10 @@
   <h1>🚌 Busbibliotheek Live</h1>
   <p>Zoek een voertuig en volg ‘m live.</p>
 
-  <input id="voertuignummer" placeholder="Voertuignummer" oninput="toonSuggesties()">
+  <input id="voertuignummer" placeholder="Voertuignummer" oninput="toonSuggesties()" onkeydown="if(event.key==='Enter'){zoekAlles();}">
   <ul id="suggestielijst"></ul>
 
-  <button onclick="zoekAlles()">Zoeken</button>
-
-  <div class="grid">
+  <div class="grid" id="resultsGrid">
     <div class="card">
       <h2>📋 Voertuiginfo</h2>
       <div id="vasteData">Nog geen voertuig geselecteerd.</div>
@@ -33,6 +50,9 @@
       <div id="map"></div>
     </div>
   </div>
+
+  <button id="backBtn" class="back-btn" style="display:none;" onclick="terug()">⬅ Terug</button>
+
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -42,7 +62,7 @@ let voertuigen = [];
 let map, marker, refresh;
 
 /* ===============================
-   LAAD VOERTUIGEN (PUNTKOMMA)
+   LAAD VOERTUIGEN
 ================================ */
 async function laadVoertuigen() {
   const res = await fetch(
@@ -57,14 +77,11 @@ async function laadVoertuigen() {
   voertuigen = regels.slice(1).map(r => {
     const v = r.split(";");
     const obj = {};
-    headers.forEach((h, i) => {
-      obj[h.trim()] = v[i]?.trim() || "/";
-    });
+    headers.forEach((h, i) => obj[h.trim()] = v[i]?.trim() || "/");
     return obj;
   });
 
   console.log("✅ voertuigen geladen:", voertuigen.length);
-  console.log("🔍 test:", voertuigen[0]);
 }
 laadVoertuigen();
 
@@ -77,7 +94,7 @@ function toonSuggesties() {
   if (!q) return;
 
   voertuigen
-    .filter(v => v.Voertuignummer?.startsWith(q))
+    .filter(v => v.Voertuignummer?.toLowerCase().startsWith(q))
     .slice(0, 8)
     .forEach(v => {
       const li = document.createElement("li");
@@ -98,11 +115,26 @@ function zoekAlles() {
   const id = voertuignummer.value.trim();
   if (!id) return;
 
+  document.getElementById("resultsGrid").classList.add("show");
+  document.getElementById("backBtn").style.display = "inline-block";
+
   toonVasteData(id);
   updateRealtime(id);
 
   if (refresh) clearInterval(refresh);
   refresh = setInterval(() => updateRealtime(id), 10000);
+}
+
+/* ===============================
+   TERUG
+================================ */
+function terug() {
+  document.getElementById("resultsGrid").classList.remove("show");
+  document.getElementById("backBtn").style.display = "none";
+  realtime.innerHTML = "Nog geen data.";
+  vasteData.innerHTML = "Nog geen voertuig geselecteerd.";
+  voertuignummer.value = "";
+  if (marker) { map.removeLayer(marker); marker = null; }
 }
 
 /* ===============================
@@ -121,18 +153,20 @@ function toonVasteData(id) {
     return;
   }
 
-  let html = "<table>";
+  let html = `<p class="voertuignummer-display">${bus.Voertuignummer}</p><table>`;
   for (const [k, v] of Object.entries(bus)) {
-    if (v !== "/" && k !== "Vervoersmaatschappij") {
-      html += `
-        <tr>
-          <th>${k}</th>
-          <td>${v}</td>
-        </tr>`;
+    if (k === "Vervoersmaatschappij") continue;
+
+    let waarde = v;
+    if (k.toLowerCase().includes("datum") && v !== "/") {
+      waarde = new Date(v).toLocaleDateString("nl-NL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    } else if (v === "/") {
+      waarde = k.toLowerCase().includes("uit dienst") ? "Niet uit dienst" : "Niet afgeschreven";
     }
+
+    html += `<tr><th>${k}</th><td>${waarde}</td></tr>`;
   }
   html += "</table>";
-
   vasteData.innerHTML = html;
 }
 
