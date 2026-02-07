@@ -121,17 +121,17 @@ button:hover, .btn:hover {
 /* ===============================
    GRID
 ================================ */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-top: 2rem;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: 0.5s;
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.6rem 1.6rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.75), var(--glass-bg));
+  backdrop-filter: blur(var(--blur)) saturate(140%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.06), inset 0 1px 0 rgba(255,255,255,0.22);
+  min-height: 320px;
 }
-
-.grid.show { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
@@ -162,6 +162,15 @@ th { text-align: left; color: var(--muted); font-weight: 600; padding: 0.4rem 0;
 td { padding: 0.4rem 0; }
 .voertuignummer-display { font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem; }
 
+/* Modern input */
+input {
+  box-shadow: 0 6px 20px rgba(16,24,40,0.06), inset 0 1px 0 rgba(255,255,255,0.45);
+  border-radius: 12px;
+}
+
+/* Refined map area */
+#map { border-radius: 12px; height: 360px; }
+
 /* ===============================
    MAP
 ================================ */
@@ -174,3 +183,12 @@ td { padding: 0.4rem 0; }
 }
 
 .leaflet-container { background: #000; border-radius: var(--radius); }
+
+/* Instagram variant: visually distinct but same sizing as primary */
+.btn--instagram {
+  background: linear-gradient(45deg,#feda75 0%,#fa7e1e 25%,#d62976 50%,#962fbf 75%,#4f5bd5 100%);
+  color: #fff;
+  padding: 0.8rem 1.2rem;
+  border-radius: 12px;
+}
+.btn--instagram::before{ content: '📷'; margin-right:8px; }
