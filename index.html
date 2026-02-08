@@ -280,6 +280,27 @@ td { padding: 0.4rem 0; }
   #splash .logo { width: 200px; }
 }
 #splash.hidden{ opacity: 0; pointer-events: none; }
+
+/* ===============================
+   INSTALL BUTTON
+================================ */
+#installBtn {
+  margin-top: 0 !important;
+  padding: 0.7rem 1.2rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: var(--radius);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+#installBtn::before { content: '⬇ '; }
+#installBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+#installBtn.show { display: block; }
 </style>
 </head>
 <body>
@@ -287,11 +308,12 @@ td { padding: 0.4rem 0; }
   <img src="logo.png" alt="Busbibliotheek" class="logo">
 </div>
 <div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
     <div>
       <h1>Busbibliotheek</h1>
       <p>Zoekt een voertuig op en volg het in realtime.</p>
     </div>
+    <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
   </div>
 
   <input id="voertuignummer" placeholder="Voertuignummer" 
@@ -333,6 +355,29 @@ function hideSplash(ms = 350) {
 window.addEventListener('load', () => setTimeout(hideSplash, 700));
 splash?.addEventListener('click', () => hideSplash(150));
 document.addEventListener('touchstart', () => hideSplash(150), { once: true });
+
+// Install Prompt (beter gecontroleerde PWA-installatie)
+let deferredPrompt = null;
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.classList.add('show');
+});
+installBtn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Gebruiker antwoord: ${outcome}`);
+    deferredPrompt = null;
+    installBtn.classList.remove('show');
+  }
+});
+window.addEventListener('appinstalled', () => {
+  console.log('App succesvol geïnstalleerd');
+  installBtn.classList.remove('show');
+  deferredPrompt = null;
+});
 
 // Constants
 const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
