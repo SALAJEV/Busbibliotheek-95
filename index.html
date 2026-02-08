@@ -252,9 +252,40 @@ td { padding: 0.4rem 0; }
    LOADING
 ================================ */
 .loading { color: #888; font-style: italic; }
+
+/* ===============================
+   SPLASH / LAADSCHERM
+================================ */
+#splash{
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  z-index: 9999;
+  padding: env(safe-area-inset);
+  transition: opacity .35s ease;
+}
+#splash .logo{
+  width: 44vw;
+  max-width: 220px;
+  height: auto;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+@media (min-width: 700px) {
+  #splash .logo { width: 200px; }
+}
+#splash.hidden{ opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
+<div id="splash" role="img" aria-label="Busbibliotheek laden">
+  <img src="logo.png" alt="Busbibliotheek" class="logo">
+</div>
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <div>
@@ -291,6 +322,18 @@ td { padding: 0.4rem 0; }
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+// Splash controls (mobile-first startup experience)
+const splash = document.getElementById("splash");
+function hideSplash(ms = 350) {
+  const s = splash;
+  if (!s) return;
+  s.classList.add("hidden");
+  setTimeout(() => { if (s.parentNode) s.parentNode.removeChild(s); document.querySelector('.grid')?.classList.add('show'); }, ms + 50);
+}
+window.addEventListener('load', () => setTimeout(hideSplash, 700));
+splash?.addEventListener('click', () => hideSplash(150));
+document.addEventListener('touchstart', () => hideSplash(150), { once: true });
+
 // Constants
 const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
 const API_URL = "https://busbibliotheek95.pages.dev/api";
