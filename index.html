@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Busbibliotheek">
-<link rel="apple-touch-icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo_light.png">
 <link rel="manifest" href="manifest.json">
 <title>Busbibliotheek</title>
 
@@ -272,7 +272,7 @@ td { padding: 0.4rem 0; }
   max-width: 220px;
   height: auto;
   border-radius: 12px;
-  background: #fff;
+  background: transparent;
   padding: 10px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.25);
 }
@@ -305,7 +305,11 @@ td { padding: 0.4rem 0; }
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
-  <img src="logo.png" alt="Busbibliotheek" class="logo">
+  <picture class="logo">
+    <source media="(prefers-color-scheme: light)" srcset="logo_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="logo_dark.png">
+    <img src="logo_light.png" alt="Busbibliotheek">
+  </picture>
 </div>
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
