@@ -72,7 +72,12 @@ function hideSplash(ms = 350) {
   const s = splash;
   if (!s) return;
   s.classList.add("hidden");
-  setTimeout(() => { if (s.parentNode) s.parentNode.removeChild(s); document.querySelector('.grid')?.classList.add('show'); }, ms + 50);
+  setTimeout(() => {
+    if (s && s.parentNode) {
+      s.parentNode.removeChild(s);
+    }
+    document.querySelector('.grid')?.classList.add('show');
+  }, ms + 100);
 }
 window.addEventListener('load', () => setTimeout(hideSplash, 700));
 splash?.addEventListener('click', () => hideSplash(150));
@@ -270,9 +275,13 @@ function toonVasteData(id){
     }
     html+=`<tr><th>${k}</th><td>${waarde}</td></tr>`;
   }
-  html+="</table>";
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- App stylesheet (centralized) -->
-  <link rel="stylesheet" href="style.css">
+      html+="</table>";
+      vasteData.innerHTML=html;
+    }
+    
+    async function updateRealtime(voertuignummer){
+      // Implementation needed here
+    }
+  </script>
+  </body>
+  </html>
