@@ -275,13 +275,87 @@ function toonVasteData(id){
     }
     html+=`<tr><th>${k}</th><td>${waarde}</td></tr>`;
   }
-      html+="</table>";
-      vasteData.innerHTML=html;
+  vasteData.innerHTML = html;
+}
+
+async function updateRealtime(id) {
+  try {
+    const res = await fetch(`${API_URL}/realtime`, { cache: "no-store" });
+    const data = await res.json();
+    
+    if (!data || !data.entity) {
+      realtime.innerHTML = "Geen realtime gegevens beschikbaar.";
+      return;
+    }
+
+    const entity = data.entity.find(e => 
+      e.vehicle?.vehicle?.id === id || 
+      e.vehicle?.trip?.route_id === id
+    );
+
+    if (!entity || !entity.vehicle) {
+      realtime.innerHTML = "Voertuig niet actief.";
+      return;
+    }
+
+    const v = entity.vehicle;
+    const pos = v.position;
+    const trip = v.trip;
+
+    if (!pos) {
+      realtime.innerHTML = "Geen positiegegevens beschikbaar.";
+      return;
+    }
+
+    // Update realtime info
+    let html = `<p><strong>Latitude:</strong> ${pos.latitude.toFixed(6)}</p>`;
+    html += `<p><strong>Longitude:</strong> ${pos.longitude.toFixed(6)}</p>`;
+    if (trip?.route_id) html += `<p><strong>Route:</strong> ${trip.route_id}</p>`;
+    if (v.stop_id) html += `<p><strong>Halte:</strong> ${v.stop_id}</p>`;
+    
+    realtime.innerHTML = html;
+
+    // Initialize map if needed
+    if (!map) {
+      map = L.map('map').setView([pos.latitude, pos.longitude], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+    }
+
+    // Update marker
+    if (marker) {
+      map.removeLayer(marker);
     }
     
-    async function updateRealtime(voertuignummer){
-      // Implementation needed here
+    const bearing = pos.bearing || 0;
+    const iconHtml = `<img src="navicon.png" style="width:36px;height:36px;transform:rotate(${bearing}deg);display:block;transform-origin:18px 28px;transition: transform 0.25s linear;"/>`;
+    
+    const customIcon = L.divIcon({
+      className: 'bus-div-icon',
+      html: iconHtml,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36]
+    });
+
+    marker = L.marker([pos.latitude, pos.longitude], { icon: customIcon }).addTo(map);
+    
+    if (!userInteracted) {
+      map.setView([pos.latitude, pos.longitude], 15);
     }
-  </script>
-  </body>
-  </html>
+  } catch (error) {
+    console.error("Fout bij ophalen realtime gegevens:", error);
+    realtime.innerHTML = "Fout bij ophalen gegevens.";
+  }
+}
+
+// Map interaction tracking
+document.addEventListener('DOMContentLoaded', () => {
+  if (map) {
+    map.on('movestart', () => { userInteracted = true; });
+  }
+});
+</script>
+</body>
+</html>
