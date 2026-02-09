@@ -121,21 +121,41 @@ button:hover, .btn:hover {
 /* ===============================
    GRID
 ================================ */
-.card {
-  display: flex;
-  flex-direction: column;
-  padding: 1.6rem 1.6rem;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.75), var(--glass-bg));
-  backdrop-filter: blur(var(--blur)) saturate(140%);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 8px 30px rgba(2,6,23,0.06), inset 0 1px 0 rgba(255,255,255,0.22);
-  min-height: 320px;
-}
-
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
 }
+
+/* Grid show state and loading helpers (moved from inline to central stylesheet) */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: 0.5s;
+  position: relative;
+}
+.grid.show { opacity: 1; transform: translateY(0); }
+
+/* Loading spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-pulse { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.loading { color: #888; font-style: italic; }
 
 /* ===============================
    CARD
@@ -202,7 +222,7 @@ input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
+  background: var(--bg);
   z-index: 9999;
   padding: env(safe-area-inset);
   transition: opacity .35s ease;

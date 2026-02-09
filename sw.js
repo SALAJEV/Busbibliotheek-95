@@ -5,6 +5,7 @@ const URLS_TO_CACHE = [
   '/style.css',
   '/logo_light.png',
   '/logo_dark.png',
+  '/logo.png',
   '/navicon.png',
   'https://unpkg.com/leaflet/dist/leaflet.css',
   'https://unpkg.com/leaflet/dist/leaflet.js',
