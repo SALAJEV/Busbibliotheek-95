@@ -90,7 +90,6 @@ button:hover, .btn:hover {
 
 /* Instagram button styles */
 .ig-btn-wrap { margin-top: 10px; }
-.ig-btn { /* keeps semantic hook but visuals come from .btn */ }
 .ig-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
 
 .back-btn {
