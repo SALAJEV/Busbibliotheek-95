@@ -318,17 +318,13 @@ td { padding: 0.4rem 0; }
 ================================ */
 #installBtn {
   margin-top: 0 !important;
-  padding: 0.7rem 1.2rem;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border: none;
-  border-radius: var(--radius);
-  color: white;
+  padding: 0.75rem 1.2rem;
   font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
   display: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
   white-space: nowrap;
+  background:
+    linear-gradient(135deg, rgba(5, 150, 105, 0.52), rgba(4, 120, 87, 0.38)),
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25), transparent 60%);
 }
 #installBtn::before { content: '⬇ '; }
 #installBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
