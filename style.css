@@ -15,6 +15,13 @@
   --bg: #f3f7ff;
   --bg-gradient-top: #e7efff;
   --bg-gradient-bottom: #f7f9ff;
+  --bg-glow-a: rgba(37, 99, 235, 0.18);
+  --bg-glow-b: rgba(14, 165, 233, 0.14);
+  --bg-glow-c: rgba(59, 130, 246, 0.1);
+  --bg-frost-a: rgba(255, 255, 255, 0.26);
+  --bg-frost-b: rgba(15, 23, 42, 0.05);
+  --bg-noise-color: rgba(148, 163, 184, 0.08);
+  --bg-noise-opacity: 0.08;
 
   --surface: rgba(255, 255, 255, 0.72);
   --surface-strong: rgba(255, 255, 255, 0.9);
@@ -43,17 +50,24 @@
   :root {
     color-scheme: dark;
 
-    --bg: #070b14;
-    --bg-gradient-top: #11182a;
-    --bg-gradient-bottom: #070b14;
+    --bg: #030915;
+    --bg-gradient-top: #0b1b38;
+    --bg-gradient-bottom: #020812;
+    --bg-glow-a: rgba(56, 189, 248, 0.23);
+    --bg-glow-b: rgba(37, 99, 235, 0.28);
+    --bg-glow-c: rgba(59, 130, 246, 0.16);
+    --bg-frost-a: rgba(191, 219, 254, 0.09);
+    --bg-frost-b: rgba(30, 64, 175, 0.16);
+    --bg-noise-color: rgba(191, 219, 254, 0.16);
+    --bg-noise-opacity: 0.18;
 
-    --surface: rgba(16, 24, 40, 0.72);
-    --surface-strong: rgba(18, 27, 45, 0.92);
-    --surface-alt: rgba(22, 34, 57, 0.84);
+    --surface: rgba(8, 20, 43, 0.62);
+    --surface-strong: rgba(10, 24, 49, 0.8);
+    --surface-alt: rgba(16, 35, 67, 0.76);
 
-    --stroke: rgba(148, 163, 184, 0.2);
-    --stroke-strong: rgba(148, 163, 184, 0.34);
-    --stroke-soft: rgba(148, 163, 184, 0.14);
+    --stroke: rgba(148, 163, 184, 0.24);
+    --stroke-strong: rgba(148, 163, 184, 0.38);
+    --stroke-soft: rgba(148, 163, 184, 0.18);
 
     --text: #f8fafc;
     --muted: #b8c1cf;
@@ -77,6 +91,13 @@
   --bg: #f3f7ff;
   --bg-gradient-top: #e7efff;
   --bg-gradient-bottom: #f7f9ff;
+  --bg-glow-a: rgba(37, 99, 235, 0.18);
+  --bg-glow-b: rgba(14, 165, 233, 0.14);
+  --bg-glow-c: rgba(59, 130, 246, 0.1);
+  --bg-frost-a: rgba(255, 255, 255, 0.26);
+  --bg-frost-b: rgba(15, 23, 42, 0.05);
+  --bg-noise-color: rgba(148, 163, 184, 0.08);
+  --bg-noise-opacity: 0.08;
 
   --surface: rgba(255, 255, 255, 0.72);
   --surface-strong: rgba(255, 255, 255, 0.9);
@@ -104,17 +125,24 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #070b14;
-  --bg-gradient-top: #11182a;
-  --bg-gradient-bottom: #070b14;
+  --bg: #030915;
+  --bg-gradient-top: #0b1b38;
+  --bg-gradient-bottom: #020812;
+  --bg-glow-a: rgba(56, 189, 248, 0.23);
+  --bg-glow-b: rgba(37, 99, 235, 0.28);
+  --bg-glow-c: rgba(59, 130, 246, 0.16);
+  --bg-frost-a: rgba(191, 219, 254, 0.09);
+  --bg-frost-b: rgba(30, 64, 175, 0.16);
+  --bg-noise-color: rgba(191, 219, 254, 0.16);
+  --bg-noise-opacity: 0.18;
 
-  --surface: rgba(16, 24, 40, 0.72);
-  --surface-strong: rgba(18, 27, 45, 0.92);
-  --surface-alt: rgba(22, 34, 57, 0.84);
+  --surface: rgba(8, 20, 43, 0.62);
+  --surface-strong: rgba(10, 24, 49, 0.8);
+  --surface-alt: rgba(16, 35, 67, 0.76);
 
-  --stroke: rgba(148, 163, 184, 0.2);
-  --stroke-strong: rgba(148, 163, 184, 0.34);
-  --stroke-soft: rgba(148, 163, 184, 0.14);
+  --stroke: rgba(148, 163, 184, 0.24);
+  --stroke-strong: rgba(148, 163, 184, 0.38);
+  --stroke-soft: rgba(148, 163, 184, 0.18);
 
   --text: #f8fafc;
   --muted: #b8c1cf;
@@ -155,9 +183,10 @@ body {
   line-height: 1.45;
   color: var(--text);
   background:
-    radial-gradient(circle at 14% 16%, rgba(37, 99, 235, 0.18), transparent 32%),
-    radial-gradient(circle at 84% 8%, rgba(14, 165, 233, 0.14), transparent 36%),
-    linear-gradient(170deg, var(--bg-gradient-top), var(--bg-gradient-bottom) 54%);
+    radial-gradient(circle at 14% 16%, var(--bg-glow-a), transparent 34%),
+    radial-gradient(circle at 84% 8%, var(--bg-glow-b), transparent 38%),
+    radial-gradient(circle at 50% 104%, var(--bg-glow-c), transparent 45%),
+    linear-gradient(170deg, var(--bg-gradient-top), var(--bg-gradient-bottom) 56%);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -168,8 +197,23 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.26), transparent 38%),
-    radial-gradient(circle at 10% 90%, rgba(15, 23, 42, 0.05), transparent 30%);
+    linear-gradient(115deg, var(--bg-frost-a), transparent 40%),
+    radial-gradient(circle at 10% 90%, var(--bg-frost-b), transparent 34%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      var(--bg-noise-color) 0 1px,
+      transparent 1px 5px
+    );
+  opacity: var(--bg-noise-opacity);
 }
 
 a {
