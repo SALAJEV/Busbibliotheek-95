@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20260214-2">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -85,21 +85,23 @@
     </div>
   </div>
 
-  <div class="grid" id="resultsGrid">
+  <div class="results-wrap">
     <button class="close-btn" id="closeBtn" onclick="terug()" title="Venster sluiten" aria-label="Sluiten">&times;</button>
-    <div class="card">
-      <h2 id="staticCardTitle">Voertuiginformatie</h2>
-      <div id="vasteData">Geen voertuig geselecteerd.</div>
-    </div>
-
-    <div class="card">
-      <h2 id="realtimeCardTitle">Realtimegegevens</h2>
-      <div class="meta-row">
-        <button id="followToggle" type="button">Volgen: aan</button>
-        <div id="lastUpdate">Laatste update: -</div>
+    <div class="grid" id="resultsGrid">
+      <div class="card">
+        <h2 id="staticCardTitle">Voertuiginformatie</h2>
+        <div id="vasteData">Geen voertuig geselecteerd.</div>
       </div>
-      <div id="realtime" class="loading">Geen gegevens beschikbaar.</div>
-      <div id="map"></div>
+
+      <div class="card">
+        <h2 id="realtimeCardTitle">Realtimegegevens</h2>
+        <div class="meta-row">
+          <button id="followToggle" type="button">Volgen: aan</button>
+          <div id="lastUpdate">Laatste update: -</div>
+        </div>
+        <div id="realtime" class="loading">Geen gegevens beschikbaar.</div>
+        <div id="map"></div>
+      </div>
     </div>
   </div>
 
@@ -857,9 +859,4 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
-
-
-
-
-
 

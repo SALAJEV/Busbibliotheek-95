@@ -1,10 +1,11 @@
-const CACHE_NAME = 'busbibliotheek-v2';
+const CACHE_NAME = 'busbibliotheek-v3';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/translations.js',
   '/offline.html',
   '/style.css',
+  '/style.css?v=20260214-2',
   '/logo_light.png',
   '/logo_dark.png',
   '/navicon.png',
@@ -97,3 +98,4 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+
