@@ -959,6 +959,146 @@ const localWord = (key) => {
   return labels[key]?.[settings.language] || labels[key]?.nl || key;
 };
 
+const vehicleFieldLabels = {
+  nl: {
+    "vervoersmaatschappij": "Vervoersmaatschappij",
+    "voertuignummer": "Voertuignummer",
+    "type": "Type",
+    "hansea nummer": "Hansea nummer",
+    "oude voertuignummers": "Oude voertuignummers",
+    "oude nummerplaten": "Oude nummerplaten",
+    "datum in dienst": "Datum in dienst",
+    "uit dienst": "Uit dienst",
+    "fabrikant": "Fabrikant",
+    "model": "Model",
+    "bouwjaar": "Bouwjaar",
+    "nummerplaat": "Nummerplaat",
+    "kenteken": "Kenteken",
+    "status": "Status",
+    "opmerkingen": "Opmerkingen"
+  },
+  fr: {
+    "vervoersmaatschappij": "Compagnie de transport",
+    "voertuignummer": "Numero du vehicule",
+    "type": "Type",
+    "hansea nummer": "Numero Hansea",
+    "oude voertuignummers": "Anciens numeros de vehicule",
+    "oude nummerplaten": "Anciennes plaques",
+    "datum in dienst": "Date de mise en service",
+    "uit dienst": "Hors service",
+    "fabrikant": "Fabricant",
+    "model": "Modele",
+    "bouwjaar": "Annee de construction",
+    "nummerplaat": "Plaque",
+    "kenteken": "Immatriculation",
+    "status": "Statut",
+    "opmerkingen": "Remarques"
+  },
+  en: {
+    "vervoersmaatschappij": "Operator",
+    "voertuignummer": "Vehicle number",
+    "type": "Type",
+    "hansea nummer": "Hansea number",
+    "oude voertuignummers": "Old vehicle numbers",
+    "oude nummerplaten": "Old license plates",
+    "datum in dienst": "In service date",
+    "uit dienst": "Out of service",
+    "fabrikant": "Manufacturer",
+    "model": "Model",
+    "bouwjaar": "Year built",
+    "nummerplaat": "License plate",
+    "kenteken": "Registration",
+    "status": "Status",
+    "opmerkingen": "Notes"
+  },
+  de: {
+    "vervoersmaatschappij": "Verkehrsunternehmen",
+    "voertuignummer": "Fahrzeugnummer",
+    "type": "Typ",
+    "hansea nummer": "Hansea-Nummer",
+    "oude voertuignummers": "Alte Fahrzeugnummern",
+    "oude nummerplaten": "Alte Kennzeichen",
+    "datum in dienst": "Datum der Inbetriebnahme",
+    "uit dienst": "Ausser Dienst",
+    "fabrikant": "Hersteller",
+    "model": "Modell",
+    "bouwjaar": "Baujahr",
+    "nummerplaat": "Kennzeichen",
+    "kenteken": "Zulassung",
+    "status": "Status",
+    "opmerkingen": "Bemerkungen"
+  },
+  pl: {
+    "vervoersmaatschappij": "Operator",
+    "voertuignummer": "Numer pojazdu",
+    "type": "Typ",
+    "hansea nummer": "Numer Hansea",
+    "oude voertuignummers": "Stare numery pojazdu",
+    "oude nummerplaten": "Stare tablice",
+    "datum in dienst": "Data rozpoczecia eksploatacji",
+    "uit dienst": "Wycofany z ruchu",
+    "fabrikant": "Producent",
+    "model": "Model",
+    "bouwjaar": "Rok produkcji",
+    "nummerplaat": "Tablica rejestracyjna",
+    "kenteken": "Rejestracja",
+    "status": "Status",
+    "opmerkingen": "Uwagi"
+  },
+  es: {
+    "vervoersmaatschappij": "Operador",
+    "voertuignummer": "Numero de vehiculo",
+    "type": "Tipo",
+    "hansea nummer": "Numero Hansea",
+    "oude voertuignummers": "Numeros antiguos del vehiculo",
+    "oude nummerplaten": "Matriculas antiguas",
+    "datum in dienst": "Fecha de entrada en servicio",
+    "uit dienst": "Fuera de servicio",
+    "fabrikant": "Fabricante",
+    "model": "Modelo",
+    "bouwjaar": "Ano de fabricacion",
+    "nummerplaat": "Matricula",
+    "kenteken": "Registro",
+    "status": "Estado",
+    "opmerkingen": "Observaciones"
+  },
+  ru: {
+    "vervoersmaatschappij": "Perevozchik",
+    "voertuignummer": "Nomer transporta",
+    "type": "Tip",
+    "hansea nummer": "Nomer Hansea",
+    "oude voertuignummers": "Starye nomera transporta",
+    "oude nummerplaten": "Starye nomera znaka",
+    "datum in dienst": "Data vvedeniya v ekspluatatsiyu",
+    "uit dienst": "Vyveden iz sluzhby",
+    "fabrikant": "Proizvoditel",
+    "model": "Model",
+    "bouwjaar": "God vypuska",
+    "nummerplaat": "Gosnomer",
+    "kenteken": "Registratsiya",
+    "status": "Status",
+    "opmerkingen": "Primechaniya"
+  }
+};
+
+function normalizeFieldKey(key) {
+  return (key || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function translateVehicleFieldLabel(key) {
+  const normalized = normalizeFieldKey(key);
+  return (
+    vehicleFieldLabels[settings.language]?.[normalized] ||
+    vehicleFieldLabels.nl[normalized] ||
+    key
+  );
+}
+
 const localeForLanguage = (lang) => {
   const map = {
     nl: "nl-NL",
@@ -1353,7 +1493,7 @@ function toonVasteData(id){
     } else {
       if(v==="/") continue;
     }
-    html+=`<tr><th>${k}</th><td>${waarde}</td></tr>`;
+    html+=`<tr><th>${translateVehicleFieldLabel(k)}</th><td>${waarde}</td></tr>`;
   }
   html+="</table>";
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent('#dl' + id);
