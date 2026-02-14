@@ -608,6 +608,7 @@ td { padding: 0.4rem 0; }
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="translations.js"></script>
 <script>
 // Splash controls (mobile-first startup experience)
 const splash = document.getElementById("splash");
@@ -713,373 +714,15 @@ let settings = {
   language: "nl"
 };
 
-const i18n = {
-  nl: {
-    subtitle: "Zoek een voertuig en volg het in realtime.",
-    install: "Installeer app",
-    iosHint: "Op iPhone/iPad: tik op Deel en kies 'Zet op beginscherm'.",
-    search: "Zoek voertuig",
-    favoriteAdd: "Favoriet toevoegen",
-    favoriteRemove: "Favoriet verwijderen",
-    favorites: "Favorieten",
-    settings: "Instellingen",
-    interval: "Update-interval",
-    intervalSeconds: "seconden",
-    theme: "Thema",
-    themeAuto: "Automatisch",
-    themeLight: "Licht",
-    themeDark: "Donker",
-    language: "Taal",
-    staticCard: "Voertuiginformatie",
-    realtimeCard: "Realtimegegevens",
-    followOn: "Volgen: aan",
-    followOff: "Volgen: uit",
-    lastUpdate: "Laatste update",
-    noData: "Geen realtimegegevens beschikbaar.",
-    loading: "Gegevens laden...",
-    noneSelected: "Geen voertuig geselecteerd.",
-    noFixed: "Geen voertuiggegevens gevonden.",
-    noFavoritesYet: "Nog geen favorieten.",
-    vehiclePlaceholder: "Voertuignummer",
-    notOutOfService: "Niet uit dienst",
-    outOfServiceNoRealtime: "Realtime locatie niet beschikbaar: voertuig is uit dienst.",
-    realtimeError: "Fout bij ophalen van realtimegegevens.",
-    disclaimerTitle: "Disclaimer",
-    disclaimerText: "De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertraging, fouten of onnauwkeurigheden in realtime gegevens. Gebruikers raadplegen deze informatie geheel op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij."
-  },
-  fr: {
-    subtitle: "Recherchez un vehicule et suivez-le en temps reel.",
-    install: "Installer l'app",
-    iosHint: "Sur iPhone/iPad: touchez Partager puis 'Sur l'ecran d'accueil'.",
-    search: "Rechercher vehicule",
-    favoriteAdd: "Ajouter favori",
-    favoriteRemove: "Retirer favori",
-    favorites: "Favoris",
-    settings: "Parametres",
-    interval: "Intervalle de mise a jour",
-    intervalSeconds: "secondes",
-    theme: "Theme",
-    themeAuto: "Automatique",
-    themeLight: "Clair",
-    themeDark: "Sombre",
-    language: "Langue",
-    staticCard: "Informations vehicule",
-    realtimeCard: "Donnees temps reel",
-    followOn: "Suivi: actif",
-    followOff: "Suivi: inactif",
-    lastUpdate: "Derniere mise a jour",
-    noData: "Aucune donnee temps reel disponible.",
-    loading: "Chargement des donnees...",
-    noneSelected: "Aucun vehicule selectionne.",
-    noFixed: "Aucune donnee vehicule trouvee.",
-    noFavoritesYet: "Aucun favori pour l'instant.",
-    vehiclePlaceholder: "Numero vehicule",
-    notOutOfService: "Toujours en service",
-    outOfServiceNoRealtime: "Position temps reel indisponible: vehicule hors service.",
-    realtimeError: "Erreur lors de la recuperation des donnees temps reel.",
-    disclaimerTitle: "Avertissement",
-    disclaimerText: "Les informations de ce site sont fournies sans garantie. Busbibliotheek n'est pas responsable des retards, erreurs ou inexactitudes des donnees temps reel. Utilisation a vos propres risques. Pour des informations officielles, consultez l'operateur de transport."
-  },
-  en: {
-    subtitle: "Search a vehicle and follow it in realtime.",
-    install: "Install app",
-    iosHint: "On iPhone/iPad: tap Share and choose 'Add to Home Screen'.",
-    search: "Search vehicle",
-    favoriteAdd: "Add favorite",
-    favoriteRemove: "Remove favorite",
-    favorites: "Favorites",
-    settings: "Settings",
-    interval: "Update interval",
-    intervalSeconds: "seconds",
-    theme: "Theme",
-    themeAuto: "Automatic",
-    themeLight: "Light",
-    themeDark: "Dark",
-    language: "Language",
-    staticCard: "Vehicle information",
-    realtimeCard: "Realtime data",
-    followOn: "Follow: on",
-    followOff: "Follow: off",
-    lastUpdate: "Last update",
-    noData: "No realtime data available.",
-    loading: "Loading data...",
-    noneSelected: "No vehicle selected.",
-    noFixed: "No vehicle data found.",
-    noFavoritesYet: "No favorites yet.",
-    vehiclePlaceholder: "Vehicle number",
-    notOutOfService: "Still in service",
-    outOfServiceNoRealtime: "Realtime location unavailable: vehicle is out of service.",
-    realtimeError: "Error while fetching realtime data.",
-    disclaimerTitle: "Disclaimer",
-    disclaimerText: "The information on this website is provided without guarantees. Busbibliotheek is not liable for delays, errors or inaccuracies in realtime data. Use at your own risk. For official trip information, consult the transport operator."
-  },
-  de: {
-    subtitle: "Fahrzeug suchen und in Echtzeit verfolgen.",
-    install: "App installieren",
-    iosHint: "Auf iPhone/iPad: Teilen tippen und 'Zum Home-Bildschirm' waehlen.",
-    search: "Fahrzeug suchen",
-    favoriteAdd: "Favorit hinzufuegen",
-    favoriteRemove: "Favorit entfernen",
-    favorites: "Favoriten",
-    settings: "Einstellungen",
-    interval: "Aktualisierungsintervall",
-    intervalSeconds: "Sekunden",
-    theme: "Design",
-    themeAuto: "Automatisch",
-    themeLight: "Hell",
-    themeDark: "Dunkel",
-    language: "Sprache",
-    staticCard: "Fahrzeuginformationen",
-    realtimeCard: "Echtzeitdaten",
-    followOn: "Folgen: an",
-    followOff: "Folgen: aus",
-    lastUpdate: "Letzte Aktualisierung",
-    noData: "Keine Echtzeitdaten verfuegbar.",
-    loading: "Daten werden geladen...",
-    noneSelected: "Kein Fahrzeug ausgewaehlt.",
-    noFixed: "Keine Fahrzeugdaten gefunden.",
-    noFavoritesYet: "Noch keine Favoriten.",
-    vehiclePlaceholder: "Fahrzeugnummer",
-    notOutOfService: "Weiter im Dienst",
-    outOfServiceNoRealtime: "Echtzeitposition nicht verfuegbar: Fahrzeug ausser Dienst.",
-    realtimeError: "Fehler beim Laden der Echtzeitdaten.",
-    disclaimerTitle: "Haftungsausschluss",
-    disclaimerText: "Die Informationen auf dieser Website werden ohne Gewaehr bereitgestellt. Busbibliotheek haftet nicht fuer Verspaetungen, Fehler oder Ungenauigkeiten in Echtzeitdaten. Nutzung auf eigenes Risiko. Fuer offizielle Fahrtdaten den Verkehrsbetreiber konsultieren."
-  },
-  pl: {
-    subtitle: "Wyszukaj pojazd i sledz go w czasie rzeczywistym.",
-    install: "Zainstaluj aplikacje",
-    iosHint: "Na iPhone/iPad: dotknij Udostepnij i wybierz 'Do ekranu poczatkowego'.",
-    search: "Szukaj pojazdu",
-    favoriteAdd: "Dodaj ulubiony",
-    favoriteRemove: "Usun ulubiony",
-    favorites: "Ulubione",
-    settings: "Ustawienia",
-    interval: "Interwal odswiezania",
-    intervalSeconds: "sekund",
-    theme: "Motyw",
-    themeAuto: "Automatyczny",
-    themeLight: "Jasny",
-    themeDark: "Ciemny",
-    language: "Jezyk",
-    staticCard: "Informacje o pojezdzie",
-    realtimeCard: "Dane na zywo",
-    followOn: "Sledzenie: wl.",
-    followOff: "Sledzenie: wyl.",
-    lastUpdate: "Ostatnia aktualizacja",
-    noData: "Brak danych czasu rzeczywistego.",
-    loading: "Ladowanie danych...",
-    noneSelected: "Nie wybrano pojazdu.",
-    noFixed: "Nie znaleziono danych pojazdu.",
-    noFavoritesYet: "Brak ulubionych.",
-    vehiclePlaceholder: "Numer pojazdu",
-    notOutOfService: "Wciaz w eksploatacji",
-    outOfServiceNoRealtime: "Brak lokalizacji na zywo: pojazd wycofany z ruchu.",
-    realtimeError: "Blad podczas pobierania danych na zywo.",
-    disclaimerTitle: "Zastrzezenie",
-    disclaimerText: "Informacje na tej stronie sa udostepniane bez gwarancji. Busbibliotheek nie odpowiada za opoznienia, bledy ani niedokladnosci danych na zywo. Korzystasz na wlasne ryzyko. W sprawie oficjalnych informacji skontaktuj sie z operatorem transportu."
-  },
-  es: {
-    subtitle: "Busca un vehiculo y siguelo en tiempo real.",
-    install: "Instalar app",
-    iosHint: "En iPhone/iPad: toca Compartir y elige 'Anadir a pantalla de inicio'.",
-    search: "Buscar vehiculo",
-    favoriteAdd: "Agregar favorito",
-    favoriteRemove: "Quitar favorito",
-    favorites: "Favoritos",
-    settings: "Configuracion",
-    interval: "Intervalo de actualizacion",
-    intervalSeconds: "segundos",
-    theme: "Tema",
-    themeAuto: "Automatico",
-    themeLight: "Claro",
-    themeDark: "Oscuro",
-    language: "Idioma",
-    staticCard: "Informacion del vehiculo",
-    realtimeCard: "Datos en tiempo real",
-    followOn: "Seguimiento: activo",
-    followOff: "Seguimiento: inactivo",
-    lastUpdate: "Ultima actualizacion",
-    noData: "No hay datos en tiempo real.",
-    loading: "Cargando datos...",
-    noneSelected: "Ningun vehiculo seleccionado.",
-    noFixed: "No se encontraron datos del vehiculo.",
-    noFavoritesYet: "Aun no hay favoritos.",
-    vehiclePlaceholder: "Numero de vehiculo",
-    notOutOfService: "Sigue en servicio",
-    outOfServiceNoRealtime: "Ubicacion en tiempo real no disponible: vehiculo fuera de servicio.",
-    realtimeError: "Error al obtener datos en tiempo real.",
-    disclaimerTitle: "Aviso legal",
-    disclaimerText: "La informacion en este sitio se proporciona sin garantias. Busbibliotheek no es responsable por retrasos, errores o inexactitudes en datos en tiempo real. Uso bajo su propio riesgo. Para informacion oficial, consulte al operador de transporte."
-  },
-  ru: {
-    subtitle: "Nayti transport i otslezhivat ego v realnom vremeni.",
-    install: "Ustanovit prilozhenie",
-    iosHint: "Na iPhone/iPad: nazhmite Podelitsya i vyberite 'Na ekran Domoy'.",
-    search: "Nayti transport",
-    favoriteAdd: "Dobavit v izbrannoe",
-    favoriteRemove: "Udalit iz izbrannogo",
-    favorites: "Izbrannoe",
-    settings: "Nastroiki",
-    interval: "Interval obnovleniya",
-    intervalSeconds: "sekund",
-    theme: "Tema",
-    themeAuto: "Avto",
-    themeLight: "Svetlaya",
-    themeDark: "Temnaya",
-    language: "Yazyk",
-    staticCard: "Informatsiya o transporte",
-    realtimeCard: "Dannie realtime",
-    followOn: "Slezhenie: vkl",
-    followOff: "Slezhenie: vykl",
-    lastUpdate: "Poslednee obnovlenie",
-    noData: "Dannye realtime nedostupny.",
-    loading: "Zagruzka dannyh...",
-    noneSelected: "Transport ne vybran.",
-    noFixed: "Dannye o transporte ne naideni.",
-    noFavoritesYet: "Izbrannyh poka net.",
-    vehiclePlaceholder: "Nomer transporta",
-    notOutOfService: "Vse esche v sluzhbe",
-    outOfServiceNoRealtime: "Pozitsiya realtime nedostupna: transport vyveden iz sluzhby.",
-    realtimeError: "Oshibka pri poluchenii dannyh realtime.",
-    disclaimerTitle: "Otvetstvennost",
-    disclaimerText: "Informatsiya na etom saite predostavlyaetsya bez garantii. Busbibliotheek ne neset otvetstvennosti za zaderzhki, oshibki ili netochnosti realtime dannyh. Ispolzovanie na vash risk. Za ofitsialnoi informatsiei obratites k perevozchiku."
-  }
-};
+const translationsConfig = window.BB_TRANSLATIONS || {};
+const i18n = translationsConfig.i18n || { nl: {} };
+const localWordLabels = translationsConfig.localWordLabels || {};
+const vehicleFieldLabels = translationsConfig.vehicleFieldLabels || {};
+const localeMap = translationsConfig.localeMap || { nl: "nl-NL" };
+const delayLexicon = translationsConfig.delayLexicon || {};
 
-const t = (k) => i18n[settings.language]?.[k] || i18n.nl[k] || k;
-const localWord = (key) => {
-  const labels = {
-    instagramSearch: { nl: "Zoek op Instagram", fr: "Chercher sur Instagram", en: "Search on Instagram", de: "Auf Instagram suchen", pl: "Szukaj na Instagramie", es: "Buscar en Instagram", ru: "Iskat v Instagram" },
-    vehicle: { nl: "Voertuig", fr: "Vehicule", en: "Vehicle", de: "Fahrzeug", pl: "Pojazd", es: "Vehiculo", ru: "Transport" },
-    line: { nl: "Lijn", fr: "Ligne", en: "Line", de: "Linie", pl: "Linia", es: "Linea", ru: "Marshrut" },
-    destination: { nl: "Bestemming", fr: "Destination", en: "Destination", de: "Ziel", pl: "Kierunek", es: "Destino", ru: "Napravlenie" },
-    delay: { nl: "Vertraging", fr: "Retard", en: "Delay", de: "Verspatung", pl: "Opoznienie", es: "Retraso", ru: "Zaderzhka" }
-  };
-  return labels[key]?.[settings.language] || labels[key]?.nl || key;
-};
-
-const vehicleFieldLabels = {
-  nl: {
-    "vervoersmaatschappij": "Vervoersmaatschappij",
-    "voertuignummer": "Voertuignummer",
-    "type": "Type",
-    "hansea nummer": "Hansea nummer",
-    "oude voertuignummers": "Oude voertuignummers",
-    "oude nummerplaten": "Oude nummerplaten",
-    "datum in dienst": "Datum in dienst",
-    "uit dienst": "Uit dienst",
-    "fabrikant": "Fabrikant",
-    "model": "Model",
-    "bouwjaar": "Bouwjaar",
-    "nummerplaat": "Nummerplaat",
-    "kenteken": "Kenteken",
-    "status": "Status",
-    "opmerkingen": "Opmerkingen"
-  },
-  fr: {
-    "vervoersmaatschappij": "Compagnie de transport",
-    "voertuignummer": "Numero du vehicule",
-    "type": "Type",
-    "hansea nummer": "Numero Hansea",
-    "oude voertuignummers": "Anciens numeros de vehicule",
-    "oude nummerplaten": "Anciennes plaques",
-    "datum in dienst": "Date de mise en service",
-    "uit dienst": "Hors service",
-    "fabrikant": "Fabricant",
-    "model": "Modele",
-    "bouwjaar": "Annee de construction",
-    "nummerplaat": "Plaque",
-    "kenteken": "Immatriculation",
-    "status": "Statut",
-    "opmerkingen": "Remarques"
-  },
-  en: {
-    "vervoersmaatschappij": "Operator",
-    "voertuignummer": "Vehicle number",
-    "type": "Type",
-    "hansea nummer": "Hansea number",
-    "oude voertuignummers": "Old vehicle numbers",
-    "oude nummerplaten": "Old license plates",
-    "datum in dienst": "In service date",
-    "uit dienst": "Out of service",
-    "fabrikant": "Manufacturer",
-    "model": "Model",
-    "bouwjaar": "Year built",
-    "nummerplaat": "License plate",
-    "kenteken": "Registration",
-    "status": "Status",
-    "opmerkingen": "Notes"
-  },
-  de: {
-    "vervoersmaatschappij": "Verkehrsunternehmen",
-    "voertuignummer": "Fahrzeugnummer",
-    "type": "Typ",
-    "hansea nummer": "Hansea-Nummer",
-    "oude voertuignummers": "Alte Fahrzeugnummern",
-    "oude nummerplaten": "Alte Kennzeichen",
-    "datum in dienst": "Datum der Inbetriebnahme",
-    "uit dienst": "Ausser Dienst",
-    "fabrikant": "Hersteller",
-    "model": "Modell",
-    "bouwjaar": "Baujahr",
-    "nummerplaat": "Kennzeichen",
-    "kenteken": "Zulassung",
-    "status": "Status",
-    "opmerkingen": "Bemerkungen"
-  },
-  pl: {
-    "vervoersmaatschappij": "Operator",
-    "voertuignummer": "Numer pojazdu",
-    "type": "Typ",
-    "hansea nummer": "Numer Hansea",
-    "oude voertuignummers": "Stare numery pojazdu",
-    "oude nummerplaten": "Stare tablice",
-    "datum in dienst": "Data rozpoczecia eksploatacji",
-    "uit dienst": "Wycofany z ruchu",
-    "fabrikant": "Producent",
-    "model": "Model",
-    "bouwjaar": "Rok produkcji",
-    "nummerplaat": "Tablica rejestracyjna",
-    "kenteken": "Rejestracja",
-    "status": "Status",
-    "opmerkingen": "Uwagi"
-  },
-  es: {
-    "vervoersmaatschappij": "Operador",
-    "voertuignummer": "Numero de vehiculo",
-    "type": "Tipo",
-    "hansea nummer": "Numero Hansea",
-    "oude voertuignummers": "Numeros antiguos del vehiculo",
-    "oude nummerplaten": "Matriculas antiguas",
-    "datum in dienst": "Fecha de entrada en servicio",
-    "uit dienst": "Fuera de servicio",
-    "fabrikant": "Fabricante",
-    "model": "Modelo",
-    "bouwjaar": "Ano de fabricacion",
-    "nummerplaat": "Matricula",
-    "kenteken": "Registro",
-    "status": "Estado",
-    "opmerkingen": "Observaciones"
-  },
-  ru: {
-    "vervoersmaatschappij": "Perevozchik",
-    "voertuignummer": "Nomer transporta",
-    "type": "Tip",
-    "hansea nummer": "Nomer Hansea",
-    "oude voertuignummers": "Starye nomera transporta",
-    "oude nummerplaten": "Starye nomera znaka",
-    "datum in dienst": "Data vvedeniya v ekspluatatsiyu",
-    "uit dienst": "Vyveden iz sluzhby",
-    "fabrikant": "Proizvoditel",
-    "model": "Model",
-    "bouwjaar": "God vypuska",
-    "nummerplaat": "Gosnomer",
-    "kenteken": "Registratsiya",
-    "status": "Status",
-    "opmerkingen": "Primechaniya"
-  }
-};
+const t = (k) => i18n[settings.language]?.[k] || i18n.nl?.[k] || k;
+const localWord = (key) => localWordLabels[key]?.[settings.language] || localWordLabels[key]?.nl || key;
 
 function normalizeFieldKey(key) {
   return (key || "")
@@ -1094,23 +737,19 @@ function translateVehicleFieldLabel(key) {
   const normalized = normalizeFieldKey(key);
   return (
     vehicleFieldLabels[settings.language]?.[normalized] ||
-    vehicleFieldLabels.nl[normalized] ||
+    vehicleFieldLabels.nl?.[normalized] ||
     key
   );
 }
 
-const localeForLanguage = (lang) => {
-  const map = {
-    nl: "nl-NL",
-    fr: "fr-FR",
-    en: "en-US",
-    de: "de-DE",
-    pl: "pl-PL",
-    es: "es-ES",
-    ru: "ru-RU"
-  };
-  return map[lang] || "nl-NL";
-};
+const localeForLanguage = (lang) => localeMap[lang] || "nl-NL";
+
+function formatDelayMessage(delayMinutes) {
+  const lex = delayLexicon[settings.language] || delayLexicon.nl || { minute: "min", early: "early", late: "delay", onTime: "On time" };
+  if (delayMinutes < 0) return `${Math.abs(delayMinutes)} ${lex.minute} ${lex.early}`;
+  if (delayMinutes > 0) return `${delayMinutes} ${lex.minute} ${lex.late}`;
+  return lex.onTime;
+}
 
 function isIosInstallable() {
   const ua = window.navigator.userAgent;
@@ -1559,12 +1198,36 @@ function initMap(lat,lon){
   }
 }
 
+function getTripUpdateForVehicle(entities, vehicleId) {
+  const match = entities.find(e => e.tripUpdate?.vehicle?.id == vehicleId);
+  return match?.tripUpdate || null;
+}
+
+function getDelaySecondsFromTripUpdate(tripUpdate) {
+  if (!tripUpdate?.stopTimeUpdate?.length) return null;
+  const now = Math.floor(Date.now() / 1000);
+  let best = null;
+
+  for (const stop of tripUpdate.stopTimeUpdate) {
+    const candidates = [stop.departure, stop.arrival];
+    for (const c of candidates) {
+      if (!c || typeof c.delay !== "number") continue;
+      const score = typeof c.time === "number" ? Math.abs(c.time - now) : Number.MAX_SAFE_INTEGER;
+      if (!best || score < best.score) {
+        best = { delay: c.delay, score };
+      }
+    }
+  }
+  return best ? best.delay : null;
+}
+
 async function updateRealtime(id){
   try{
     const res = await fetch(API_URL);
     const data = await res.json();
+    const entities = Array.isArray(data.entity) ? data.entity : [];
 
-    const gps = data.entity.reverse().find(e=>e.vehicle?.vehicle?.id==id && e.vehicle.position);
+    const gps = [...entities].reverse().find(e=>e.vehicle?.vehicle?.id==id && e.vehicle.position);
 
     if(!gps){ realtimeEl.innerHTML=t("noData"); mapEl.classList.add("hidden"); return; }
 
@@ -1610,38 +1273,21 @@ async function updateRealtime(id){
     const routeColor = routeColorRaw.length === 6 ? `#${routeColorRaw}` : "#2563eb";
     const routeTextColor = routeTextColorRaw.length === 6 ? `#${routeTextColorRaw}` : "#ffffff";
 
-    // Extract delay in seconds and convert to minutes
-    let delaySeconds = gps.vehicle.trip?.delay || 0;
-    if (!delaySeconds && v.stopStatus?.delay) delaySeconds = v.stopStatus.delay;
-    delayMinutes = Math.round(delaySeconds / 60);
-    
-    let msgDelay = "";
-    if (delayMinutes < 0) {
-      const mins = Math.abs(delayMinutes);
-      if (settings.language === "en") msgDelay = `${mins} min early`;
-      else if (settings.language === "fr") msgDelay = `${mins} min d'avance`;
-      else if (settings.language === "de") msgDelay = `${mins} Min zu fruh`;
-      else if (settings.language === "pl") msgDelay = `${mins} min za wczesnie`;
-      else if (settings.language === "es") msgDelay = `${mins} min antes`;
-      else if (settings.language === "ru") msgDelay = `${mins} min ranshe`;
-      else msgDelay = `${mins} minuut${mins !== 1 ? "en" : ""} te vroeg`;
-    } else if (delayMinutes > 0) {
-      if (settings.language === "en") msgDelay = `${delayMinutes} min delay`;
-      else if (settings.language === "fr") msgDelay = `${delayMinutes} min de retard`;
-      else if (settings.language === "de") msgDelay = `${delayMinutes} Min Verspatung`;
-      else if (settings.language === "pl") msgDelay = `${delayMinutes} min opoznienia`;
-      else if (settings.language === "es") msgDelay = `${delayMinutes} min de retraso`;
-      else if (settings.language === "ru") msgDelay = `${delayMinutes} min zaderzhki`;
-      else msgDelay = `${delayMinutes} minuut${delayMinutes !== 1 ? "en" : ""} vertraging`;
-    } else {
-      if (settings.language === "en") msgDelay = "On time";
-      else if (settings.language === "fr") msgDelay = "A l'heure";
-      else if (settings.language === "de") msgDelay = "Punktlich";
-      else if (settings.language === "pl") msgDelay = "Na czas";
-      else if (settings.language === "es") msgDelay = "A tiempo";
-      else if (settings.language === "ru") msgDelay = "Vovremya";
-      else msgDelay = "Op tijd";
+    // Delay from trip updates is authoritative; fallback to vehicle payload
+    const tripUpdate = getTripUpdateForVehicle(entities, id);
+    let delaySeconds = getDelaySecondsFromTripUpdate(tripUpdate);
+    if (typeof delaySeconds !== "number" && typeof gps.vehicle.trip?.delay === "number") {
+      delaySeconds = gps.vehicle.trip.delay;
     }
+    if (typeof delaySeconds !== "number" && typeof v.stopStatus?.delay === "number") {
+      delaySeconds = v.stopStatus.delay;
+    }
+    if (typeof delaySeconds !== "number") delaySeconds = 0;
+    delayMinutes = delaySeconds < 0
+      ? -Math.round(Math.abs(delaySeconds) / 60)
+      : Math.round(delaySeconds / 60);
+    
+    const msgDelay = formatDelayMessage(delayMinutes);
     const delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
 
     realtimeEl.innerHTML=`
@@ -1708,6 +1354,7 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
 
 

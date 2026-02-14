@@ -2,6 +2,7 @@ const CACHE_NAME = 'busbibliotheek-v2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
+  '/translations.js',
   '/offline.html',
   '/style.css',
   '/logo_light.png',
