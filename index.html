@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260214-4">
+<link rel="stylesheet" href="style.css?v=20260214-6">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -32,7 +32,7 @@
   <div class="header-bar">
     <div>
       <h1 id="appTitle">Busbibliotheek</h1>
-      <p id="appSubtitle">Zoekt een voertuig op en volg het in realtime.</p>
+      <p id="appSubtitle">Zoek een voertuig en volg het in realtime.</p>
     </div>
     <div class="header-actions">
       <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
@@ -45,7 +45,7 @@
     <input id="voertuignummer" placeholder="Voertuignummer" 
            oninput="toonSuggesties()" 
            onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
-    <button id="searchBtn" type="button">Zoek voertuig</button>
+    <button id="searchBtn" type="button">Zoeken</button>
     <button id="favoriteBtn" type="button" title="Favoriet toevoegen" aria-label="Favoriet toevoegen" hidden>&#9734;</button>
   </div>
   <ul id="suggestielijst"></ul>
@@ -66,17 +66,17 @@
         <h2 id="realtimeCardTitle">Realtimegegevens</h2>
         <div class="meta-row">
           <button id="followToggle" type="button">Volgen: aan</button>
-          <div id="lastUpdate">Laatste update: -</div>
         </div>
         <div id="realtime" class="loading">Geen gegevens beschikbaar.</div>
         <div id="map"></div>
+        <div id="lastUpdate" hidden>Laatste update: -</div>
       </div>
     </div>
   </div>
 
   <footer>
     <h3 id="disclaimerTitle">Disclaimer</h3>
-    <p id="disclaimerText">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertraging, fouten of onnauwkeurigheden in realtime gegevens. Gebruikers raadplegen deze informatie geheel op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij.</p>
+    <p id="disclaimerText">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertragingen, fouten of onnauwkeurigheden in realtimegegevens. Gebruik op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij.</p>
   </footer>
 
 </div>
@@ -109,12 +109,12 @@
       <label for="languageSelect" id="languageLabel">Taal</label>
       <select id="languageSelect">
         <option value="nl">Nederlands</option>
-        <option value="fr">Francais</option>
+        <option value="fr">Fran&ccedil;ais</option>
         <option value="en">English</option>
         <option value="de">Deutsch</option>
         <option value="pl">Polski</option>
-        <option value="es">Espanol</option>
-        <option value="ru">Russkiy</option>
+        <option value="es">Espa&ntilde;ol</option>
+        <option value="ru">&#1056;&#1091;&#1089;&#1089;&#1082;&#1080;&#1081;</option>
       </select>
     </div>
   </div>
@@ -122,7 +122,7 @@
 </aside>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="translations.js"></script>
+<script src="translations.js?v=20260214-2"></script>
 <script>
 // Splash controls (mobile-first startup experience)
 const splash = document.getElementById("splash");
@@ -392,6 +392,7 @@ function applyTranslations() {
   disclaimerTitleEl.textContent = t("disclaimerTitle");
   disclaimerTextEl.textContent = t("disclaimerText");
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
+  lastUpdateEl.hidden = true;
   if (!currentVehicleId) {
     realtimeEl.innerHTML = t("noData");
     vasteDataEl.innerHTML = t("noneSelected");
@@ -496,7 +497,7 @@ function updateFavoriteButtonState() {
   favoriteBtn.disabled = !hasVehicleInput;
 
   if (!hasVehicleInput) {
-    favoriteBtn.textContent = "☆";
+    favoriteBtn.textContent = "\u2606";
     favoriteBtn.classList.remove("is-favorite");
     favoriteBtn.removeAttribute("aria-pressed");
     return;
@@ -504,7 +505,7 @@ function updateFavoriteButtonState() {
 
   const isFav = favorites.includes(id);
   const label = isFav ? t("favoriteRemove") : t("favoriteAdd");
-  favoriteBtn.textContent = isFav ? "★" : "☆";
+  favoriteBtn.textContent = isFav ? "\u2605" : "\u2606";
   favoriteBtn.title = label;
   favoriteBtn.setAttribute("aria-label", label);
   favoriteBtn.setAttribute("aria-pressed", String(isFav));
@@ -552,6 +553,8 @@ function initAppPreferences() {
   resultsGridEl.classList.remove("show");
   closeBtnEl.style.display = "none";
   mapEl.classList.add("hidden");
+  lastUpdateEl.hidden = true;
+  lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
 
   if (isIosInstallable()) {
     iosInstallHintEl.hidden = false;
@@ -562,8 +565,8 @@ searchBtn.addEventListener("click", zoekAlles);
 favoriteBtn.addEventListener("click", toggleFavorite);
 voertuigInput.addEventListener("input", updateFavoriteButtonState);
 followToggleBtn.addEventListener("click", () => {
-  followVehicle = !followVehicle;
-  if (followVehicle) userInteracted = false;
+  followVehicle = true;
+  userInteracted = false;
   updateFollowButtonText();
 });
 intervalSelect.addEventListener("change", () => {
@@ -704,6 +707,8 @@ async function zoekAlles() {
   closeBtnEl.style.display = "block";
 
   toonVasteData(id);
+  lastUpdateEl.hidden = true;
+  lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
 
   if (voertuigen.length === 0) await laadVoertuigen();
   const bus = findBusById(id);
@@ -720,6 +725,7 @@ async function zoekAlles() {
       marker = null;
     }
     lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
+    lastUpdateEl.hidden = true;
     if(refresh) {
       clearInterval(refresh);
       refresh = null;
@@ -757,6 +763,7 @@ function terug() {
     trailLine = null;
   }
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
+  lastUpdateEl.hidden = true;
   mapEl.classList.add("hidden");
   if(marker){ map.removeLayer(marker); marker=null; }
   updateFavoriteButtonState();
@@ -842,9 +849,6 @@ function initMap(lat,lon){
     // Detect user interactions to stop auto-centering
     map.on('dragstart zoomstart movestart touchstart', ()=>{
       userInteracted = true;
-      followVehicle = false;
-      updateFollowButtonText();
-      if(centerControl) centerControl.getContainer().style.display = 'block';
     });
 
     // Create a custom control (button) to re-center the map
@@ -869,7 +873,6 @@ function initMap(lat,lon){
                      userInteracted = false;
                      followVehicle = true;
                      updateFollowButtonText();
-                     btn.style.display = 'none';
                    }
                  });
 
@@ -913,7 +916,13 @@ async function updateRealtime(id){
 
     const gps = [...entities].reverse().find(e=>e.vehicle?.vehicle?.id==id && e.vehicle.position);
 
-    if(!gps){ realtimeEl.innerHTML=t("noData"); mapEl.classList.add("hidden"); return; }
+    if(!gps){
+      realtimeEl.innerHTML=t("noData");
+      mapEl.classList.add("hidden");
+      lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
+      lastUpdateEl.hidden = true;
+      return;
+    }
 
     const v=gps.vehicle;
     const tripid = gps.vehicle.trip?.tripId || gps.vehicle.trip?.trip_id || "";
@@ -985,6 +994,7 @@ async function updateRealtime(id){
     `;
     mapEl.classList.remove("hidden");
     lastUpdateEl.textContent = `${t("lastUpdate")}: ${new Date().toLocaleTimeString(localeForLanguage(settings.language))}`;
+    lastUpdateEl.hidden = false;
 
     initMap(v.position.latitude,v.position.longitude);
     routeTrail.push([v.position.latitude, v.position.longitude]);
@@ -997,15 +1007,12 @@ async function updateRealtime(id){
       }
     }
 
-    if (followVehicle) {
-      map.setView([v.position.latitude,v.position.longitude],15);
-    }
+    map.setView([v.position.latitude,v.position.longitude],15);
 
     const bearing = v.position.bearing || 0;
 
     if(marker) {
       marker.setLatLng([v.position.latitude,v.position.longitude]);
-      marker.setPopupContent(`${localWord("vehicle")} ${id}<br>${localWord("line")} ${routeShort}<br>${localWord("destination")}: ${tripShort}<br>${localWord("delay")}: ${msgDelay}`);
       // update rotation of img inside divIcon
       const el = marker.getElement && marker.getElement();
       if(el){
@@ -1014,9 +1021,7 @@ async function updateRealtime(id){
       }
     } else {
       marker = L.marker([v.position.latitude,v.position.longitude], { icon: busIcon })
-        .addTo(map)
-        .bindPopup(`${localWord("vehicle")} ${id}<br>${localWord("line")} ${routeShort}<br>${localWord("destination")}: ${tripShort}<br>${localWord("delay")}: ${msgDelay}`)
-        .openPopup();
+        .addTo(map);
       // set initial rotation
       const el = marker.getElement && marker.getElement();
       if(el){
@@ -1025,7 +1030,13 @@ async function updateRealtime(id){
       }
     }
 
-  }catch(e){ console.error(e); realtimeEl.innerHTML = t("realtimeError"); }
+  }catch(e){
+    console.error(e);
+    realtimeEl.innerHTML = t("realtimeError");
+    mapEl.classList.add("hidden");
+    lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
+    lastUpdateEl.hidden = true;
+  }
 }
 </script>
 

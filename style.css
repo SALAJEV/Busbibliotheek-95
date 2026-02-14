@@ -345,7 +345,6 @@ button:disabled,
   cursor: not-allowed;
 }
 
-#favoriteBtn,
 #followToggle {
   background: var(--surface-alt);
   color: var(--text);
@@ -353,7 +352,6 @@ button:disabled,
   box-shadow: var(--shadow-soft);
 }
 
-#favoriteBtn:hover,
 #followToggle:hover {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--stroke-strong));
 }
@@ -393,6 +391,12 @@ button:disabled,
 #searchBtn {
   margin-top: 0;
   white-space: nowrap;
+}
+
+#searchBtn::before {
+  content: "\1F50D";
+  font-size: 0.98rem;
+  line-height: 1;
 }
 
 #favoriteBtn {
@@ -796,12 +800,20 @@ tr + tr td {
 }
 
 #lastUpdate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.35rem 0.55rem;
+  margin-top: 0.65rem;
   border-radius: 999px;
   border: 1px solid var(--stroke-soft);
   background: var(--surface-alt);
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+#lastUpdate[hidden] {
+  display: none !important;
 }
 
 .loading {
@@ -902,22 +914,9 @@ tr + tr td {
   background: var(--surface-alt);
 }
 
-.leaflet-popup-content-wrapper {
-  border-radius: 14px;
-  border: 1px solid var(--stroke);
-  background: var(--surface-strong);
-  color: var(--text);
-  backdrop-filter: blur(8px);
-}
-
-.leaflet-popup-tip {
-  background: var(--surface-strong);
-}
-
-.leaflet-popup-content {
-  margin: 10px 12px;
-  font-family: "Manrope", "Space Grotesk", sans-serif;
-  font-size: 0.9rem;
+.leaflet-popup,
+.leaflet-tooltip {
+  display: none !important;
 }
 
 .bus-div-icon {

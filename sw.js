@@ -1,11 +1,12 @@
-const CACHE_NAME = 'busbibliotheek-v5';
+const CACHE_NAME = 'busbibliotheek-v7';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/translations.js',
+  '/translations.js?v=20260214-2',
   '/offline.html',
   '/style.css',
-  '/style.css?v=20260214-4',
+  '/style.css?v=20260214-6',
   '/logo_light.png',
   '/logo_dark.png',
   '/navicon.png',
