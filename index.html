@@ -254,6 +254,27 @@ td { padding: 0.4rem 0; }
   font-weight: 600;
   margin-top: 0.4rem;
 }
+.route-destination-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+.line-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+.destination-text {
+  font-weight: 600;
+}
 .delay-early { color: #dc2626; }
 .delay-ontime { color: var(--text); }
 .delay-late { color: #257beb; }
@@ -1168,6 +1189,10 @@ async function updateRealtime(id){
     const routeShort = routeData?.route_short_name || "?";
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
+    const routeColorRaw = (routeData?.route_color || "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+    const routeTextColorRaw = (routeData?.route_text_color || "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+    const routeColor = routeColorRaw.length === 6 ? `#${routeColorRaw}` : "#2563eb";
+    const routeTextColor = routeTextColorRaw.length === 6 ? `#${routeTextColorRaw}` : "#ffffff";
 
     // Extract delay in seconds and convert to minutes
     let delaySeconds = gps.vehicle.trip?.delay || 0;
@@ -1181,8 +1206,10 @@ async function updateRealtime(id){
 
     realtimeEl.innerHTML=`
       <p>
-        <b>Lijn:</b> ${routeShort}<br>
-        <b>Bestemming:</b> ${tripShort}<br>
+        <div class="route-destination-row">
+          <span class="line-badge" style="background:${routeColor};color:${routeTextColor};">${routeShort}</span>
+          <span class="destination-text">${tripShort || "-"}</span>
+        </div>
         <span class="delay-status ${delayClass}">${msgDelay}</span>
       </p>
     `;
