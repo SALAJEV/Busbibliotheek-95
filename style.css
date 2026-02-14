@@ -378,11 +378,51 @@ button:disabled,
   display: inline-flex;
 }
 
-.action-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.72rem;
-  margin: 0.7rem 0 0.62rem;
+.search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.62rem;
+  margin: 0.15rem 0 0.62rem;
+}
+
+.search-row input {
+  margin-bottom: 0;
+}
+
+#searchBtn {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+#favoriteBtn {
+  margin-top: 0;
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  padding: 0;
+  border-radius: 12px;
+  font-size: 1.22rem;
+  line-height: 1;
+  color: #facc15;
+  background: var(--surface-alt);
+  border-color: color-mix(in srgb, #facc15 45%, var(--stroke-strong));
+  box-shadow: var(--shadow-soft);
+}
+
+#favoriteBtn:hover {
+  color: #fbbf24;
+  transform: translateY(-1px) scale(1.03);
+}
+
+#favoriteBtn.is-favorite {
+  color: #f59e0b;
+  background: color-mix(in srgb, #facc15 18%, var(--surface-alt));
+  border-color: color-mix(in srgb, #f59e0b 55%, var(--stroke-strong));
+}
+
+#favoriteBtn[hidden] {
+  display: none !important;
 }
 
 /* ===============================
@@ -499,6 +539,17 @@ button:disabled,
   color: var(--muted);
 }
 
+.settings-feed-status {
+  margin-top: 0.86rem;
+  padding: 0.7rem 0.76rem;
+  border-radius: 14px;
+  border: 1px solid var(--stroke-soft);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 /* ===============================
    SETTINGS PANEL
 ================================ */
@@ -588,8 +639,13 @@ body.settings-open .settings-panel {
 ================================ */
 
 .results-wrap {
+  display: none;
   position: relative;
   margin-top: 1.9rem;
+}
+
+.results-wrap.show {
+  display: block;
   animation: riseIn 0.5s ease 0.08s both;
 }
 
@@ -702,6 +758,9 @@ tr + tr td {
 
 .ig-btn-wrap {
   margin-top: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.56rem;
 }
 
 .btn--instagram {
@@ -716,6 +775,15 @@ tr + tr td {
 .btn--instagram::before {
   content: "IG ";
   font-weight: 700;
+}
+
+.btn--story {
+  margin-top: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background:
+    linear-gradient(145deg, rgba(245, 158, 11, 0.9), rgba(234, 88, 12, 0.84)),
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.3), transparent 62%);
+  color: #fff;
 }
 
 .meta-row {
@@ -1034,12 +1102,16 @@ footer h3 {
     flex: 0 1 auto;
   }
 
-  .action-row {
-    flex-direction: column;
+  .search-row {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .btn,
-  button:not(.close-btn):not(.icon-btn):not(.settings-close-btn) {
+  button:not(.close-btn):not(.icon-btn):not(.settings-close-btn):not(#favoriteBtn) {
+    width: 100%;
+  }
+
+  #searchBtn {
     width: 100%;
   }
 

@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260214-3">
+<link rel="stylesheet" href="style.css?v=20260214-4">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -36,17 +36,17 @@
     </div>
     <div class="header-actions">
       <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
-      <button id="settingsToggleBtn" class="icon-btn" type="button" title="Instellingen" aria-label="Instellingen" aria-controls="settingsPanel" aria-expanded="false">⚙</button>
+      <button id="settingsToggleBtn" class="icon-btn" type="button" title="Instellingen" aria-label="Instellingen" aria-controls="settingsPanel" aria-expanded="false">&#9881;</button>
     </div>
   </div>
   <div id="iosInstallHint" class="hint" hidden></div>
 
-  <input id="voertuignummer" placeholder="Voertuignummer" 
-         oninput="toonSuggesties()" 
-         onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
-  <div class="action-row">
+  <div class="search-row">
+    <input id="voertuignummer" placeholder="Voertuignummer" 
+           oninput="toonSuggesties()" 
+           onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
     <button id="searchBtn" type="button">Zoek voertuig</button>
-    <button id="favoriteBtn" type="button">☆ Favoriet toevoegen</button>
+    <button id="favoriteBtn" type="button" title="Favoriet toevoegen" aria-label="Favoriet toevoegen" hidden>&#9734;</button>
   </div>
   <ul id="suggestielijst"></ul>
   <div class="stack-card">
@@ -118,6 +118,7 @@
       </select>
     </div>
   </div>
+  <p id="feedStatus" class="settings-feed-status" hidden></p>
 </aside>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -132,7 +133,6 @@ function hideSplash(ms = 260) {
   s.classList.add("hidden");
   const cleanup = () => {
     if (s.parentNode) s.parentNode.removeChild(s);
-    document.querySelector('.grid')?.classList.add('show');
   };
   s.addEventListener("transitionend", cleanup, { once: true });
   setTimeout(cleanup, ms + 120);
@@ -183,6 +183,7 @@ const voertuigInput = document.getElementById("voertuignummer");
 const suggestieLijst = document.getElementById("suggestielijst");
 const realtimeEl = document.getElementById("realtime");
 const vasteDataEl = document.getElementById("vasteData");
+const resultsWrapEl = document.querySelector(".results-wrap");
 const resultsGridEl = document.getElementById("resultsGrid");
 const closeBtnEl = document.getElementById("closeBtn");
 const mapEl = document.getElementById("map");
@@ -212,6 +213,7 @@ const staticCardTitleEl = document.getElementById("staticCardTitle");
 const realtimeCardTitleEl = document.getElementById("realtimeCardTitle");
 const disclaimerTitleEl = document.getElementById("disclaimerTitle");
 const disclaimerTextEl = document.getElementById("disclaimerText");
+const feedStatusEl = document.getElementById("feedStatus");
 
 let voertuigen = [];
 let trips = [];
@@ -226,6 +228,7 @@ let delayMinutes = 0;
 let currentVehicleId = "";
 let favorites = [];
 let settingsOpen = false;
+let feedEndDateValue = "";
 let settings = {
   intervalMs: 10000,
   theme: "auto",
@@ -279,6 +282,50 @@ function translateVehicleFieldLabel(key) {
 
 const localeForLanguage = (lang) => localeMap[lang] || localeMap[FALLBACK_LANG] || localeMap[DEFAULT_LANG] || "nl-NL";
 
+function parseFlexibleDateParts(rawValue) {
+  const value = (rawValue || "").toString().trim().replace(/^"|"$/g, "");
+  if (!value || value === "/") return null;
+
+  const toValidParts = (year, month, day) => {
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const check = new Date(Date.UTC(year, month - 1, day));
+    if (
+      check.getUTCFullYear() !== year ||
+      check.getUTCMonth() !== month - 1 ||
+      check.getUTCDate() !== day
+    ) return null;
+    return { year, month, day };
+  };
+
+  let match = value.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (match) return toValidParts(Number(match[1]), Number(match[2]), Number(match[3]));
+
+  match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return toValidParts(Number(match[1]), Number(match[2]), Number(match[3]));
+
+  match = value.match(/^(\d{2})[\/.-](\d{2})[\/.-](\d{4})$/);
+  if (match) return toValidParts(Number(match[3]), Number(match[2]), Number(match[1]));
+
+  return null;
+}
+
+function formatDateForUi(rawValue, options, language = settings.language) {
+  const parts = parseFlexibleDateParts(rawValue);
+  if (parts) {
+    const utcDate = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+    if (!Number.isNaN(utcDate.getTime())) {
+      return new Intl.DateTimeFormat(localeForLanguage(language), { ...options, timeZone: "UTC" }).format(utcDate);
+    }
+  }
+
+  const parsed = new Date(rawValue);
+  if (!Number.isNaN(parsed.getTime())) {
+    return new Intl.DateTimeFormat(localeForLanguage(language), options).format(parsed);
+  }
+
+  return rawValue;
+}
+
 function formatDelayMessage(delayMinutes) {
   const lex =
     delayLexicon[settings.language] ||
@@ -325,6 +372,8 @@ function applyTranslations() {
   settingsToggleBtn.setAttribute("aria-label", t("settings"));
   iosInstallHintEl.textContent = t("iosHint");
   searchBtn.textContent = t("search");
+  searchBtn.title = t("search");
+  searchBtn.setAttribute("aria-label", t("search"));
   voertuigInput.placeholder = t("vehiclePlaceholder");
   favoritesTitleEl.textContent = t("favorites");
   settingsTitleEl.textContent = t("settings");
@@ -347,8 +396,53 @@ function applyTranslations() {
     realtimeEl.innerHTML = t("noData");
     vasteDataEl.innerHTML = t("noneSelected");
   }
+  updateFeedStatusText();
   updateFavoriteButtonState();
   updateFollowButtonText();
+}
+
+function updateFeedStatusText() {
+  if (!feedStatusEl) return;
+  if (!feedEndDateValue) {
+    feedStatusEl.hidden = true;
+    feedStatusEl.textContent = "";
+    return;
+  }
+
+  const formattedDate = formatDateForUi(feedEndDateValue, {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+
+  const templateRaw = t("feedCurrentUntil");
+  const template = templateRaw === "feedCurrentUntil" ? "Data actueel tot {date}." : templateRaw;
+  feedStatusEl.textContent = template.includes("{date}")
+    ? template.replace("{date}", formattedDate)
+    : `${template} ${formattedDate}`;
+  feedStatusEl.hidden = false;
+}
+
+async function loadFeedStatus() {
+  try {
+    const res = await fetch(`${BASE_URL}/feed_info.txt`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`feed_info status ${res.status}`);
+    const text = await res.text();
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) throw new Error("feed_info bevat te weinig regels");
+
+    const headers = parseCSVLine(lines[0]);
+    const values = parseCSVLine(lines[1]);
+    const index = headers.indexOf("feed_end_date");
+    if (index < 0) throw new Error("feed_end_date niet gevonden");
+
+    feedEndDateValue = (values[index] || "").trim();
+  } catch (e) {
+    console.warn("feed_info laden mislukt", e);
+    feedEndDateValue = "";
+  }
+
+  updateFeedStatusText();
 }
 
 function setSettingsPanel(open) {
@@ -397,8 +491,24 @@ function renderFavorites() {
 
 function updateFavoriteButtonState() {
   const id = voertuigInput.value.trim();
+  const hasVehicleInput = id.length > 0;
+  favoriteBtn.hidden = !hasVehicleInput;
+  favoriteBtn.disabled = !hasVehicleInput;
+
+  if (!hasVehicleInput) {
+    favoriteBtn.textContent = "☆";
+    favoriteBtn.classList.remove("is-favorite");
+    favoriteBtn.removeAttribute("aria-pressed");
+    return;
+  }
+
   const isFav = favorites.includes(id);
-  favoriteBtn.textContent = isFav ? t("favoriteRemove") : t("favoriteAdd");
+  const label = isFav ? t("favoriteRemove") : t("favoriteAdd");
+  favoriteBtn.textContent = isFav ? "★" : "☆";
+  favoriteBtn.title = label;
+  favoriteBtn.setAttribute("aria-label", label);
+  favoriteBtn.setAttribute("aria-pressed", String(isFav));
+  favoriteBtn.classList.toggle("is-favorite", isFav);
 }
 
 function toggleFavorite() {
@@ -436,7 +546,12 @@ function initAppPreferences() {
   applyTranslations();
   setSettingsPanel(false);
   renderFavorites();
+  loadFeedStatus();
   updateFavoriteButtonState();
+  resultsWrapEl.classList.remove("show");
+  resultsGridEl.classList.remove("show");
+  closeBtnEl.style.display = "none";
+  mapEl.classList.add("hidden");
 
   if (isIosInstallable()) {
     iosInstallHintEl.hidden = false;
@@ -584,6 +699,7 @@ async function zoekAlles() {
   updateFavoriteButtonState();
 
   suggestieLijst.innerHTML = "";
+  resultsWrapEl.classList.add("show");
   resultsGridEl.classList.add("show");
   closeBtnEl.style.display = "block";
 
@@ -625,6 +741,7 @@ async function zoekAlles() {
 
 function terug() {
   resultsGridEl.classList.remove("show");
+  resultsWrapEl.classList.remove("show");
   closeBtnEl.style.display = "none";
   realtimeEl.innerHTML = t("noData");
   vasteDataEl.innerHTML = t("noneSelected");
@@ -640,6 +757,7 @@ function terug() {
     trailLine = null;
   }
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
+  mapEl.classList.add("hidden");
   if(marker){ map.removeLayer(marker); marker=null; }
   updateFavoriteButtonState();
 }
@@ -681,20 +799,28 @@ function toonVasteData(id){
     const key = k.toLowerCase();
 
     if(key.includes("datum in dienst") && v!=="/") {
-      waarde = new Date(v).toLocaleDateString(localeForLanguage(settings.language),{year:'numeric',month:'long',day:'numeric'});
+      waarde = formatDateForUi(v, { year:'numeric', month:'long', day:'numeric' });
     } else if(key.includes("uit dienst")) {
       if(v==="/") waarde = t("notOutOfService");
-      else waarde = new Date(v).toLocaleDateString(localeForLanguage(settings.language),{year:'numeric',month:'long',day:'numeric'});
+      else waarde = formatDateForUi(v, { year:'numeric', month:'long', day:'numeric' });
     } else if(key.includes("datum") && v!=="/") {
-      waarde = new Date(v).toLocaleDateString(localeForLanguage(settings.language),{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+      waarde = formatDateForUi(v, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     } else {
       if(v==="/") continue;
     }
     html+=`<tr><th>${translateVehicleFieldLabel(k)}</th><td>${waarde}</td></tr>`;
   }
   html+="</table>";
+
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent('#dl' + id);
-  html += `<p class="ig-btn-wrap"><a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener">${localWord("instagramSearch")}</a></p>`;
+  const links = [
+    `<a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener">${localWord("instagramSearch")}</a>`
+  ];
+  const idNum = Number(id);
+  if (Number.isInteger(idNum) && idNum >= 4404 && idNum <= 4459) {
+    links.push(`<a class="btn btn--story" href="https://sites.google.com/view/delijn-busspotter/dampkap" target="_blank" rel="noopener">${t("story44xx")}</a>`);
+  }
+  html += `<div class="ig-btn-wrap">${links.join("")}</div>`;
   vasteDataEl.innerHTML=html;
 }
 
