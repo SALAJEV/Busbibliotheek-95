@@ -300,10 +300,22 @@ td { padding: 0.4rem 0; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
+  background:
+    radial-gradient(circle at 25% 20%, rgba(255,255,255,0.55), transparent 58%),
+    linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.28)),
+    var(--bg);
   z-index: 9999;
   padding: env(safe-area-inset);
-  transition: opacity .35s ease;
+  transition: opacity 0.42s ease, visibility 0.42s ease;
+  will-change: opacity;
+}
+@media (prefers-color-scheme: dark) {
+  #splash {
+    background:
+      radial-gradient(circle at 25% 20%, rgba(255,255,255,0.08), transparent 58%),
+      linear-gradient(180deg, rgba(15,17,21,0.9), rgba(15,17,21,0.72)),
+      var(--bg);
+  }
 }
 #splash .logo{
   width: 44vw;
@@ -313,11 +325,19 @@ td { padding: 0.4rem 0; }
   background: transparent;
   padding: 10px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  transform: translateY(0) scale(1);
+  animation: splashFloat 1.9s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 @media (min-width: 700px) {
   #splash .logo { width: 200px; }
 }
-#splash.hidden{ opacity: 0; pointer-events: none; }
+#splash.hidden{ opacity: 0; visibility: hidden; pointer-events: none; }
+#splash.hidden .logo { transform: translateY(-6px) scale(0.96); opacity: 0.45; }
+@keyframes splashFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.015); }
+}
 
 /* ===============================
    INSTALL BUTTON
@@ -424,13 +444,19 @@ td { padding: 0.4rem 0; }
 <script>
 // Splash controls (mobile-first startup experience)
 const splash = document.getElementById("splash");
-function hideSplash(ms = 350) {
+function hideSplash(ms = 260) {
   const s = splash;
-  if (!s) return;
+  if (!s || s.dataset.hiding === "1") return;
+  s.dataset.hiding = "1";
   s.classList.add("hidden");
-  setTimeout(() => { if (s.parentNode) s.parentNode.removeChild(s); document.querySelector('.grid')?.classList.add('show'); }, ms + 50);
+  const cleanup = () => {
+    if (s.parentNode) s.parentNode.removeChild(s);
+    document.querySelector('.grid')?.classList.add('show');
+  };
+  s.addEventListener("transitionend", cleanup, { once: true });
+  setTimeout(cleanup, ms + 120);
 }
-window.addEventListener('load', () => setTimeout(hideSplash, 700));
+window.addEventListener('load', () => setTimeout(hideSplash, 520));
 splash?.addEventListener('click', () => hideSplash(150));
 document.addEventListener('touchstart', () => hideSplash(150), { once: true });
 
