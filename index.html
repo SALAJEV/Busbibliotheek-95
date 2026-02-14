@@ -239,8 +239,24 @@ const vehicleFieldLabels = translationsConfig.vehicleFieldLabels || {};
 const localeMap = translationsConfig.localeMap || { nl: "nl-NL" };
 const delayLexicon = translationsConfig.delayLexicon || {};
 
-const t = (k) => i18n[settings.language]?.[k] || i18n.nl?.[k] || k;
-const localWord = (key) => localWordLabels[key]?.[settings.language] || localWordLabels[key]?.nl || key;
+const DEFAULT_LANG = "nl";
+const FALLBACK_LANG = "en";
+
+function translateKey(key, language = settings.language) {
+  return (
+    i18n[language]?.[key] ??
+    i18n[FALLBACK_LANG]?.[key] ??
+    i18n[DEFAULT_LANG]?.[key] ??
+    key
+  );
+}
+
+const t = (key) => translateKey(key);
+const localWord = (key) =>
+  localWordLabels[key]?.[settings.language] ??
+  localWordLabels[key]?.[FALLBACK_LANG] ??
+  localWordLabels[key]?.[DEFAULT_LANG] ??
+  key;
 
 function normalizeFieldKey(key) {
   return (key || "")
@@ -255,15 +271,20 @@ function translateVehicleFieldLabel(key) {
   const normalized = normalizeFieldKey(key);
   return (
     vehicleFieldLabels[settings.language]?.[normalized] ||
-    vehicleFieldLabels.nl?.[normalized] ||
+    vehicleFieldLabels[FALLBACK_LANG]?.[normalized] ||
+    vehicleFieldLabels[DEFAULT_LANG]?.[normalized] ||
     key
   );
 }
 
-const localeForLanguage = (lang) => localeMap[lang] || "nl-NL";
+const localeForLanguage = (lang) => localeMap[lang] || localeMap[FALLBACK_LANG] || localeMap[DEFAULT_LANG] || "nl-NL";
 
 function formatDelayMessage(delayMinutes) {
-  const lex = delayLexicon[settings.language] || delayLexicon.nl || { minute: "min", early: "early", late: "delay", onTime: "On time" };
+  const lex =
+    delayLexicon[settings.language] ||
+    delayLexicon[FALLBACK_LANG] ||
+    delayLexicon[DEFAULT_LANG] ||
+    { minute: "min", early: "early", late: "delay", onTime: "On time" };
   if (delayMinutes < 0) return `${Math.abs(delayMinutes)} ${lex.minute} ${lex.early}`;
   if (delayMinutes > 0) return `${delayMinutes} ${lex.minute} ${lex.late}`;
   return lex.onTime;
@@ -406,7 +427,6 @@ function updateFollowButtonText() {
 
 function initAppPreferences() {
   loadSettings();
-  if (!i18n[settings.language]) settings.language = "nl";
   loadFavorites();
   updateIntervalMs = Number(settings.intervalMs) || 10000;
   intervalSelect.value = String(updateIntervalMs);
