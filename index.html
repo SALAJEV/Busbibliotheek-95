@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260214-2">
+<link rel="stylesheet" href="style.css?v=20260214-3">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -34,7 +34,10 @@
       <h1 id="appTitle">Busbibliotheek</h1>
       <p id="appSubtitle">Zoekt een voertuig op en volg het in realtime.</p>
     </div>
-    <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
+    <div class="header-actions">
+      <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
+      <button id="settingsToggleBtn" class="icon-btn" type="button" title="Instellingen" aria-label="Instellingen" aria-controls="settingsPanel" aria-expanded="false">⚙</button>
+    </div>
   </div>
   <div id="iosInstallHint" class="hint" hidden></div>
 
@@ -49,40 +52,6 @@
   <div class="stack-card">
     <h3 id="favoritesTitle">Favorieten</h3>
     <div id="favoritesList" class="chip-row"></div>
-  </div>
-  <div class="stack-card">
-    <h3 id="settingsTitle">Instellingen</h3>
-    <div class="settings-grid">
-      <div>
-        <label for="intervalSelect" id="intervalLabel">Update-interval</label>
-        <select id="intervalSelect">
-          <option value="5000" id="intervalOpt5">5 seconden</option>
-          <option value="10000" selected id="intervalOpt10">10 seconden</option>
-          <option value="15000" id="intervalOpt15">15 seconden</option>
-          <option value="30000" id="intervalOpt30">30 seconden</option>
-        </select>
-      </div>
-      <div>
-        <label for="themeSelect" id="themeLabel">Thema</label>
-        <select id="themeSelect">
-          <option value="auto" id="themeAutoOpt">Automatisch</option>
-          <option value="light" id="themeLightOpt">Licht</option>
-          <option value="dark" id="themeDarkOpt">Donker</option>
-        </select>
-      </div>
-      <div>
-        <label for="languageSelect" id="languageLabel">Taal</label>
-        <select id="languageSelect">
-          <option value="nl">Nederlands</option>
-          <option value="fr">Francais</option>
-          <option value="en">English</option>
-          <option value="de">Deutsch</option>
-          <option value="pl">Polski</option>
-          <option value="es">Espanol</option>
-          <option value="ru">Russkiy</option>
-        </select>
-      </div>
-    </div>
   </div>
 
   <div class="results-wrap">
@@ -112,6 +81,45 @@
 
 </div>
 
+<div id="settingsBackdrop" class="settings-backdrop"></div>
+<aside id="settingsPanel" class="settings-panel" aria-hidden="true" inert>
+  <div class="settings-panel-header">
+    <h3 id="settingsTitle">Instellingen</h3>
+    <button id="settingsCloseBtn" class="settings-close-btn" type="button" title="Sluit instellingen" aria-label="Sluit instellingen">&times;</button>
+  </div>
+  <div class="settings-grid">
+    <div>
+      <label for="intervalSelect" id="intervalLabel">Update-interval</label>
+      <select id="intervalSelect">
+        <option value="5000" id="intervalOpt5">5 seconden</option>
+        <option value="10000" selected id="intervalOpt10">10 seconden</option>
+        <option value="15000" id="intervalOpt15">15 seconden</option>
+        <option value="30000" id="intervalOpt30">30 seconden</option>
+      </select>
+    </div>
+    <div>
+      <label for="themeSelect" id="themeLabel">Thema</label>
+      <select id="themeSelect">
+        <option value="auto" id="themeAutoOpt">Automatisch</option>
+        <option value="light" id="themeLightOpt">Licht</option>
+        <option value="dark" id="themeDarkOpt">Donker</option>
+      </select>
+    </div>
+    <div>
+      <label for="languageSelect" id="languageLabel">Taal</label>
+      <select id="languageSelect">
+        <option value="nl">Nederlands</option>
+        <option value="fr">Francais</option>
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="pl">Polski</option>
+        <option value="es">Espanol</option>
+        <option value="ru">Russkiy</option>
+      </select>
+    </div>
+  </div>
+</aside>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="translations.js"></script>
 <script>
@@ -137,6 +145,10 @@ document.addEventListener('touchstart', () => hideSplash(150), { once: true });
 let deferredPrompt = null;
 const installBtn = document.getElementById('installBtn');
 const iosInstallHintEl = document.getElementById("iosInstallHint");
+const settingsPanelEl = document.getElementById("settingsPanel");
+const settingsBackdropEl = document.getElementById("settingsBackdrop");
+const settingsToggleBtn = document.getElementById("settingsToggleBtn");
+const settingsCloseBtn = document.getElementById("settingsCloseBtn");
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -213,6 +225,7 @@ let centerControl;
 let delayMinutes = 0;
 let currentVehicleId = "";
 let favorites = [];
+let settingsOpen = false;
 let settings = {
   intervalMs: 10000,
   theme: "auto",
@@ -287,6 +300,8 @@ function applyTheme(theme) {
 function applyTranslations() {
   appSubtitleEl.textContent = t("subtitle");
   installBtn.textContent = t("install");
+  settingsToggleBtn.title = t("settings");
+  settingsToggleBtn.setAttribute("aria-label", t("settings"));
   iosInstallHintEl.textContent = t("iosHint");
   searchBtn.textContent = t("search");
   voertuigInput.placeholder = t("vehiclePlaceholder");
@@ -313,6 +328,15 @@ function applyTranslations() {
   }
   updateFavoriteButtonState();
   updateFollowButtonText();
+}
+
+function setSettingsPanel(open) {
+  settingsOpen = !!open;
+  document.body.classList.toggle("settings-open", settingsOpen);
+  settingsPanelEl.setAttribute("aria-hidden", String(!settingsOpen));
+  settingsPanelEl.toggleAttribute("inert", !settingsOpen);
+  settingsToggleBtn.setAttribute("aria-expanded", String(settingsOpen));
+  settingsToggleBtn.classList.toggle("active", settingsOpen);
 }
 
 function loadFavorites() {
@@ -390,6 +414,7 @@ function initAppPreferences() {
   languageSelect.value = settings.language;
   applyTheme(settings.theme);
   applyTranslations();
+  setSettingsPanel(false);
   renderFavorites();
   updateFavoriteButtonState();
 
@@ -422,6 +447,14 @@ languageSelect.addEventListener("change", () => {
   saveSettings();
   applyTranslations();
   renderFavorites();
+});
+settingsToggleBtn.addEventListener("click", () => setSettingsPanel(!settingsOpen));
+settingsCloseBtn.addEventListener("click", () => setSettingsPanel(false));
+settingsBackdropEl.addEventListener("click", () => setSettingsPanel(false));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && settingsOpen) {
+    setSettingsPanel(false);
+  }
 });
 
 // Helper: CSV parser that respects quoted fields
