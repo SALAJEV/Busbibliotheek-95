@@ -216,6 +216,12 @@ td { padding: 0.4rem 0; }
 }
 
 .leaflet-container { background: #000; border-radius: var(--radius); }
+.leaflet-control a.map-center-btn {
+  border-radius: 10px;
+  border: 1px solid var(--btn-border);
+  background: linear-gradient(135deg, var(--btn-glass-1), var(--btn-glass-2));
+  color: var(--btn-text);
+}
 
 /* Dark mode: lighter tile layer for Leaflet */
 @media (prefers-color-scheme: dark) {
@@ -326,9 +332,49 @@ td { padding: 0.4rem 0; }
     linear-gradient(135deg, rgba(5, 150, 105, 0.52), rgba(4, 120, 87, 0.38)),
     radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25), transparent 60%);
 }
-#installBtn::before { content: '⬇ '; }
-#installBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
-#installBtn.show { display: block; }
+#installBtn::before { content: "\2193 "; }
+#installBtn.show { display: inline-flex; }
+
+.btn--instagram {
+  background:
+    linear-gradient(45deg, rgba(250, 126, 30, 0.75), rgba(214, 41, 118, 0.72) 50%, rgba(79, 91, 213, 0.7)),
+    radial-gradient(circle at 25% 20%, rgba(255,255,255,0.28), transparent 60%);
+}
+
+.btn--instagram::before {
+  content: "IG ";
+  font-weight: 700;
+  margin-right: 0.25rem;
+}
+
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ig-btn-wrap { margin-top: 0.9rem; }
+
+@media (max-width: 900px) {
+  .container { padding: 1.5rem 1rem 2rem; }
+  h1 { font-size: 2rem; }
+  .card { min-height: 280px; }
+}
+
+@media (max-width: 640px) {
+  .header-bar { align-items: stretch; }
+  #installBtn { width: 100%; }
+  .btn,
+  button:not(.close-btn) { width: 100%; }
+  #map { height: 260px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
 </style>
 </head>
 <body>
@@ -340,7 +386,7 @@ td { padding: 0.4rem 0; }
   </picture>
 </div>
 <div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div class="header-bar">
     <div>
       <h1>Busbibliotheek</h1>
       <p>Zoekt een voertuig op en volg het in realtime.</p>
@@ -354,7 +400,7 @@ td { padding: 0.4rem 0; }
   <ul id="suggestielijst"></ul>
 
   <div class="grid" id="resultsGrid">
-    <button class="close-btn" id="closeBtn" style="display:none; position: absolute; top: 2rem; right: 1.5rem; z-index: 100;" onclick="terug()" title="Venster sluiten" aria-label="Sluiten">×</button>
+    <button class="close-btn" id="closeBtn" style="display:none; position: absolute; top: 2rem; right: 1.5rem; z-index: 100;" onclick="terug()" title="Venster sluiten" aria-label="Sluiten">&times;</button>
     <div class="card">
       <h2>Voertuiginformatie</h2>
       <div id="vasteData">Geen voertuig geselecteerd.</div>
@@ -369,7 +415,7 @@ td { padding: 0.4rem 0; }
 
   <footer style="margin-top: 4rem; padding: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem;">
     <h3>Disclaimer</h3>
-    <p style="margin-top: 0.5rem; line-height: 1.6;">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertraging, fouten of onnauwkeurigheden in realtime gegevens. Gebruikers raadplegen deze informatie geheel op eigen risico. Raadpleeg voor officiële ritinformatie de bevoegde vervoersmaatschappij.</p>
+    <p style="margin-top: 0.5rem; line-height: 1.6;">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertraging, fouten of onnauwkeurigheden in realtime gegevens. Gebruikers raadplegen deze informatie geheel op eigen risico. Raadpleeg voor offici&euml;le ritinformatie de bevoegde vervoersmaatschappij.</p>
   </footer>
 
 </div>
@@ -406,7 +452,7 @@ installBtn.addEventListener('click', async () => {
   }
 });
 window.addEventListener('appinstalled', () => {
-  console.log('App succesvol geïnstalleerd');
+  console.log('App succesvol geinstalleerd');
   installBtn.classList.remove('show');
   deferredPrompt = null;
 });
@@ -415,6 +461,14 @@ window.addEventListener('appinstalled', () => {
 const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
 const API_URL = "https://busbibliotheek95.pages.dev/api";
 const TIME_UPDATE = 10000; // 10 seconds
+
+const voertuigInput = document.getElementById("voertuignummer");
+const suggestieLijst = document.getElementById("suggestielijst");
+const realtimeEl = document.getElementById("realtime");
+const vasteDataEl = document.getElementById("vasteData");
+const resultsGridEl = document.getElementById("resultsGrid");
+const closeBtnEl = document.getElementById("closeBtn");
+const mapEl = document.getElementById("map");
 
 let voertuigen = [];
 let trips = [];
@@ -501,36 +555,36 @@ laadTrips();
 laadRoutes();
 
 function toonSuggesties() {
-  const q = voertuignummer.value.toLowerCase();
-  suggestielijst.innerHTML = "";
+  const q = voertuigInput.value.toLowerCase();
+  suggestieLijst.innerHTML = "";
   if(!q) return;
 
   voertuigen.filter(v => v.Voertuignummer?.toLowerCase().startsWith(q))
     .slice(0,8)
     .forEach(v=>{
       const li=document.createElement("li");
-      li.textContent = `${v.Voertuignummer} – ${v.Type}`;
+      li.textContent = `${v.Voertuignummer} - ${v.Type}`;
       li.onclick=()=>{
-        voertuignummer.value=v.Voertuignummer;
-        suggestielijst.innerHTML="";
-        voertuignummer.blur(); // Focus weghalen zodat geen enter meer nodig is
+        voertuigInput.value=v.Voertuignummer;
+        suggestieLijst.innerHTML="";
+        voertuigInput.blur(); // Focus weghalen zodat geen enter meer nodig is
         zoekAlles();
       };
-      suggestielijst.appendChild(li);
+      suggestieLijst.appendChild(li);
     });
 }
 
 function zoekAlles() {
-  const id = voertuignummer.value.trim();
+  const id = voertuigInput.value.trim();
   if(!id) return;
 
-  suggestielijst.innerHTML = "";
-  document.getElementById("resultsGrid").classList.add("show");
-  document.getElementById("closeBtn").style.display = "block";
+  suggestieLijst.innerHTML = "";
+  resultsGridEl.classList.add("show");
+  closeBtnEl.style.display = "block";
 
   toonVasteData(id);
 
-  realtime.innerHTML = "<span class='spinner'></span><span class='loading'>Gegevens laden...</span>";
+  realtimeEl.innerHTML = "<span class='spinner'></span><span class='loading'>Gegevens laden...</span>";
 
   updateRealtime(id);
   if(refresh) clearInterval(refresh);
@@ -538,11 +592,15 @@ function zoekAlles() {
 }
 
 function terug() {
-  document.getElementById("resultsGrid").classList.remove("show");
-  document.getElementById("closeBtn").style.display = "none";
-  realtime.innerHTML = "Geen gegevens beschikbaar.";
-  vasteData.innerHTML = "Geen voertuig geselecteerd.";
-  voertuignummer.value = "";
+  resultsGridEl.classList.remove("show");
+  closeBtnEl.style.display = "none";
+  realtimeEl.innerHTML = "Geen gegevens beschikbaar.";
+  vasteDataEl.innerHTML = "Geen voertuig geselecteerd.";
+  voertuigInput.value = "";
+  if(refresh) {
+    clearInterval(refresh);
+    refresh = null;
+  }
   if(marker){ map.removeLayer(marker); marker=null; }
 }
 
@@ -555,7 +613,7 @@ function toonVasteData(id){
   );
 
   if(!bus){
-    vasteData.innerHTML="Geen voertuiggegevens gevonden.";
+    vasteDataEl.innerHTML="Geen voertuiggegevens gevonden.";
     return;
   }
 
@@ -583,7 +641,7 @@ function toonVasteData(id){
   html+="</table>";
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent('#dl' + id);
   html += `<p class="ig-btn-wrap"><a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener">Zoek op Instagram</a></p>`;
-  vasteData.innerHTML=html;
+  vasteDataEl.innerHTML=html;
 }
 
 function initMap(lat,lon){
@@ -611,7 +669,7 @@ function initMap(lat,lon){
     const CenterControl = L.Control.extend({
       onAdd: function(map){
         const el = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        const btn = L.DomUtil.create('a', '', el);
+        const btn = L.DomUtil.create('a', 'map-center-btn', el);
         btn.innerHTML = 'C';
         btn.title = 'Centreren';
         btn.href = '#';
@@ -620,10 +678,6 @@ function initMap(lat,lon){
         btn.style.height = '30px';
         btn.style.lineHeight = '30px';
         btn.style.textAlign = 'center';
-        btn.style.fontWeight = '700';
-        btn.style.background = 'white';
-        btn.style.color = '#333';
-        btn.style.textDecoration = 'none';
 
         L.DomEvent.on(btn, 'click', L.DomEvent.stopPropagation)
                  .on(btn, 'click', L.DomEvent.preventDefault)
@@ -651,7 +705,7 @@ async function updateRealtime(id){
 
     const gps = data.entity.reverse().find(e=>e.vehicle?.vehicle?.id==id && e.vehicle.position);
 
-    if(!gps){ realtime.innerHTML="Geen realtimegegevens beschikbaar."; document.getElementById("map").classList.add("hidden"); return; }
+    if(!gps){ realtimeEl.innerHTML="Geen realtimegegevens beschikbaar."; mapEl.classList.add("hidden"); return; }
 
     const v=gps.vehicle;
     const tripid = gps.vehicle.trip?.tripId || gps.vehicle.trip?.trip_id || "Geen trip";
@@ -693,7 +747,7 @@ async function updateRealtime(id){
 
     // Extract delay in seconds and convert to minutes
     let delaySeconds = gps.vehicle.trip?.delay || 0;
-    if (!delaySeconds && v.vehicle?.stopStatus?.delay) delaySeconds = v.vehicle.stopStatus.delay;
+    if (!delaySeconds && v.stopStatus?.delay) delaySeconds = v.stopStatus.delay;
     delayMinutes = Math.round(delaySeconds / 60);
     
     const msgDelay = delayMinutes < 0 ? `${Math.abs(delayMinutes)} minuut${Math.abs(delayMinutes)!==1?'en':''} te vroeg` 
@@ -701,18 +755,19 @@ async function updateRealtime(id){
                    : "Op tijd";
     const delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
 
-    realtime.innerHTML=`
+    realtimeEl.innerHTML=`
       <p>
         <b>Lijn:</b> ${routeShort}<br>
         <b>Bestemming:</b> ${tripShort}<br>
         <span class="delay-status ${delayClass}">${msgDelay}</span>
       </p>
     `;
-    document.getElementById("map").classList.remove("hidden");
+    mapEl.classList.remove("hidden");
 
     initMap(v.position.latitude,v.position.longitude);
-    // Always center the map on each realtime update
-    map.setView([v.position.latitude,v.position.longitude],15);
+    if (!userInteracted) {
+      map.setView([v.position.latitude,v.position.longitude],15);
+    }
 
     const bearing = v.position.bearing || 0;
 
@@ -738,7 +793,7 @@ async function updateRealtime(id){
       }
     }
 
-  }catch(e){ console.error(e); realtime.innerHTML="Fout bij ophalen van realtimegegevens."; }
+  }catch(e){ console.error(e); realtimeEl.innerHTML="Fout bij ophalen van realtimegegevens."; }
 }
 </script>
 
@@ -751,3 +806,4 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
