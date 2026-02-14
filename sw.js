@@ -1,7 +1,8 @@
-const CACHE_NAME = 'busbibliotheek-v1';
+const CACHE_NAME = 'busbibliotheek-v2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
+  '/offline.html',
   '/style.css',
   '/logo_light.png',
   '/logo_dark.png',
@@ -35,17 +36,32 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event: network-first strategy for dynamic content, cache-first for static assets
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests and external URLs not in cache list
   if (request.method !== 'GET') {
     return;
   }
 
-  // API calls: network-first (always try fresh data)
+  // HTML navigation: network first with offline fallback page
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const cloned = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, cloned));
+          return response;
+        })
+        .catch(async () => {
+          const cachedPage = await caches.match(request);
+          return cachedPage || caches.match('/offline.html');
+        })
+    );
+    return;
+  }
+
+  // API/external calls: network first, fallback to cache
   if (url.hostname !== self.location.hostname || url.pathname.includes('/api')) {
     event.respondWith(
       fetch(request)
@@ -62,11 +78,21 @@ self.addEventListener('fetch', event => {
           return caches.match(request);
         })
     );
-  } else {
-    // Static assets: cache-first
+  } else { // Static assets: stale-while-revalidate
     event.respondWith(
-      caches.match(request)
-        .then(response => response || fetch(request))
+      caches.match(request).then(cached => {
+        const networkFetch = fetch(request)
+          .then(response => {
+            if (response && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => cached);
+
+        return cached || networkFetch;
+      })
     );
   }
 });
