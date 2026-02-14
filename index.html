@@ -86,7 +86,7 @@
   </div>
 
   <div class="grid" id="resultsGrid">
-    <button class="close-btn" id="closeBtn" style="display:none; position: absolute; top: 2rem; right: 1.5rem; z-index: 100;" onclick="terug()" title="Venster sluiten" aria-label="Sluiten">&times;</button>
+    <button class="close-btn" id="closeBtn" onclick="terug()" title="Venster sluiten" aria-label="Sluiten">&times;</button>
     <div class="card">
       <h2 id="staticCardTitle">Voertuiginformatie</h2>
       <div id="vasteData">Geen voertuig geselecteerd.</div>
@@ -103,9 +103,9 @@
     </div>
   </div>
 
-  <footer style="margin-top: 4rem; padding: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem;">
+  <footer>
     <h3 id="disclaimerTitle">Disclaimer</h3>
-    <p id="disclaimerText" style="margin-top: 0.5rem; line-height: 1.6;">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertraging, fouten of onnauwkeurigheden in realtime gegevens. Gebruikers raadplegen deze informatie geheel op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij.</p>
+    <p id="disclaimerText">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertraging, fouten of onnauwkeurigheden in realtime gegevens. Gebruikers raadplegen deze informatie geheel op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij.</p>
   </footer>
 
 </div>
@@ -617,7 +617,7 @@ function toonVasteData(id){
   }
 
   let html=`<p class="voertuignummer-display">${bus.Voertuignummer}</p>`;
-  if(bus.Type) html += `<p style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.8rem;">${bus.Type}</p>`;
+  if(bus.Type) html += `<p class="vehicle-type">${bus.Type}</p>`;
   html+="<table>";
   for(const [k,v] of Object.entries(bus)){
     if(k==="Vervoersmaatschappij"||k==="Voertuignummer"||k==="Type") continue;
@@ -857,6 +857,7 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
 
 
