@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260215-3">
+<link rel="stylesheet" href="style.css?v=20260215-4">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -116,15 +116,6 @@
       </select>
     </div>
     <div>
-      <label for="stylePresetSelect" id="stylePresetLabel">Stijl</label>
-      <select id="stylePresetSelect">
-        <option value="standard" id="styleStandardOpt">Standaard</option>
-        <option value="compact" id="styleCompactOpt">Compact</option>
-        <option value="modern" id="styleModernOpt">Modern</option>
-        <option value="calm" id="styleCalmOpt">Rustig</option>
-      </select>
-    </div>
-    <div>
       <label for="languageSelect" id="languageLabel">Taal</label>
       <select id="languageSelect">
         <option value="nl">Nederlands</option>
@@ -149,7 +140,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="translations.js?v=20260215-2"></script>
+<script src="translations.js?v=20260215-3"></script>
 <script>
 // Splash controls (mobile-first startup experience)
 const splash = document.getElementById("splash");
@@ -221,7 +212,6 @@ const favoritesListEl = document.getElementById("favoritesList");
 const intervalSelect = document.getElementById("intervalSelect");
 const themeSelect = document.getElementById("themeSelect");
 const colorThemeSelect = document.getElementById("colorThemeSelect");
-const stylePresetSelect = document.getElementById("stylePresetSelect");
 const languageSelect = document.getElementById("languageSelect");
 const intervalOpt5El = document.getElementById("intervalOpt5");
 const intervalOpt10El = document.getElementById("intervalOpt10");
@@ -235,11 +225,6 @@ const colorBlueOptEl = document.getElementById("colorBlueOpt");
 const colorGreenOptEl = document.getElementById("colorGreenOpt");
 const colorYellowOptEl = document.getElementById("colorYellowOpt");
 const colorRedOptEl = document.getElementById("colorRedOpt");
-const stylePresetLabelEl = document.getElementById("stylePresetLabel");
-const styleStandardOptEl = document.getElementById("styleStandardOpt");
-const styleCompactOptEl = document.getElementById("styleCompactOpt");
-const styleModernOptEl = document.getElementById("styleModernOpt");
-const styleCalmOptEl = document.getElementById("styleCalmOpt");
 const themeColorMetaEls = Array.from(document.querySelectorAll('meta[name="theme-color"]'));
 const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
 const lastUpdateEl = document.getElementById("lastUpdate");
@@ -273,11 +258,15 @@ let favorites = [];
 let settingsOpen = false;
 let favoritesPanelOpen = false;
 let feedEndDateValue = "";
+const INACTIVITY_LIMIT_MS = 5 * 60 * 1000;
+const INACTIVITY_CHECK_MS = 15000;
+let lastUserInteractionAt = Date.now();
+let realtimePausedByInactivity = false;
+let inactivityCheckHandle = null;
 let settings = {
   intervalMs: 10000,
   theme: "auto",
   colorTheme: "blue",
-  stylePreset: "calm",
   language: "nl"
 };
 
@@ -291,7 +280,6 @@ const delayLexicon = translationsConfig.delayLexicon || {};
 const DEFAULT_LANG = "nl";
 const FALLBACK_LANG = "en";
 const ALLOWED_COLOR_THEMES = ["blue", "green", "yellow", "red"];
-const ALLOWED_STYLE_PRESETS = ["standard", "compact", "modern", "calm"];
 
 function translateKey(key, language = settings.language) {
   return (
@@ -409,7 +397,6 @@ function loadSettings() {
     const parsed = JSON.parse(raw);
     settings = { ...settings, ...parsed };
     settings.colorTheme = normalizeColorTheme(settings.colorTheme);
-    settings.stylePreset = normalizeStylePreset(settings.stylePreset);
   } catch (e) {
     console.warn("Settings laden mislukt", e);
   }
@@ -436,19 +423,6 @@ function applyColorTheme(colorTheme) {
   const normalized = normalizeColorTheme(colorTheme);
   if (normalized === "blue") root.removeAttribute("data-color-theme");
   else root.setAttribute("data-color-theme", normalized);
-  updateSystemUiThemeColor();
-}
-
-function normalizeStylePreset(stylePreset) {
-  const value = (stylePreset || "").toString().toLowerCase();
-  return ALLOWED_STYLE_PRESETS.includes(value) ? value : "calm";
-}
-
-function applyStylePreset(stylePreset) {
-  const root = document.documentElement;
-  const normalized = normalizeStylePreset(stylePreset);
-  if (normalized === "standard") root.removeAttribute("data-ui-style");
-  else root.setAttribute("data-ui-style", normalized);
   updateSystemUiThemeColor();
 }
 
@@ -481,7 +455,6 @@ function applyTranslations() {
   intervalLabelEl.textContent = t("interval");
   themeLabelEl.textContent = t("theme");
   colorThemeLabelEl.textContent = t("colorTheme");
-  stylePresetLabelEl.textContent = t("stylePreset");
   languageLabelEl.textContent = t("language");
   intervalOpt5El.textContent = `5 ${t("intervalSeconds")}`;
   intervalOpt10El.textContent = `10 ${t("intervalSeconds")}`;
@@ -494,10 +467,6 @@ function applyTranslations() {
   colorGreenOptEl.textContent = t("colorGreen");
   colorYellowOptEl.textContent = t("colorYellow");
   colorRedOptEl.textContent = t("colorRed");
-  styleStandardOptEl.textContent = t("styleStandard");
-  styleCompactOptEl.textContent = t("styleCompact");
-  styleModernOptEl.textContent = t("styleModern");
-  styleCalmOptEl.textContent = t("styleCalm");
   staticCardTitleEl.textContent = t("staticCard");
   realtimeCardTitleEl.textContent = t("realtimeCard");
   disclaimerTitleEl.textContent = t("disclaimerTitle");
@@ -510,6 +479,9 @@ function applyTranslations() {
   }
   updateFeedStatusText();
   updateFavoriteButtonState();
+  if (realtimePausedByInactivity && currentVehicleId) {
+    realtimeEl.textContent = t("idlePaused");
+  }
 }
 
 function updateFeedStatusText() {
@@ -657,8 +629,46 @@ function toggleFavorite(explicitId = "") {
 
 function restartRealtimeRefresh() {
   if (refresh) clearInterval(refresh);
-  if (!currentVehicleId) return;
+  if (!currentVehicleId || realtimePausedByInactivity) return;
   refresh = setInterval(() => updateRealtime(currentVehicleId), updateIntervalMs);
+}
+
+function markUserInteraction() {
+  lastUserInteractionAt = Date.now();
+  if (!realtimePausedByInactivity || !currentVehicleId) return;
+  realtimePausedByInactivity = false;
+  restartRealtimeRefresh();
+  updateRealtime(currentVehicleId);
+}
+
+function pauseRealtimeForInactivity() {
+  if (!currentVehicleId || realtimePausedByInactivity) return;
+  realtimePausedByInactivity = true;
+  if (refresh) {
+    clearInterval(refresh);
+    refresh = null;
+  }
+  realtimeEl.textContent = t("idlePaused");
+}
+
+function initInactivityMonitor() {
+  if (inactivityCheckHandle) return;
+  inactivityCheckHandle = setInterval(() => {
+    if (!currentVehicleId || realtimePausedByInactivity) return;
+    const idleMs = Date.now() - lastUserInteractionAt;
+    if (idleMs >= INACTIVITY_LIMIT_MS) {
+      pauseRealtimeForInactivity();
+    }
+  }, INACTIVITY_CHECK_MS);
+
+  ["pointerdown", "touchstart", "wheel", "scroll", "mousedown"].forEach((eventName) => {
+    document.addEventListener(eventName, markUserInteraction, { passive: true });
+  });
+  document.addEventListener("keydown", markUserInteraction);
+  window.addEventListener("focus", markUserInteraction);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) markUserInteraction();
+  });
 }
 
 function initAppPreferences() {
@@ -669,12 +679,9 @@ function initAppPreferences() {
   themeSelect.value = settings.theme;
   settings.colorTheme = normalizeColorTheme(settings.colorTheme);
   colorThemeSelect.value = settings.colorTheme;
-  settings.stylePreset = normalizeStylePreset(settings.stylePreset);
-  stylePresetSelect.value = settings.stylePreset;
   languageSelect.value = settings.language;
   applyTheme(settings.theme);
   applyColorTheme(settings.colorTheme);
-  applyStylePreset(settings.stylePreset);
   applyTranslations();
   setSettingsPanel(false);
   setFavoritesPanel(false);
@@ -691,6 +698,7 @@ function initAppPreferences() {
   if (isIosInstallable()) {
     iosInstallHintEl.hidden = false;
   }
+  initInactivityMonitor();
 }
 
 searchBtn.addEventListener("click", zoekAlles);
@@ -736,12 +744,6 @@ colorThemeSelect.addEventListener("change", () => {
   colorThemeSelect.value = settings.colorTheme;
   saveSettings();
   applyColorTheme(settings.colorTheme);
-});
-stylePresetSelect.addEventListener("change", () => {
-  settings.stylePreset = normalizeStylePreset(stylePresetSelect.value);
-  stylePresetSelect.value = settings.stylePreset;
-  saveSettings();
-  applyStylePreset(settings.stylePreset);
 });
 languageSelect.addEventListener("change", () => {
   settings.language = languageSelect.value;
@@ -891,6 +893,7 @@ function toonSuggesties() {
 }
 
 async function zoekAlles() {
+  markUserInteraction();
   const id = voertuigInput.value.trim();
   if(!id) return;
   setFavoritesPanel(false);
@@ -900,6 +903,7 @@ async function zoekAlles() {
     return;
   }
   currentVehicleId = id;
+  realtimePausedByInactivity = false;
   updateFavoriteButtonState();
 
   suggestieLijst.innerHTML = "";
@@ -942,8 +946,7 @@ async function zoekAlles() {
   }
 
   updateRealtime(id);
-  if(refresh) clearInterval(refresh);
-  refresh = setInterval(()=>updateRealtime(id), updateIntervalMs);
+  restartRealtimeRefresh();
 }
 
 function terug() {
@@ -954,6 +957,7 @@ function terug() {
   vasteDataEl.innerHTML = t("noneSelected");
   voertuigInput.value = "";
   currentVehicleId = "";
+  realtimePausedByInactivity = false;
   routeTrail = [];
   if(refresh) {
     clearInterval(refresh);
@@ -1207,10 +1211,10 @@ async function updateRealtime(id){
       <span class="destination-text">${escapeHtml(destinationText)}</span>
     `;
     const routeRowMarkup = routeUrl
-      ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}">${routeRowInner}</a>`
+      ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}" target="_blank" rel="noopener noreferrer">${routeRowInner}</a>`
       : `<div class="route-destination-row">${routeRowInner}</div>`;
     const currentStopValueMarkup = currentStopUrl
-      ? `<a class="current-stop-link" href="${escapeHtml(currentStopUrl)}">${escapeHtml(currentStopName)}</a>`
+      ? `<a class="current-stop-link" href="${escapeHtml(currentStopUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(currentStopName)}</a>`
       : `<span class="current-stop-link">${escapeHtml(currentStopName)}</span>`;
 
     realtimeEl.innerHTML=`
