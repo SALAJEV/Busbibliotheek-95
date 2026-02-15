@@ -2,6 +2,7 @@ window.BB_TRANSLATIONS = {
   i18n: {
     nl: {
       subtitle: "Zoek een voertuig en volg het in realtime.",
+      appContextLine: "Over bussen van de Vlaamse vervoermaatschappij De Lijn.",
       install: "Installeer app",
       iosHint: "Op iPhone/iPad: tik op Deel en kies 'Zet op beginscherm'.",
       search: "Zoeken",
@@ -47,6 +48,7 @@ window.BB_TRANSLATIONS = {
     },
     fr: {
       subtitle: "Recherchez un vehicule et suivez-le en temps reel.",
+      appContextLine: "A propos des bus de la societe de transport flamande De Lijn.",
       install: "Installer l'application",
       iosHint: "Sur iPhone/iPad: touchez Partager puis 'Sur l'ecran d'accueil'.",
       search: "Rechercher",
@@ -92,6 +94,7 @@ window.BB_TRANSLATIONS = {
     },
     en: {
       subtitle: "Search for a vehicle and follow it in real time.",
+      appContextLine: "About buses of the Flemish public transport company De Lijn.",
       install: "Install app",
       iosHint: "On iPhone/iPad: tap Share and choose 'Add to Home Screen'.",
       search: "Search",
@@ -137,6 +140,7 @@ window.BB_TRANSLATIONS = {
     },
     de: {
       subtitle: "Suche ein Fahrzeug und verfolge es in Echtzeit.",
+      appContextLine: "Infos uber Busse der flamischen Verkehrsgesellschaft De Lijn.",
       install: "App installieren",
       iosHint: "Auf iPhone/iPad: Tippe auf Teilen und wahle 'Zum Home-Bildschirm'.",
       search: "Suchen",
@@ -182,6 +186,7 @@ window.BB_TRANSLATIONS = {
     },
     pl: {
       subtitle: "Wyszukaj pojazd i sledz go w czasie rzeczywistym.",
+      appContextLine: "O autobusach flamandzkiego przewoznika De Lijn.",
       install: "Zainstaluj aplikacje",
       iosHint: "Na iPhone/iPad: dotknij Udostepnij i wybierz 'Dodaj do ekranu poczatkowego'.",
       search: "Szukaj",
@@ -227,6 +232,7 @@ window.BB_TRANSLATIONS = {
     },
     es: {
       subtitle: "Busca un vehiculo y siguelo en tiempo real.",
+      appContextLine: "Sobre los autobuses de la empresa flamenca de transporte De Lijn.",
       install: "Instalar app",
       iosHint: "En iPhone/iPad: toca Compartir y elige 'Anadir a pantalla de inicio'.",
       search: "Buscar",
@@ -272,6 +278,7 @@ window.BB_TRANSLATIONS = {
     },
     ru: {
       subtitle: "\u041d\u0430\u0439\u0434\u0438\u0442\u0435 \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442 \u0438 \u043e\u0442\u0441\u043b\u0435\u0436\u0438\u0432\u0430\u0439\u0442\u0435 \u0435\u0433\u043e \u0432 \u0440\u0435\u0430\u043b\u044c\u043d\u043e\u043c \u0432\u0440\u0435\u043c\u0435\u043d\u0438.",
+      appContextLine: "O avtobusah flamandskoy transportnoy kompanii De Lijn.",
       install: "\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435",
       iosHint: "\u041d\u0430 iPhone/iPad: \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u041f\u043e\u0434\u0435\u043b\u0438\u0442\u044c\u0441\u044f\u00bb \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u00ab\u041d\u0430 \u044d\u043a\u0440\u0430\u043d \u0414\u043e\u043c\u043e\u0439\u00bb.",
       search: "\u0418\u0441\u043a\u0430\u0442\u044c",

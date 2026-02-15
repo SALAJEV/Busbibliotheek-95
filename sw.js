@@ -1,18 +1,18 @@
-const CACHE_NAME = 'busbibliotheek-v13';
+const CACHE_NAME = 'busbibliotheek-v14';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/translations.js',
-  '/translations.js?v=20260214-4',
+  '/translations.js?v=20260215-1',
   '/offline.html',
   '/style.css',
-  '/style.css?v=20260214-11',
+  '/style.css?v=20260215-1',
   '/logo_light.png',
   '/logo_dark.png',
   '/navicon.png',
   'https://unpkg.com/leaflet/dist/leaflet.css',
   'https://unpkg.com/leaflet/dist/leaflet.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap'
+  'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap'
 ];
 
 // Install event: cache essential files

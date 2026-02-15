@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Zoek een voertuig en volg 'm live.">
+<meta name="description" content="Busbibliotheek voor bussen van De Lijn: zoek een voertuig en volg het live.">
 <meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260214-11">
+<link rel="stylesheet" href="style.css?v=20260215-1">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -31,12 +31,20 @@
 </div>
 <div class="container">
   <div class="header-bar">
-    <div>
+    <div class="header-intro">
       <h1 id="appTitle">Busbibliotheek</h1>
       <p id="appSubtitle">Zoek een voertuig en volg het in realtime.</p>
+      <p id="appContextLine" class="app-context-line">Over bussen van de Vlaamse vervoermaatschappij De Lijn.</p>
     </div>
     <div class="header-actions">
       <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
+      <div class="favorites-top">
+        <button id="favoritesToggleBtn" class="icon-btn favorites-toggle-btn" type="button" title="Favorieten" aria-label="Favorieten" aria-controls="favoritesPanel" aria-expanded="false">&#9734;</button>
+        <div id="favoritesPanel" class="favorites-panel" hidden>
+          <h3 id="favoritesTitle">Favorieten</h3>
+          <div id="favoritesList" class="chip-row"></div>
+        </div>
+      </div>
       <button id="settingsToggleBtn" class="icon-btn" type="button" title="Instellingen" aria-label="Instellingen" aria-controls="settingsPanel" aria-expanded="false">&#9881;</button>
     </div>
   </div>
@@ -47,13 +55,8 @@
            oninput="toonSuggesties()" 
            onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
     <button id="searchBtn" type="button">Zoeken</button>
-    <button id="favoriteBtn" type="button" title="Favoriet toevoegen" aria-label="Favoriet toevoegen" hidden>&#9734;</button>
   </div>
   <ul id="suggestielijst"></ul>
-  <div class="stack-card">
-    <h3 id="favoritesTitle">Favorieten</h3>
-    <div id="favoritesList" class="chip-row"></div>
-  </div>
 
   <div class="results-wrap">
     <button class="close-btn" id="closeBtn" onclick="terug()" title="Venster sluiten" aria-label="Sluiten">&times;</button>
@@ -149,7 +152,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="translations.js?v=20260214-4"></script>
+<script src="translations.js?v=20260215-1"></script>
 <script>
 // Splash controls (mobile-first startup experience)
 const splash = document.getElementById("splash");
@@ -176,6 +179,8 @@ const settingsPanelEl = document.getElementById("settingsPanel");
 const settingsBackdropEl = document.getElementById("settingsBackdrop");
 const settingsToggleBtn = document.getElementById("settingsToggleBtn");
 const settingsCloseBtn = document.getElementById("settingsCloseBtn");
+const favoritesToggleBtn = document.getElementById("favoritesToggleBtn");
+const favoritesPanelEl = document.getElementById("favoritesPanel");
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -215,7 +220,6 @@ const resultsGridEl = document.getElementById("resultsGrid");
 const closeBtnEl = document.getElementById("closeBtn");
 const mapEl = document.getElementById("map");
 const searchBtn = document.getElementById("searchBtn");
-const favoriteBtn = document.getElementById("favoriteBtn");
 const favoritesListEl = document.getElementById("favoritesList");
 const intervalSelect = document.getElementById("intervalSelect");
 const themeSelect = document.getElementById("themeSelect");
@@ -243,6 +247,7 @@ const followToggleBtn = document.getElementById("followToggle");
 const lastUpdateEl = document.getElementById("lastUpdate");
 const appTitleEl = document.getElementById("appTitle");
 const appSubtitleEl = document.getElementById("appSubtitle");
+const appContextLineEl = document.getElementById("appContextLine");
 const favoritesTitleEl = document.getElementById("favoritesTitle");
 const settingsTitleEl = document.getElementById("settingsTitle");
 const intervalLabelEl = document.getElementById("intervalLabel");
@@ -269,6 +274,7 @@ let delayMinutes = 0;
 let currentVehicleId = "";
 let favorites = [];
 let settingsOpen = false;
+let favoritesPanelOpen = false;
 let feedEndDateValue = "";
 let settings = {
   intervalMs: 10000,
@@ -438,7 +444,10 @@ function applyStylePreset(stylePreset) {
 
 function applyTranslations() {
   appSubtitleEl.textContent = t("subtitle");
+  appContextLineEl.textContent = t("appContextLine");
   installBtn.textContent = t("install");
+  favoritesToggleBtn.title = t("favorites");
+  favoritesToggleBtn.setAttribute("aria-label", t("favorites"));
   settingsToggleBtn.title = t("settings");
   settingsToggleBtn.setAttribute("aria-label", t("settings"));
   iosInstallHintEl.textContent = t("iosHint");
@@ -528,12 +537,22 @@ async function loadFeedStatus() {
 }
 
 function setSettingsPanel(open) {
+  if (open) setFavoritesPanel(false);
   settingsOpen = !!open;
   document.body.classList.toggle("settings-open", settingsOpen);
   settingsPanelEl.setAttribute("aria-hidden", String(!settingsOpen));
   settingsPanelEl.toggleAttribute("inert", !settingsOpen);
   settingsToggleBtn.setAttribute("aria-expanded", String(settingsOpen));
   settingsToggleBtn.classList.toggle("active", settingsOpen);
+}
+
+function setFavoritesPanel(open) {
+  const shouldOpen = !!open;
+  if (shouldOpen && settingsOpen) setSettingsPanel(false);
+  favoritesPanelOpen = shouldOpen;
+  favoritesPanelEl.hidden = !favoritesPanelOpen;
+  favoritesToggleBtn.setAttribute("aria-expanded", String(favoritesPanelOpen));
+  favoritesToggleBtn.classList.toggle("active", favoritesPanelOpen);
 }
 
 function showFunnyModal() {
@@ -577,6 +596,7 @@ function renderFavorites() {
     chip.textContent = id;
     chip.addEventListener("click", () => {
       voertuigInput.value = id;
+      setFavoritesPanel(false);
       zoekAlles();
     });
     favoritesListEl.appendChild(chip);
@@ -584,29 +604,25 @@ function renderFavorites() {
 }
 
 function updateFavoriteButtonState() {
-  const id = voertuigInput.value.trim();
-  const hasVehicleInput = id.length > 0;
-  favoriteBtn.hidden = !hasVehicleInput;
-  favoriteBtn.disabled = !hasVehicleInput;
-
-  if (!hasVehicleInput) {
-    favoriteBtn.textContent = "\u2606";
-    favoriteBtn.classList.remove("is-favorite");
-    favoriteBtn.removeAttribute("aria-pressed");
+  const inlineFavoriteBtn = document.getElementById("favoriteInlineBtn");
+  if (!inlineFavoriteBtn) {
     return;
   }
 
+  const id = (inlineFavoriteBtn.dataset.id || currentVehicleId || voertuigInput.value || "").trim();
+  if (!id) return;
+
   const isFav = favorites.includes(id);
   const label = isFav ? t("favoriteRemove") : t("favoriteAdd");
-  favoriteBtn.textContent = isFav ? "\u2605" : "\u2606";
-  favoriteBtn.title = label;
-  favoriteBtn.setAttribute("aria-label", label);
-  favoriteBtn.setAttribute("aria-pressed", String(isFav));
-  favoriteBtn.classList.toggle("is-favorite", isFav);
+  inlineFavoriteBtn.textContent = isFav ? "\u2605" : "\u2606";
+  inlineFavoriteBtn.title = label;
+  inlineFavoriteBtn.setAttribute("aria-label", label);
+  inlineFavoriteBtn.setAttribute("aria-pressed", String(isFav));
+  inlineFavoriteBtn.classList.toggle("is-favorite", isFav);
 }
 
-function toggleFavorite() {
-  const id = voertuigInput.value.trim();
+function toggleFavorite(explicitId = "") {
+  const id = (explicitId || currentVehicleId || voertuigInput.value || "").trim();
   if (!id) return;
   if (favorites.includes(id)) {
     favorites = favorites.filter((x) => x !== id);
@@ -645,6 +661,7 @@ function initAppPreferences() {
   applyStylePreset(settings.stylePreset);
   applyTranslations();
   setSettingsPanel(false);
+  setFavoritesPanel(false);
   renderFavorites();
   loadFeedStatus();
   updateFavoriteButtonState();
@@ -661,8 +678,32 @@ function initAppPreferences() {
 }
 
 searchBtn.addEventListener("click", zoekAlles);
-favoriteBtn.addEventListener("click", toggleFavorite);
 voertuigInput.addEventListener("input", updateFavoriteButtonState);
+favoritesToggleBtn.addEventListener("click", (event) => {
+  event.stopPropagation();
+  setFavoritesPanel(!favoritesPanelOpen);
+});
+favoritesPanelEl.addEventListener("click", (event) => {
+  event.stopPropagation();
+});
+document.addEventListener("click", (event) => {
+  if (!favoritesPanelOpen) return;
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    setFavoritesPanel(false);
+    return;
+  }
+  if (favoritesPanelEl.contains(target) || favoritesToggleBtn.contains(target)) return;
+  setFavoritesPanel(false);
+});
+vasteDataEl.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const inlineFavoriteBtn = target.closest("#favoriteInlineBtn");
+  if (!inlineFavoriteBtn) return;
+  const id = inlineFavoriteBtn.getAttribute("data-id") || "";
+  toggleFavorite(id);
+});
 followToggleBtn.addEventListener("click", () => {
   followVehicle = true;
   userInteracted = false;
@@ -707,6 +748,10 @@ settingsBackdropEl.addEventListener("click", () => setSettingsPanel(false));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !funnyModalEl?.hidden) {
     hideFunnyModal();
+    return;
+  }
+  if (event.key === "Escape" && favoritesPanelOpen) {
+    setFavoritesPanel(false);
     return;
   }
   if (event.key === "Escape" && settingsOpen) {
@@ -814,6 +859,7 @@ function toonSuggesties() {
 async function zoekAlles() {
   const id = voertuigInput.value.trim();
   if(!id) return;
+  setFavoritesPanel(false);
   if (id.toLowerCase() === "best") {
     suggestieLijst.innerHTML = "";
     showFunnyModal();
@@ -920,7 +966,12 @@ function toonVasteData(id){
     return;
   }
 
-  let html=`<p class="voertuignummer-display">${bus.Voertuignummer}</p>`;
+  const favoriteLabel = favorites.includes(id) ? t("favoriteRemove") : t("favoriteAdd");
+  const favoriteStateSymbol = favorites.includes(id) ? "\u2605" : "\u2606";
+  const safeFavoriteId = id.replace(/"/g, "&quot;");
+  const favoriteClass = favorites.includes(id) ? "vehicle-favorite-btn is-favorite" : "vehicle-favorite-btn";
+
+  let html=`<div class="vehicle-title-row"><p class="voertuignummer-display">${bus.Voertuignummer}</p><button id="favoriteInlineBtn" class="${favoriteClass}" type="button" title="${favoriteLabel}" aria-label="${favoriteLabel}" aria-pressed="${favorites.includes(id)}" data-id="${safeFavoriteId}">${favoriteStateSymbol}</button></div>`;
   if(bus.Type) html += `<p class="vehicle-type">${bus.Type}</p>`;
   html+="<table>";
   for(const [k,v] of Object.entries(bus)){
@@ -953,6 +1004,7 @@ function toonVasteData(id){
   }
   html += `<div class="ig-btn-wrap">${links.join("")}</div>`;
   vasteDataEl.innerHTML=html;
+  updateFavoriteButtonState();
 }
 
 function initMap(lat,lon){
