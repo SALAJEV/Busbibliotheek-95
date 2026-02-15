@@ -6,7 +6,7 @@ const URLS_TO_CACHE = [
   '/translations.js?v=20260214-3',
   '/offline.html',
   '/style.css',
-  '/style.css?v=20260214-10',
+  '/style.css?v=20260214-9',
   '/logo_light.png',
   '/logo_dark.png',
   '/navicon.png',
@@ -57,8 +57,12 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(async () => {
-          const cachedPage = await caches.match(request);
-          return cachedPage || caches.match('/offline.html');
+          const offlinePage = await caches.match('/offline.html');
+          return offlinePage || new Response('Offline', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain; charset=UTF-8' }
+          });
         })
     );
     return;
@@ -99,4 +103,3 @@ self.addEventListener('fetch', event => {
     );
   }
 });
-
