@@ -761,6 +761,12 @@ p {
 
 .favorites-panel .chip-row {
   min-height: 34px;
+  justify-content: flex-end;
+}
+
+.favorites-panel .chip {
+  width: auto;
+  max-width: 100%;
 }
 
 /* ===============================
@@ -1291,8 +1297,8 @@ tr + tr td {
 .vehicle-title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
+  justify-content: flex-start;
+  gap: 0.26rem;
   margin-bottom: 0.35rem;
 }
 
@@ -1307,29 +1313,37 @@ tr + tr td {
 
 .vehicle-favorite-btn {
   margin-top: 0;
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
-  min-height: 44px;
-  padding: 0;
-  border-radius: var(--icon-radius);
-  border: 1px solid color-mix(in srgb, #facc15 45%, var(--stroke-strong));
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  padding: 0.02rem 0.12rem;
+  border-radius: 0;
+  border: 0;
   color: #facc15;
-  background: color-mix(in srgb, #fef08a 10%, var(--surface-alt));
-  box-shadow: var(--shadow-soft);
-  font-size: 1.22rem;
+  background: transparent;
+  box-shadow: none;
+  font-size: 1.58rem;
   line-height: 1;
+  letter-spacing: 0;
+  vertical-align: middle;
 }
 
 .vehicle-favorite-btn:hover {
   color: #f59e0b;
-  filter: brightness(1.06);
+  filter: none;
 }
 
 .vehicle-favorite-btn.is-favorite {
   color: #f59e0b;
-  background: color-mix(in srgb, #facc15 22%, var(--surface-alt));
-  border-color: color-mix(in srgb, #f59e0b 58%, var(--stroke-strong));
+  background: transparent;
+  border-color: transparent;
+}
+
+.vehicle-favorite-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, #f59e0b 74%, white 16%);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .vehicle-type {
@@ -1781,12 +1795,12 @@ footer h3 {
 
   .favorites-panel {
     position: fixed;
-    top: 5.2rem;
-    right: 0.7rem;
-    left: 0.7rem;
-    width: auto;
+    top: 4.6rem;
+    right: 0.4rem;
+    left: auto;
+    width: min(320px, calc(100vw - 0.8rem));
     max-height: min(52vh, 390px);
-    transform-origin: top center;
+    transform-origin: top right;
   }
 
   .header-actions #installBtn {
@@ -1799,8 +1813,14 @@ footer h3 {
   }
 
   .btn,
-  button:not(.close-btn):not(.icon-btn):not(.settings-close-btn):not(#searchBtn):not(.vehicle-favorite-btn) {
+  button:not(.close-btn):not(.icon-btn):not(.settings-close-btn):not(#searchBtn):not(.vehicle-favorite-btn):not(.chip) {
     width: 100%;
+  }
+
+  .favorites-panel .chip {
+    min-height: 34px;
+    padding: 0.36rem 0.72rem;
+    font-size: 0.8rem;
   }
 
   #searchBtn {
