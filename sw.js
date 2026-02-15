@@ -1,15 +1,20 @@
-const CACHE_NAME = 'busbibliotheek-v14';
-const URLS_TO_CACHE = [
+const CACHE_NAME = 'busbibliotheek-v16';
+const CORE_ASSETS = [
   '/',
   '/index.html',
-  '/translations.js',
-  '/translations.js?v=20260215-1',
+  '/manifest.json',
   '/offline.html',
   '/style.css',
-  '/style.css?v=20260215-1',
-  '/logo_light.png',
-  '/logo_dark.png',
-  '/navicon.png',
+  '/style.css?v=20260215-3',
+  '/translations.js',
+  '/translations.js?v=20260215-1',
+  '/media/logo.png',
+  '/media/logo_light.png',
+  '/media/logo_dark.png',
+  '/media/navicon.png',
+  '/media/hansea.png'
+];
+const OPTIONAL_ASSETS = [
   'https://unpkg.com/leaflet/dist/leaflet.css',
   'https://unpkg.com/leaflet/dist/leaflet.js',
   'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap'
@@ -18,9 +23,20 @@ const URLS_TO_CACHE = [
 // Install event: cache essential files
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(URLS_TO_CACHE))
-      .then(() => self.skipWaiting())
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const allAssets = [...CORE_ASSETS, ...OPTIONAL_ASSETS];
+      await Promise.allSettled(
+        allAssets.map(async (url) => {
+          try {
+            await cache.add(url);
+          } catch (_) {
+            // Keep install resilient: one failing asset must not break offline support.
+          }
+        })
+      );
+      await self.skipWaiting();
+    })()
   );
 });
 
@@ -57,8 +73,10 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(async () => {
-          const offlinePage = await caches.match('/offline.html');
-          return offlinePage || new Response('Offline', {
+          const offlinePage = await caches.match('/offline.html', { ignoreSearch: true });
+          if (offlinePage) return offlinePage;
+          const cachedIndex = await caches.match('/index.html', { ignoreSearch: true });
+          return cachedIndex || new Response('Offline', {
             status: 503,
             statusText: 'Service Unavailable',
             headers: { 'Content-Type': 'text/plain; charset=UTF-8' }

@@ -608,26 +608,14 @@ body {
   font-family: "Space Grotesk", "Inter", "Segoe UI", sans-serif;
   line-height: 1.45;
   color: var(--text);
-  background:
-    radial-gradient(circle at 14% 16%, var(--bg-glow-a), transparent 34%),
-    radial-gradient(circle at 84% 8%, var(--bg-glow-b), transparent 38%),
-    radial-gradient(circle at 50% 104%, var(--bg-glow-c), transparent 45%),
-    linear-gradient(170deg, var(--bg-gradient-top), var(--bg-gradient-bottom) 56%);
-  background-size: 120% 120%, 130% 130%, 135% 135%, 100% 100%;
+  background: linear-gradient(180deg, var(--bg-gradient-top), var(--bg-gradient-bottom));
+  background-size: 100% 100%;
   -webkit-font-smoothing: antialiased;
-  animation: bgShift 24s ease-in-out infinite alternate;
+  animation: none;
 }
 
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    linear-gradient(115deg, var(--bg-frost-a), transparent 40%),
-    radial-gradient(circle at 10% 90%, var(--bg-frost-b), transparent 34%);
-  animation: frostDrift 28s ease-in-out infinite alternate;
+  content: none;
 }
 
 body::after {
@@ -638,7 +626,7 @@ body::after {
   pointer-events: none;
   background: var(--bg-pattern);
   background-size: var(--bg-pattern-size);
-  opacity: var(--bg-noise-opacity);
+  opacity: 0.035;
 }
 
 a {
@@ -716,7 +704,7 @@ p {
 }
 
 .icon-btn:hover {
-  transform: translateY(-1px) rotate(8deg);
+  filter: brightness(1.05);
 }
 
 .icon-btn.active {
@@ -725,7 +713,8 @@ p {
 }
 
 #settingsToggleBtn.active {
-  transform: rotate(90deg);
+  background: var(--surface-alt);
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--stroke-strong));
 }
 
 .favorites-top {
@@ -754,12 +743,10 @@ p {
   padding: 0.9rem 0.95rem 0.95rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--stroke-strong);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 42%),
-    var(--surface-strong);
+  background: var(--surface-strong);
   box-shadow: var(--shadow-strong);
-  backdrop-filter: blur(calc(var(--blur) + 1px)) saturate(148%);
-  -webkit-backdrop-filter: blur(calc(var(--blur) + 1px)) saturate(148%);
+  backdrop-filter: blur(calc(var(--blur) - 1px)) saturate(112%);
+  -webkit-backdrop-filter: blur(calc(var(--blur) - 1px)) saturate(112%);
   transform-origin: top right;
   animation: panelDropIn 0.2s ease both;
 }
@@ -832,7 +819,7 @@ button,
   padding: 0.78rem 1.26rem;
   border-radius: var(--button-radius);
   border: 1px solid color-mix(in srgb, var(--accent) 48%, transparent);
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: var(--accent);
   color: #f8fafc;
   font-family: "Manrope", "Space Grotesk", sans-serif;
   font-size: 0.93rem;
@@ -847,22 +834,19 @@ button,
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     var(--shadow-soft);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease, border-color 0.18s ease;
+  transition: box-shadow 0.18s ease, filter 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
 }
 
 button:hover,
 .btn:hover {
-  transform: translateY(-2px);
-  filter: saturate(1.06);
+  filter: brightness(1.05);
   border-color: color-mix(in srgb, var(--accent) 60%, white 25%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    var(--shadow-card);
+  box-shadow: var(--shadow-soft);
 }
 
 button:active,
 .btn:active {
-  transform: translateY(0);
+  filter: brightness(0.94);
 }
 
 button:focus-visible,
@@ -877,27 +861,12 @@ button:disabled,
   cursor: not-allowed;
 }
 
-#followToggle {
-  background: var(--surface-alt);
-  color: var(--text);
-  border: 1px solid var(--stroke-strong);
-  box-shadow: var(--shadow-soft);
-}
-
-#followToggle:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--stroke-strong));
-}
-
-#followToggle {
-  margin-top: 0;
-}
-
 #installBtn {
   margin-top: 0;
   display: none;
   white-space: nowrap;
   border-color: color-mix(in srgb, var(--success) 48%, transparent);
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: #059669;
 }
 
 #installBtn::before {
@@ -1019,12 +988,12 @@ button:disabled,
 }
 
 .chip:hover {
-  transform: translateY(-1px);
   background: color-mix(in srgb, var(--accent-soft) 80%, var(--surface-strong));
+  filter: brightness(1.03);
 }
 
 .chip:active {
-  transform: translateY(0);
+  filter: brightness(0.96);
 }
 
 .settings-grid {
@@ -1084,12 +1053,10 @@ button:disabled,
   padding: 0.95rem 1rem 1.05rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--stroke-strong);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 40%),
-    var(--surface-strong);
+  background: var(--surface-strong);
   box-shadow: var(--shadow-strong);
-  backdrop-filter: blur(calc(var(--blur) + 2px)) saturate(145%);
-  -webkit-backdrop-filter: blur(calc(var(--blur) + 2px)) saturate(145%);
+  backdrop-filter: blur(calc(var(--blur) + 1px)) saturate(114%);
+  -webkit-backdrop-filter: blur(calc(var(--blur) + 1px)) saturate(114%);
   opacity: 0;
   transform: translateY(-10px) scale(0.96);
   pointer-events: none;
@@ -1247,7 +1214,7 @@ body.funny-open {
 }
 
 .close-btn:hover {
-  transform: translateY(-1px) scale(1.02);
+  filter: brightness(1.05);
 }
 
 .card {
@@ -1257,18 +1224,15 @@ body.funny-open {
   padding: 1.24rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--stroke);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 40%),
-    var(--surface);
+  background: var(--surface);
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(var(--blur)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition: box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-strong);
+  box-shadow: var(--shadow-card);
   border-color: color-mix(in srgb, var(--accent) 34%, var(--stroke));
 }
 
@@ -1346,7 +1310,7 @@ tr + tr td {
 
 .vehicle-favorite-btn:hover {
   color: #f59e0b;
-  transform: translateY(-1px) scale(1.03);
+  filter: brightness(1.06);
 }
 
 .vehicle-favorite-btn.is-favorite {
@@ -1360,6 +1324,19 @@ tr + tr td {
   font-size: 1.08rem;
   font-weight: 700;
   color: var(--text);
+}
+
+.hansea-number-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.hansea-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .ig-btn-wrap {
@@ -1420,7 +1397,7 @@ tr + tr td {
 
 .loading {
   color: var(--muted);
-  font-style: italic;
+  font-style: normal;
 }
 
 .spinner {
@@ -1441,6 +1418,25 @@ tr + tr td {
   gap: 0.4rem;
   flex-wrap: wrap;
   margin-bottom: 0.2rem;
+}
+
+.route-link {
+  text-decoration: none;
+  color: inherit;
+  width: fit-content;
+  max-width: 100%;
+  cursor: pointer;
+  transition: filter 0.14s ease;
+}
+
+.route-link:hover {
+  filter: brightness(0.94);
+}
+
+.route-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white 20%);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .line-badge {
@@ -1559,10 +1555,7 @@ tr + tr td {
   align-items: center;
   justify-content: center;
   gap: 0.62rem;
-  background:
-    radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.52), transparent 58%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.3)),
-    var(--bg);
+  background: var(--bg);
   z-index: 9999;
   padding: env(safe-area-inset);
   transition: opacity 0.42s ease, visibility 0.42s ease;
@@ -1571,10 +1564,7 @@ tr + tr td {
 
 @media (prefers-color-scheme: dark) {
   #splash {
-    background:
-      radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.08), transparent 58%),
-      linear-gradient(180deg, rgba(7, 11, 20, 0.9), rgba(7, 11, 20, 0.74)),
-      var(--bg);
+    background: var(--bg);
   }
 }
 
@@ -1586,7 +1576,7 @@ tr + tr td {
   padding: 10px;
   box-shadow: var(--shadow-strong);
   transform: translateY(0) scale(1);
-  animation: splashFloat 2s ease-in-out infinite;
+  animation: none;
   will-change: transform, opacity;
 }
 
@@ -1634,7 +1624,7 @@ footer {
   border-top: 1px solid var(--stroke);
   color: var(--muted);
   font-size: 0.9rem;
-  animation: riseIn 0.55s ease 0.16s both;
+  animation: none;
 }
 
 footer h3 {

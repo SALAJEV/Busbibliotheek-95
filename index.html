@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Busbibliotheek voor bussen van De Lijn: zoek een voertuig en volg het live.">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#f4f7fb">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Busbibliotheek">
-<link rel="apple-touch-icon" href="logo_light.png">
+<link rel="apple-touch-icon" href="media/logo_light.png">
 <link rel="manifest" href="manifest.json">
 <title>Busbibliotheek</title>
 
@@ -18,14 +18,14 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260215-1">
+<link rel="stylesheet" href="style.css?v=20260215-3">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
   <picture class="logo">
-    <source media="(prefers-color-scheme: light)" srcset="logo_light.png">
-    <source media="(prefers-color-scheme: dark)" srcset="logo_dark.png">
-    <img src="logo_light.png" alt="Busbibliotheek">
+    <source media="(prefers-color-scheme: light)" srcset="media/logo_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="media/logo_dark.png">
+    <img src="media/logo_light.png" alt="Busbibliotheek">
   </picture>
   <p class="splash-credit">Made by @delijn_busspotter</p>
 </div>
@@ -68,9 +68,6 @@
 
       <div class="card">
         <h2 id="realtimeCardTitle">Realtimegegevens</h2>
-        <div class="meta-row">
-          <button id="followToggle" type="button">Volgen: aan</button>
-        </div>
         <div id="realtime" class="loading">Geen gegevens beschikbaar.</div>
         <div id="map"></div>
         <div id="lastUpdate" hidden>Laatste update: -</div>
@@ -243,7 +240,8 @@ const styleStandardOptEl = document.getElementById("styleStandardOpt");
 const styleCompactOptEl = document.getElementById("styleCompactOpt");
 const styleModernOptEl = document.getElementById("styleModernOpt");
 const styleCalmOptEl = document.getElementById("styleCalmOpt");
-const followToggleBtn = document.getElementById("followToggle");
+const themeColorMetaEls = Array.from(document.querySelectorAll('meta[name="theme-color"]'));
+const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
 const lastUpdateEl = document.getElementById("lastUpdate");
 const appTitleEl = document.getElementById("appTitle");
 const appSubtitleEl = document.getElementById("appSubtitle");
@@ -267,9 +265,6 @@ let routes = [];
 let map, marker, refresh;
 let trailLine = null;
 let routeTrail = [];
-let followVehicle = true;
-let userInteracted = false;
-let centerControl;
 let delayMinutes = 0;
 let currentVehicleId = "";
 let favorites = [];
@@ -280,7 +275,7 @@ let settings = {
   intervalMs: 10000,
   theme: "auto",
   colorTheme: "blue",
-  stylePreset: "standard",
+  stylePreset: "calm",
   language: "nl"
 };
 
@@ -332,6 +327,16 @@ function translateVehicleFieldLabel(key) {
 }
 
 const localeForLanguage = (lang) => localeMap[lang] || localeMap[FALLBACK_LANG] || localeMap[DEFAULT_LANG] || "nl-NL";
+
+function escapeHtml(value) {
+  return (value ?? "")
+    .toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function parseFlexibleDateParts(rawValue) {
   const value = (rawValue || "").toString().trim().replace(/^"|"$/g, "");
@@ -416,6 +421,7 @@ function applyTheme(theme) {
   const root = document.documentElement;
   if (theme === "auto") root.removeAttribute("data-theme");
   else root.setAttribute("data-theme", theme);
+  updateSystemUiThemeColor();
 }
 
 function normalizeColorTheme(colorTheme) {
@@ -428,11 +434,12 @@ function applyColorTheme(colorTheme) {
   const normalized = normalizeColorTheme(colorTheme);
   if (normalized === "blue") root.removeAttribute("data-color-theme");
   else root.setAttribute("data-color-theme", normalized);
+  updateSystemUiThemeColor();
 }
 
 function normalizeStylePreset(stylePreset) {
   const value = (stylePreset || "").toString().toLowerCase();
-  return ALLOWED_STYLE_PRESETS.includes(value) ? value : "standard";
+  return ALLOWED_STYLE_PRESETS.includes(value) ? value : "calm";
 }
 
 function applyStylePreset(stylePreset) {
@@ -440,6 +447,18 @@ function applyStylePreset(stylePreset) {
   const normalized = normalizeStylePreset(stylePreset);
   if (normalized === "standard") root.removeAttribute("data-ui-style");
   else root.setAttribute("data-ui-style", normalized);
+  updateSystemUiThemeColor();
+}
+
+function updateSystemUiThemeColor() {
+  const css = getComputedStyle(document.documentElement);
+  const nextThemeColor =
+    css.getPropertyValue("--bg-gradient-top").trim() ||
+    css.getPropertyValue("--bg").trim() ||
+    "#f4f7fb";
+  themeColorMetaEls.forEach((metaEl) => {
+    metaEl.setAttribute("content", nextThemeColor);
+  });
 }
 
 function applyTranslations() {
@@ -489,7 +508,6 @@ function applyTranslations() {
   }
   updateFeedStatusText();
   updateFavoriteButtonState();
-  updateFollowButtonText();
 }
 
 function updateFeedStatusText() {
@@ -641,10 +659,6 @@ function restartRealtimeRefresh() {
   refresh = setInterval(() => updateRealtime(currentVehicleId), updateIntervalMs);
 }
 
-function updateFollowButtonText() {
-  followToggleBtn.textContent = followVehicle ? t("followOn") : t("followOff");
-}
-
 function initAppPreferences() {
   loadSettings();
   loadFavorites();
@@ -703,11 +717,6 @@ vasteDataEl.addEventListener("click", (event) => {
   if (!inlineFavoriteBtn) return;
   const id = inlineFavoriteBtn.getAttribute("data-id") || "";
   toggleFavorite(id);
-});
-followToggleBtn.addEventListener("click", () => {
-  followVehicle = true;
-  userInteracted = false;
-  updateFollowButtonText();
 });
 intervalSelect.addEventListener("change", () => {
   settings.intervalMs = Number(intervalSelect.value);
@@ -784,7 +793,7 @@ const normalize = s => (s||"").toString().replace(/"/g, "").trim();
 // Custom bus pin as DivIcon so we can rotate the image based on bearing
 const busIcon = L.divIcon({
   className: 'bus-div-icon',
-  html: `<img src="navicon.png" style="width:36px;height:36px;transform:rotate(0deg);display:block;transform-origin:18px 28px;transition: transform 0.25s linear;"/>`,
+  html: `<img src="media/navicon.png" style="width:36px;height:36px;transform:rotate(0deg);display:block;transform-origin:18px 28px;transition: transform 0.25s linear;"/>`,
   iconSize: [36,36],
   iconAnchor: [18,36]
 });
@@ -866,9 +875,6 @@ async function zoekAlles() {
     return;
   }
   currentVehicleId = id;
-  followVehicle = true;
-  userInteracted = false;
-  updateFollowButtonText();
   updateFavoriteButtonState();
 
   suggestieLijst.innerHTML = "";
@@ -979,6 +985,7 @@ function toonVasteData(id){
 
     let waarde = v;
     const key = k.toLowerCase();
+    const normalizedKey = normalizeFieldKey(k);
 
     if(key.includes("datum in dienst") && v!=="/") {
       waarde = formatDateForUi(v, { year:'numeric', month:'long', day:'numeric' });
@@ -990,7 +997,16 @@ function toonVasteData(id){
     } else {
       if(v==="/") continue;
     }
-    html+=`<tr><th>${translateVehicleFieldLabel(k)}</th><td>${waarde}</td></tr>`;
+    let waardeMarkup = escapeHtml(waarde);
+    if (normalizedKey === "hansea nummer") {
+      waardeMarkup = `
+        <span class="hansea-number-display">
+          <img src="media/hansea.png" alt="Hansea" class="hansea-logo" loading="lazy" decoding="async">
+          <span>${escapeHtml(waarde)}</span>
+        </span>
+      `;
+    }
+    html+=`<tr><th>${translateVehicleFieldLabel(k)}</th><td>${waardeMarkup}</td></tr>`;
   }
   html+="</table>";
 
@@ -1021,43 +1037,6 @@ function initMap(lat,lon){
       attribution: '&copy; OpenRailwayMap'
     });
     transportOverlay.addTo(map);
-
-    // Detect user interactions to stop auto-centering
-    map.on('dragstart zoomstart movestart touchstart', ()=>{
-      userInteracted = true;
-    });
-
-    // Create a custom control (button) to re-center the map
-    const CenterControl = L.Control.extend({
-      onAdd: function(map){
-        const el = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        const btn = L.DomUtil.create('a', 'map-center-btn', el);
-        btn.innerHTML = 'C';
-        btn.title = 'Centreren';
-        btn.href = '#';
-        btn.style.display = 'none';
-        btn.style.width = '30px';
-        btn.style.height = '30px';
-        btn.style.lineHeight = '30px';
-        btn.style.textAlign = 'center';
-
-        L.DomEvent.on(btn, 'click', L.DomEvent.stopPropagation)
-                 .on(btn, 'click', L.DomEvent.preventDefault)
-                 .on(btn, 'click', ()=>{
-                   if(marker){
-                     map.setView(marker.getLatLng(), Math.max(map.getZoom(), 15));
-                     userInteracted = false;
-                     followVehicle = true;
-                     updateFollowButtonText();
-                   }
-                 });
-
-        return el;
-      }
-    });
-
-    centerControl = new CenterControl({ position: 'topright' });
-    centerControl.addTo(map);
   }
 }
 
@@ -1137,6 +1116,9 @@ async function updateRealtime(id){
     const routeShort = routeData?.route_short_name || "?";
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
+    const destinationText = tripShort || routeLong || "-";
+    const routeUrlRaw = (routeData?.route_url || "").toString().trim();
+    const routeUrl = /^https?:\/\//i.test(routeUrlRaw) ? routeUrlRaw : "";
     const routeColorRaw = (routeData?.route_color || "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
     const routeTextColorRaw = (routeData?.route_text_color || "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
     const routeColor = routeColorRaw.length === 6 ? `#${routeColorRaw}` : "#2563eb";
@@ -1158,15 +1140,17 @@ async function updateRealtime(id){
     
     const msgDelay = formatDelayMessage(delayMinutes);
     const delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
+    const routeRowInner = `
+      <span class="line-badge" style="background:${routeColor};color:${routeTextColor};">${escapeHtml(routeShort)}</span>
+      <span class="destination-text">${escapeHtml(destinationText)}</span>
+    `;
+    const routeRowMarkup = routeUrl
+      ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}">${routeRowInner}</a>`
+      : `<div class="route-destination-row">${routeRowInner}</div>`;
 
     realtimeEl.innerHTML=`
-      <p>
-        <div class="route-destination-row">
-          <span class="line-badge" style="background:${routeColor};color:${routeTextColor};">${routeShort}</span>
-          <span class="destination-text">${tripShort || "-"}</span>
-        </div>
-        <span class="delay-status ${delayClass}">${msgDelay}</span>
-      </p>
+      ${routeRowMarkup}
+      <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
     `;
     mapEl.classList.remove("hidden");
     lastUpdateEl.textContent = `${t("lastUpdate")}: ${new Date().toLocaleTimeString(localeForLanguage(settings.language))}`;
@@ -1221,6 +1205,16 @@ async function updateRealtime(id){
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js')
     .catch(err => console.error('Service Worker registratie mislukt:', err));
+}
+
+if (prefersDarkScheme?.addEventListener) {
+  prefersDarkScheme.addEventListener("change", () => {
+    if (settings.theme === "auto") updateSystemUiThemeColor();
+  });
+} else if (prefersDarkScheme?.addListener) {
+  prefersDarkScheme.addListener(() => {
+    if (settings.theme === "auto") updateSystemUiThemeColor();
+  });
 }
 </script>
 </body>
