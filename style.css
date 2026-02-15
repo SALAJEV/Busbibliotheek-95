@@ -427,6 +427,99 @@
 }
 
 /* ===============================
+   UI STYLE PRESETS
+================================ */
+
+:root[data-ui-style="compact"] {
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+  --blur: 12px;
+}
+
+:root[data-ui-style="compact"] .container {
+  padding: 1.6rem 0 2.2rem;
+}
+
+:root[data-ui-style="compact"] .search-row {
+  gap: 0.46rem;
+  margin: 0.08rem 0 0.5rem;
+}
+
+:root[data-ui-style="compact"] .stack-card {
+  padding: 0.82rem 0.9rem;
+}
+
+:root[data-ui-style="compact"] .card {
+  min-height: 270px;
+  padding: 1rem;
+}
+
+:root[data-ui-style="compact"] input {
+  padding: 0.74rem 0.88rem;
+}
+
+:root[data-ui-style="compact"] button,
+:root[data-ui-style="compact"] .btn {
+  min-height: 40px;
+  padding: 0.62rem 1.02rem;
+  font-size: 0.88rem;
+}
+
+:root[data-ui-style="compact"] #map {
+  height: 270px;
+}
+
+:root[data-ui-style="modern"] {
+  --radius-lg: 30px;
+  --radius-md: 20px;
+  --radius-sm: 14px;
+  --blur: 20px;
+  --shadow-soft: 0 16px 40px rgba(37, 99, 235, 0.16);
+  --shadow-card: 0 28px 72px rgba(37, 99, 235, 0.2);
+  --shadow-strong: 0 38px 94px rgba(37, 99, 235, 0.25);
+}
+
+:root[data-ui-style="modern"] .stack-card,
+:root[data-ui-style="modern"] .card,
+:root[data-ui-style="modern"] .settings-panel {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--stroke-strong));
+}
+
+:root[data-ui-style="modern"] .card {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.2), transparent 38%),
+    linear-gradient(185deg, rgba(255, 255, 255, 0.12), transparent 52%),
+    var(--surface);
+  backdrop-filter: blur(calc(var(--blur) + 3px)) saturate(160%);
+  -webkit-backdrop-filter: blur(calc(var(--blur) + 3px)) saturate(160%);
+}
+
+:root[data-ui-style="modern"] .stack-card {
+  backdrop-filter: blur(calc(var(--blur) + 1px)) saturate(155%);
+}
+
+:root[data-ui-style="calm"] {
+  --blur: 13px;
+  --bg-noise-opacity: 0.05;
+  --shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.1);
+  --shadow-card: 0 14px 36px rgba(15, 23, 42, 0.14);
+  --shadow-strong: 0 22px 50px rgba(15, 23, 42, 0.18);
+}
+
+:root[data-ui-style="calm"] .card,
+:root[data-ui-style="calm"] .stack-card,
+:root[data-ui-style="calm"] .settings-panel {
+  backdrop-filter: blur(var(--blur)) saturate(118%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(118%);
+}
+
+:root[data-ui-style="calm"] button,
+:root[data-ui-style="calm"] .btn {
+  transition-duration: 0.12s;
+}
+
+/* ===============================
    BASE
 ================================ */
 
@@ -1082,6 +1175,7 @@ th,
 td {
   padding: 0.42rem 0;
   vertical-align: top;
+  text-align: left;
 }
 
 th {
@@ -1311,8 +1405,10 @@ tr + tr td {
   position: fixed;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.62rem;
   background:
     radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.52), transparent 58%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.3)),
@@ -1344,6 +1440,16 @@ tr + tr td {
   will-change: transform, opacity;
 }
 
+#splash .splash-credit {
+  margin: 0;
+  color: color-mix(in srgb, var(--text) 86%, var(--muted));
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  text-align: center;
+  opacity: 0.88;
+}
+
 #splash picture,
 #splash picture img {
   display: block;
@@ -1361,6 +1467,11 @@ tr + tr td {
 #splash.hidden .logo {
   opacity: 0.4;
   transform: translateY(-8px) scale(0.96);
+}
+
+#splash.hidden .splash-credit {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 /* ===============================
