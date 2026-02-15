@@ -262,6 +262,8 @@ const funnyModalCloseBtn = document.getElementById("funnyModalCloseBtn");
 let voertuigen = [];
 let trips = [];
 let routes = [];
+let stops = [];
+const stopsById = new Map();
 let map, marker, refresh;
 let trailLine = null;
 let routeTrail = [];
@@ -840,10 +842,33 @@ async function laadRoutes() {
   });
 }
 
+async function laadStops() {
+  const res = await fetch(`${BASE_URL}/stops.txt`, { cache: "no-store" });
+  const text = await res.text();
+  const regels = text.trim().split(/\r?\n/);
+  const headers = parseCSVLine(regels[0]).map(h => h.trim());
+
+  stops = regels.slice(1).map(r => {
+    const values = parseCSVLine(r);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = values[i] || "/");
+    return obj;
+  });
+
+  stopsById.clear();
+  stops.forEach((stop) => {
+    const stopId = normalize(stop.stop_id);
+    const stopCode = normalize(stop.stop_code);
+    if (stopId) stopsById.set(stopId, stop);
+    if (stopCode) stopsById.set(stopCode, stop);
+  });
+}
+
 initAppPreferences();
 laadVoertuigen();
 laadTrips();
 laadRoutes();
+laadStops();
 
 function toonSuggesties() {
   const q = voertuigInput.value.toLowerCase();
@@ -1063,6 +1088,37 @@ function getDelaySecondsFromTripUpdate(tripUpdate) {
   return best ? best.delay : null;
 }
 
+function getCurrentStopIdFromTripUpdate(tripUpdate) {
+  const updates = tripUpdate?.stopTimeUpdate;
+  if (!Array.isArray(updates) || updates.length === 0) return "";
+
+  const now = Math.floor(Date.now() / 1000);
+  let best = null;
+
+  updates.forEach((stop, index) => {
+    const stopId = (stop?.stopId || "").toString().trim();
+    if (!stopId) return;
+
+    const candidates = [stop.departure?.time, stop.arrival?.time]
+      .filter((t) => typeof t === "number");
+    const score = candidates.length
+      ? Math.min(...candidates.map((t) => Math.abs(t - now)))
+      : Number.MAX_SAFE_INTEGER;
+
+    if (!best || score < best.score || (score === best.score && index < best.index)) {
+      best = { stopId, score, index };
+    }
+  });
+
+  return best?.stopId || "";
+}
+
+function getStopByStopId(stopId) {
+  const normalized = normalize(stopId);
+  if (!normalized) return null;
+  return stopsById.get(normalized) || null;
+}
+
 async function updateRealtime(id){
   try{
     const res = await fetch(API_URL);
@@ -1085,6 +1141,7 @@ async function updateRealtime(id){
     // Zorg dat trips/routes geladen zijn
     if(trips.length===0) await laadTrips();
     if(routes.length===0) await laadRoutes();
+    if(stopsById.size===0) await laadStops();
 
     // Robuuste matching: normaliseer en probeer exact / endsWith / includes
     const nTripId = normalize(tripid);
@@ -1126,6 +1183,11 @@ async function updateRealtime(id){
 
     // Delay from trip updates is authoritative; fallback to vehicle payload
     const tripUpdate = getTripUpdateForVehicle(entities, id);
+    const currentStopId = getCurrentStopIdFromTripUpdate(tripUpdate);
+    const currentStop = getStopByStopId(currentStopId);
+    const currentStopName = (currentStop?.stop_name || currentStopId || "-").toString().trim() || "-";
+    const currentStopUrlRaw = (currentStop?.stop_url || "").toString().trim();
+    const currentStopUrl = /^https?:\/\//i.test(currentStopUrlRaw) ? currentStopUrlRaw : "";
     let delaySeconds = getDelaySecondsFromTripUpdate(tripUpdate);
     if (typeof delaySeconds !== "number" && typeof gps.vehicle.trip?.delay === "number") {
       delaySeconds = gps.vehicle.trip.delay;
@@ -1147,9 +1209,16 @@ async function updateRealtime(id){
     const routeRowMarkup = routeUrl
       ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}">${routeRowInner}</a>`
       : `<div class="route-destination-row">${routeRowInner}</div>`;
+    const currentStopValueMarkup = currentStopUrl
+      ? `<a class="current-stop-link" href="${escapeHtml(currentStopUrl)}">${escapeHtml(currentStopName)}</a>`
+      : `<span class="current-stop-link">${escapeHtml(currentStopName)}</span>`;
 
     realtimeEl.innerHTML=`
       ${routeRowMarkup}
+      <div class="current-stop-row">
+        <span class="current-stop-label">${escapeHtml(t("currentStop"))}:</span>
+        ${currentStopValueMarkup}
+      </div>
       <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
     `;
     mapEl.classList.remove("hidden");
