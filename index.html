@@ -51,7 +51,7 @@
   <div id="iosInstallHint" class="hint" hidden></div>
 
   <div class="search-row">
-    <input id="voertuignummer" placeholder="Voertuignummer" 
+    <input id="voertuignummer" placeholder="Voertuignummer of nummerplaat" 
            oninput="toonSuggesties()" 
            onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
     <button id="searchBtn" type="button">Zoeken</button>
@@ -258,6 +258,9 @@ let favorites = [];
 let settingsOpen = false;
 let favoritesPanelOpen = false;
 let feedEndDateValue = "";
+let vehiclePlateFieldKey = "";
+let oldVehicleNumbersFieldKey = "";
+let oldLicensePlatesFieldKey = "";
 const INACTIVITY_LIMIT_MS = 5 * 60 * 1000;
 const INACTIVITY_CHECK_MS = 15000;
 let lastUserInteractionAt = Date.now();
@@ -800,6 +803,76 @@ function parseCSVLine(line){
 
 // Helper: normalize ids/strings for matching
 const normalize = s => (s||"").toString().replace(/"/g, "").trim();
+const normalizeLookup = s => normalize(s).toLowerCase();
+const normalizePlateLookup = s => normalizeLookup(s).replace(/[^a-z0-9]/g, "");
+
+function getVehicleField(vehicle, fieldKey) {
+  if (!vehicle || !fieldKey) return "";
+  const value = vehicle[fieldKey];
+  return value == null ? "" : value.toString().trim();
+}
+
+function splitLegacyValues(rawValue, splitOnSpaces = false) {
+  const value = normalize(rawValue);
+  if (!value || value === "/") return [];
+  const pattern = splitOnSpaces ? /[,;| ]+/ : /[,;|]+/;
+  return value.split(pattern).map((part) => part.trim()).filter((part) => part && part !== "/");
+}
+
+function resolveVehicleSearch(query) {
+  const normalizedQuery = normalizeLookup(query);
+  const normalizedPlateQuery = normalizePlateLookup(query);
+  if (!normalizedQuery && !normalizedPlateQuery) {
+    return { bus: null, vehicleId: "" };
+  }
+
+  const bus = voertuigen.find((vehicle) => {
+    const vehicleNumber = normalizeLookup(vehicle.Voertuignummer);
+    if (vehicleNumber && vehicleNumber === normalizedQuery) return true;
+
+    const plate = normalizePlateLookup(getVehicleField(vehicle, vehiclePlateFieldKey));
+    if (normalizedPlateQuery && plate && plate === normalizedPlateQuery) return true;
+
+    const oldVehicleNumbers = splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true);
+    if (oldVehicleNumbers.some((value) => normalizeLookup(value) === normalizedQuery)) return true;
+
+    const oldPlates = splitLegacyValues(getVehicleField(vehicle, oldLicensePlatesFieldKey), false);
+    if (normalizedPlateQuery && oldPlates.some((value) => normalizePlateLookup(value) === normalizedPlateQuery)) return true;
+
+    return false;
+  });
+
+  return {
+    bus: bus || null,
+    vehicleId: bus ? normalize(bus.Voertuignummer) : ""
+  };
+}
+
+function matchesSuggestionQuery(vehicle, normalizedQuery, normalizedPlateQuery) {
+  const vehicleNumber = normalizeLookup(vehicle.Voertuignummer);
+  if (normalizedQuery && vehicleNumber.startsWith(normalizedQuery)) return true;
+
+  const plate = normalizePlateLookup(getVehicleField(vehicle, vehiclePlateFieldKey));
+  if (normalizedPlateQuery && plate && plate.startsWith(normalizedPlateQuery)) return true;
+
+  const oldVehicleNumbers = splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true);
+  if (normalizedQuery && oldVehicleNumbers.some((value) => normalizeLookup(value).startsWith(normalizedQuery))) return true;
+
+  const oldPlates = splitLegacyValues(getVehicleField(vehicle, oldLicensePlatesFieldKey), false);
+  if (normalizedPlateQuery && oldPlates.some((value) => normalizePlateLookup(value).startsWith(normalizedPlateQuery))) return true;
+
+  return false;
+}
+
+function buildSuggestionLabel(vehicle) {
+  const vehicleNumber = normalize(vehicle.Voertuignummer);
+  const vehicleType = normalize(vehicle.Type);
+  const plate = normalize(getVehicleField(vehicle, vehiclePlateFieldKey));
+  const parts = [`${vehicleNumber}`];
+  if (vehicleType && vehicleType !== "/") parts.push(vehicleType);
+  if (plate && plate !== "/") parts.push(plate);
+  return parts.join(" - ");
+}
 
 // Custom bus pin as DivIcon so we can rotate the image based on bearing
 const busIcon = L.divIcon({
@@ -814,6 +887,14 @@ async function laadVoertuigen() {
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
   const headers = regels[0].split(";");
+  const headerByNormalizedName = new Map();
+  headers.forEach((header) => {
+    const trimmed = header.trim();
+    headerByNormalizedName.set(normalizeFieldKey(trimmed), trimmed);
+  });
+  vehiclePlateFieldKey = headerByNormalizedName.get("nummerplaat") || "";
+  oldVehicleNumbersFieldKey = headerByNormalizedName.get("oude voertuignummers") || "";
+  oldLicensePlatesFieldKey = headerByNormalizedName.get("oude nummerplaten") || "";
 
   voertuigen = regels.slice(1).map(r => {
     const v = r.split(";");
@@ -880,17 +961,19 @@ laadRoutes();
 laadStops();
 
 function toonSuggesties() {
-  const q = voertuigInput.value.toLowerCase();
+  const query = voertuigInput.value.trim();
+  const normalizedQuery = normalizeLookup(query);
+  const normalizedPlateQuery = normalizePlateLookup(query);
   suggestieLijst.innerHTML = "";
-  if(!q) return;
+  if(!normalizedQuery && !normalizedPlateQuery) return;
 
-  voertuigen.filter(v => v.Voertuignummer?.toLowerCase().startsWith(q))
+  voertuigen.filter(v => matchesSuggestionQuery(v, normalizedQuery, normalizedPlateQuery))
     .slice(0,8)
     .forEach(v=>{
       const li=document.createElement("li");
-      li.textContent = `${v.Voertuignummer} - ${v.Type}`;
+      li.textContent = buildSuggestionLabel(v);
       li.onclick=()=>{
-        voertuigInput.value=v.Voertuignummer;
+        voertuigInput.value = normalize(v.Voertuignummer);
         suggestieLijst.innerHTML="";
         voertuigInput.blur(); // Focus weghalen zodat geen enter meer nodig is
         zoekAlles();
@@ -901,21 +984,28 @@ function toonSuggesties() {
 
 async function zoekAlles() {
   markUserInteraction();
-  const id = voertuigInput.value.trim();
-  if(!id) return;
+  const query = voertuigInput.value.trim();
+  if(!query) return;
   setFavoritesPanel(false);
-  if (id.toLowerCase() === "best") {
+  if (query.toLowerCase() === "best") {
     suggestieLijst.innerHTML = "";
     showFunnyModal();
     return;
   }
-  if (id.toLowerCase() === "bus beih") {
+  if (query.toLowerCase() === "bus beih") {
     suggestieLijst.innerHTML = "";
     window.open("https://salajev.github.io/bus.be-fcl/index.html", "_blank", "noopener,noreferrer");
     return;
   }
-  currentVehicleId = id;
+  if (voertuigen.length === 0) await laadVoertuigen();
+  const resolved = resolveVehicleSearch(query);
+  const activeVehicleId = resolved.vehicleId || normalize(query);
+  const bus = resolved.bus;
+  currentVehicleId = activeVehicleId;
   realtimePausedByInactivity = false;
+  if (resolved.vehicleId && activeVehicleId !== query) {
+    voertuigInput.value = activeVehicleId;
+  }
   updateFavoriteButtonState();
 
   suggestieLijst.innerHTML = "";
@@ -923,12 +1013,10 @@ async function zoekAlles() {
   resultsGridEl.classList.add("show");
   closeBtnEl.style.display = "block";
 
-  toonVasteData(id);
+  toonVasteData(activeVehicleId);
   lastUpdateEl.hidden = true;
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
 
-  if (voertuigen.length === 0) await laadVoertuigen();
-  const bus = findBusById(id);
   if (isOutOfService(bus)) {
     realtimeEl.innerHTML = t("outOfServiceNoRealtime");
     mapEl.classList.add("hidden");
@@ -957,7 +1045,7 @@ async function zoekAlles() {
     trailLine = null;
   }
 
-  updateRealtime(id);
+  updateRealtime(activeVehicleId);
   restartRealtimeRefresh();
 }
 
@@ -987,12 +1075,7 @@ function terug() {
 }
 
 function findBusById(id) {
-  return voertuigen.find(v =>
-    v.Voertuignummer === id ||
-    v["Hansea nummer"] === id ||
-    v["Oude voertuignummers"]?.split(/[, ]+/).includes(id) ||
-    v["Oude nummerplaten"]?.split(/[, ]+/).includes(id)
-  );
+  return resolveVehicleSearch(id).bus;
 }
 
 function isOutOfService(bus) {
