@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260215-4">
+<link rel="stylesheet" href="style.css?v=20260218-1">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -92,7 +92,6 @@
     <div>
       <label for="intervalSelect" id="intervalLabel">Update-interval</label>
       <select id="intervalSelect">
-        <option value="5000" id="intervalOpt5">5 seconden</option>
         <option value="10000" selected id="intervalOpt10">10 seconden</option>
         <option value="15000" id="intervalOpt15">15 seconden</option>
         <option value="30000" id="intervalOpt30">30 seconden</option>
@@ -109,6 +108,7 @@
     <div>
       <label for="colorThemeSelect" id="colorThemeLabel">Kleurthema</label>
       <select id="colorThemeSelect">
+        <option value="classic" id="colorClassicOpt" selected>Klassiek (zwart-wit)</option>
         <option value="blue" id="colorBlueOpt">Blauw</option>
         <option value="green" id="colorGreenOpt">Groen</option>
         <option value="yellow" id="colorYellowOpt">Geel</option>
@@ -140,7 +140,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="translations.js?v=20260215-3"></script>
+<script src="translations.js?v=20260218-1"></script>
 <script>
 // Splash controls (mobile-first startup experience)
 const splash = document.getElementById("splash");
@@ -213,7 +213,6 @@ const intervalSelect = document.getElementById("intervalSelect");
 const themeSelect = document.getElementById("themeSelect");
 const colorThemeSelect = document.getElementById("colorThemeSelect");
 const languageSelect = document.getElementById("languageSelect");
-const intervalOpt5El = document.getElementById("intervalOpt5");
 const intervalOpt10El = document.getElementById("intervalOpt10");
 const intervalOpt15El = document.getElementById("intervalOpt15");
 const intervalOpt30El = document.getElementById("intervalOpt30");
@@ -221,6 +220,7 @@ const themeAutoOptEl = document.getElementById("themeAutoOpt");
 const themeLightOptEl = document.getElementById("themeLightOpt");
 const themeDarkOptEl = document.getElementById("themeDarkOpt");
 const colorThemeLabelEl = document.getElementById("colorThemeLabel");
+const colorClassicOptEl = document.getElementById("colorClassicOpt");
 const colorBlueOptEl = document.getElementById("colorBlueOpt");
 const colorGreenOptEl = document.getElementById("colorGreenOpt");
 const colorYellowOptEl = document.getElementById("colorYellowOpt");
@@ -269,7 +269,7 @@ let inactivityCheckHandle = null;
 let settings = {
   intervalMs: 10000,
   theme: "auto",
-  colorTheme: "blue",
+  colorTheme: "classic",
   language: "nl"
 };
 
@@ -282,7 +282,13 @@ const delayLexicon = translationsConfig.delayLexicon || {};
 
 const DEFAULT_LANG = "nl";
 const FALLBACK_LANG = "en";
-const ALLOWED_COLOR_THEMES = ["blue", "green", "yellow", "red"];
+const ALLOWED_COLOR_THEMES = ["classic", "blue", "green", "yellow", "red"];
+const ALLOWED_UPDATE_INTERVALS = [10000, 15000, 30000];
+
+function normalizeUpdateIntervalMs(intervalMs) {
+  const value = Number(intervalMs);
+  return ALLOWED_UPDATE_INTERVALS.includes(value) ? value : 10000;
+}
 
 function translateKey(key, language = settings.language) {
   return (
@@ -418,14 +424,13 @@ function applyTheme(theme) {
 
 function normalizeColorTheme(colorTheme) {
   const value = (colorTheme || "").toString().toLowerCase();
-  return ALLOWED_COLOR_THEMES.includes(value) ? value : "blue";
+  return ALLOWED_COLOR_THEMES.includes(value) ? value : "classic";
 }
 
 function applyColorTheme(colorTheme) {
   const root = document.documentElement;
   const normalized = normalizeColorTheme(colorTheme);
-  if (normalized === "blue") root.removeAttribute("data-color-theme");
-  else root.setAttribute("data-color-theme", normalized);
+  root.setAttribute("data-color-theme", normalized);
   updateSystemUiThemeColor();
 }
 
@@ -459,13 +464,13 @@ function applyTranslations() {
   themeLabelEl.textContent = t("theme");
   colorThemeLabelEl.textContent = t("colorTheme");
   languageLabelEl.textContent = t("language");
-  intervalOpt5El.textContent = `5 ${t("intervalSeconds")}`;
   intervalOpt10El.textContent = `10 ${t("intervalSeconds")}`;
   intervalOpt15El.textContent = `15 ${t("intervalSeconds")}`;
   intervalOpt30El.textContent = `30 ${t("intervalSeconds")}`;
   themeAutoOptEl.textContent = t("themeAuto");
   themeLightOptEl.textContent = t("themeLight");
   themeDarkOptEl.textContent = t("themeDark");
+  colorClassicOptEl.textContent = t("colorClassic");
   colorBlueOptEl.textContent = t("colorBlue");
   colorGreenOptEl.textContent = t("colorGreen");
   colorYellowOptEl.textContent = t("colorYellow");
@@ -684,7 +689,8 @@ function initInactivityMonitor() {
 function initAppPreferences() {
   loadSettings();
   loadFavorites();
-  updateIntervalMs = Number(settings.intervalMs) || 10000;
+  settings.intervalMs = normalizeUpdateIntervalMs(settings.intervalMs);
+  updateIntervalMs = settings.intervalMs;
   intervalSelect.value = String(updateIntervalMs);
   themeSelect.value = settings.theme;
   settings.colorTheme = normalizeColorTheme(settings.colorTheme);
@@ -739,7 +745,8 @@ vasteDataEl.addEventListener("click", (event) => {
   toggleFavorite(id);
 });
 intervalSelect.addEventListener("change", () => {
-  settings.intervalMs = Number(intervalSelect.value);
+  settings.intervalMs = normalizeUpdateIntervalMs(intervalSelect.value);
+  intervalSelect.value = String(settings.intervalMs);
   updateIntervalMs = settings.intervalMs;
   saveSettings();
   restartRealtimeRefresh();
