@@ -18,7 +18,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260218-2">
+<link rel="stylesheet" href="style.css?v=20260218-3">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -54,7 +54,7 @@
     <input id="voertuignummer" placeholder="Voertuignummer of nummerplaat" 
            oninput="toonSuggesties()" 
            onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
-    <button id="searchBtn" type="button" title="Zoeken" aria-label="Zoeken"></button>
+    <button id="searchBtn" type="button" title="Zoeken" aria-label="Zoeken" onclick="zoekAlles()"><span class="search-btn-icon" aria-hidden="true">&#128269;</span></button>
   </div>
   <ul id="suggestielijst"></ul>
 
@@ -454,7 +454,6 @@ function applyTranslations() {
   settingsToggleBtn.title = t("settings");
   settingsToggleBtn.setAttribute("aria-label", t("settings"));
   iosInstallHintEl.textContent = t("iosHint");
-  searchBtn.textContent = "";
   searchBtn.title = t("search");
   searchBtn.setAttribute("aria-label", t("search"));
   voertuigInput.placeholder = t("vehiclePlaceholder");

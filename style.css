@@ -1018,7 +1018,6 @@ button:disabled,
   width: 46px;
   min-width: 46px;
   padding: 0;
-  position: relative;
   border-radius: calc(var(--button-radius) + 2px);
   background: linear-gradient(
     140deg,
@@ -1032,29 +1031,10 @@ button:disabled,
   flex: 0 0 auto;
 }
 
-#searchBtn::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 15px;
-  height: 15px;
-  border: 2.4px solid currentColor;
-  border-radius: 50%;
-  transform: translate(-58%, -60%);
-}
-
-#searchBtn::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 9px;
-  height: 2.8px;
-  border-radius: 2px;
-  background: currentColor;
-  transform: translate(18%, 95%) rotate(45deg);
-  transform-origin: center;
+.search-btn-icon {
+  font-size: 1.28rem;
+  line-height: 1;
+  transform: translateY(0.5px);
 }
 
 :root[data-theme="dark"][data-color-theme="classic"] #searchBtn {
