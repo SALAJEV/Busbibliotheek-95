@@ -54,7 +54,7 @@
     <input id="voertuignummer" placeholder="Voertuignummer of nummerplaat" 
            oninput="toonSuggesties()" 
            onkeydown="if(event.key==='Enter'){zoekAlles();}" autocomplete="off">
-    <button id="searchBtn" type="button">Zoeken</button>
+    <button id="searchBtn" type="button" title="Zoeken" aria-label="Zoeken"></button>
   </div>
   <ul id="suggestielijst"></ul>
 
@@ -454,7 +454,7 @@ function applyTranslations() {
   settingsToggleBtn.title = t("settings");
   settingsToggleBtn.setAttribute("aria-label", t("settings"));
   iosInstallHintEl.textContent = t("iosHint");
-  searchBtn.textContent = t("search");
+  searchBtn.textContent = "";
   searchBtn.title = t("search");
   searchBtn.setAttribute("aria-label", t("search"));
   voertuigInput.placeholder = t("vehiclePlaceholder");
@@ -1276,7 +1276,9 @@ async function updateRealtime(id){
       ));
     }
 
-    const routeShort = routeData?.route_short_name || "?";
+    const routeShortRaw = (routeData?.route_short_name || "").toString().trim();
+    const routeShort = routeShortRaw || "?";
+    const isUnknownRoute = routeShort === "?" || routeShort === "-";
     const routeLong = routeData?.route_long_name || "";
     const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
     const destinationText = tripShort || routeLong || "-";
@@ -1308,25 +1310,29 @@ async function updateRealtime(id){
     
     const msgDelay = formatDelayMessage(delayMinutes);
     const delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
-    const routeRowInner = `
-      <span class="line-badge" style="background:${routeColor};color:${routeTextColor};">${escapeHtml(routeShort)}</span>
-      <span class="destination-text">${escapeHtml(destinationText)}</span>
-    `;
-    const routeRowMarkup = routeUrl
-      ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}" target="_blank" rel="noopener noreferrer">${routeRowInner}</a>`
-      : `<div class="route-destination-row">${routeRowInner}</div>`;
-    const currentStopValueMarkup = currentStopUrl
-      ? `<a class="current-stop-link" href="${escapeHtml(currentStopUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(currentStopName)}</a>`
-      : `<span class="current-stop-link">${escapeHtml(currentStopName)}</span>`;
+    if (isUnknownRoute) {
+      realtimeEl.innerHTML = "";
+    } else {
+      const routeRowInner = `
+        <span class="line-badge" style="background:${routeColor};color:${routeTextColor};">${escapeHtml(routeShort)}</span>
+        <span class="destination-text">${escapeHtml(destinationText)}</span>
+      `;
+      const routeRowMarkup = routeUrl
+        ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}" target="_blank" rel="noopener noreferrer">${routeRowInner}</a>`
+        : `<div class="route-destination-row">${routeRowInner}</div>`;
+      const currentStopValueMarkup = currentStopUrl
+        ? `<a class="current-stop-link" href="${escapeHtml(currentStopUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(currentStopName)}</a>`
+        : `<span class="current-stop-link">${escapeHtml(currentStopName)}</span>`;
 
-    realtimeEl.innerHTML=`
-      ${routeRowMarkup}
-      <div class="current-stop-row">
-        <span class="current-stop-label">${escapeHtml(t("currentStop"))}:</span>
-        ${currentStopValueMarkup}
-      </div>
-      <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
-    `;
+      realtimeEl.innerHTML=`
+        ${routeRowMarkup}
+        <div class="current-stop-row">
+          <span class="current-stop-label">${escapeHtml(t("currentStop"))}:</span>
+          ${currentStopValueMarkup}
+        </div>
+        <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
+      `;
+    }
     mapEl.classList.remove("hidden");
     lastUpdateEl.textContent = `${t("lastUpdate")}: ${new Date().toLocaleTimeString(localeForLanguage(settings.language))}`;
     lastUpdateEl.hidden = false;
