@@ -43,7 +43,7 @@ window.BB_TRANSLATIONS = {
       notOutOfService: "Niet uit dienst",
       outOfServiceNoRealtime: "Realtime locatie niet beschikbaar: voertuig is uit dienst.",
       realtimeError: "Fout bij het ophalen van realtimegegevens.",
-      story44xx: "Verhaal 44xx",
+      story44xx: "Het verhaal van 44xx",
       feedCurrentUntil: "Data actueel tot {date}.",
       disclaimerTitle: "Disclaimer",
       disclaimerText: "De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertragingen, fouten of onnauwkeurigheden in realtimegegevens. Gebruik op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij."

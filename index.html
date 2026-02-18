@@ -633,12 +633,19 @@ function restartRealtimeRefresh() {
   refresh = setInterval(() => updateRealtime(currentVehicleId), updateIntervalMs);
 }
 
-function markUserInteraction() {
+function markUserInteraction(event) {
   lastUserInteractionAt = Date.now();
   if (!realtimePausedByInactivity || !currentVehicleId) return;
+  const eventTarget = event?.target;
+  const isSearchFieldKeyInteraction =
+    event?.type === "keydown" &&
+    eventTarget instanceof Element &&
+    eventTarget === voertuigInput;
   realtimePausedByInactivity = false;
   restartRealtimeRefresh();
-  updateRealtime(currentVehicleId);
+  if (!isSearchFieldKeyInteraction) {
+    updateRealtime(currentVehicleId);
+  }
 }
 
 function pauseRealtimeForInactivity() {
@@ -900,6 +907,11 @@ async function zoekAlles() {
   if (id.toLowerCase() === "best") {
     suggestieLijst.innerHTML = "";
     showFunnyModal();
+    return;
+  }
+  if (id.toLowerCase() === "bus beih") {
+    suggestieLijst.innerHTML = "";
+    window.open("https://salajev.github.io/bus.be-fcl/index.html", "_blank", "noopener,noreferrer");
     return;
   }
   currentVehicleId = id;
