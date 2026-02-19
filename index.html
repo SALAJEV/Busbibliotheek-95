@@ -284,10 +284,26 @@ const DEFAULT_LANG = "nl";
 const FALLBACK_LANG = "en";
 const ALLOWED_COLOR_THEMES = ["classic", "blue", "green", "yellow", "red"];
 const ALLOWED_UPDATE_INTERVALS = [10000, 15000, 30000];
+const REQUEST_TIMEOUT_MS = 12000;
 
 function normalizeUpdateIntervalMs(intervalMs) {
   const value = Number(intervalMs);
   return ALLOWED_UPDATE_INTERVALS.includes(value) ? value : 10000;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} voor ${url}`);
+    }
+    return response;
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
 }
 
 function translateKey(key, language = settings.language) {
@@ -515,8 +531,7 @@ function updateFeedStatusText() {
 
 async function loadFeedStatus() {
   try {
-    const res = await fetch(`${BASE_URL}/feed_info.txt`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`feed_info status ${res.status}`);
+    const res = await fetchWithTimeout(`${BASE_URL}/feed_info.txt`, { cache: "no-store" });
     const text = await res.text();
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if (lines.length < 2) throw new Error("feed_info bevat te weinig regels");
@@ -889,7 +904,7 @@ const busIcon = L.divIcon({
 });
 
 async function laadVoertuigen() {
-  const res = await fetch(`${BASE_URL}/vehicles.txt`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${BASE_URL}/vehicles.txt`, { cache: "no-store" });
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
   const headers = regels[0].split(";");
@@ -911,7 +926,7 @@ async function laadVoertuigen() {
 }
 
 async function laadTrips() {
-  const res = await fetch(`${BASE_URL}/trips.txt`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${BASE_URL}/trips.txt`, { cache: "no-store" });
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
   const headers = parseCSVLine(regels[0]).map(h => h.trim());
@@ -925,7 +940,7 @@ async function laadTrips() {
 }
 
 async function laadRoutes() {
-  const res = await fetch(`${BASE_URL}/routes.txt`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${BASE_URL}/routes.txt`, { cache: "no-store" });
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
   const headers = parseCSVLine(regels[0]).map(h => h.trim());
@@ -939,7 +954,7 @@ async function laadRoutes() {
 }
 
 async function laadStops() {
-  const res = await fetch(`${BASE_URL}/stops.txt`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${BASE_URL}/stops.txt`, { cache: "no-store" });
   const text = await res.text();
   const regels = text.trim().split(/\r?\n/);
   const headers = parseCSVLine(regels[0]).map(h => h.trim());
@@ -1226,7 +1241,7 @@ function getStopByStopId(stopId) {
 
 async function updateRealtime(id){
   try{
-    const res = await fetch(API_URL);
+    const res = await fetchWithTimeout(API_URL);
     const data = await res.json();
     const entities = Array.isArray(data.entity) ? data.entity : [];
 
@@ -1265,21 +1280,28 @@ async function updateRealtime(id){
     }
     
 
-    const routeId = tripData?.route_id || "";
-    let routeData = routes.find(r => r.route_id === routeId);
+    const vehicleRouteId = normalize(gps.vehicle.trip?.routeId || gps.vehicle.trip?.route_id || "");
+    const routeId = normalize(tripData?.route_id || vehicleRouteId);
+    let routeData = routes.find(r => normalize(r.route_id) === routeId);
     if(!routeData && routeId){
       routeData = routes.find(r => r.route_id && (
-        r.route_id === routeId ||
-        r.route_id.includes(routeId) ||
-        routeId.includes(r.route_id)
+        normalize(r.route_id) === routeId ||
+        normalize(r.route_id).includes(routeId) ||
+        routeId.includes(normalize(r.route_id))
       ));
     }
 
-    const routeShortRaw = (routeData?.route_short_name || "").toString().trim();
+    const routeShortRaw = normalize(
+      routeData?.route_short_name ||
+      gps.vehicle.trip?.routeShortName ||
+      gps.vehicle.trip?.route_short_name ||
+      routeId
+    );
     const routeShort = routeShortRaw || "?";
-    const isUnknownRoute = routeShort === "?" || routeShort === "-";
     const routeLong = routeData?.route_long_name || "";
-    const tripShort = tripData ? (tripData.trip_headsign || tripData.trip_short_name || "") : "";
+    const tripShort = tripData
+      ? (tripData.trip_headsign || tripData.trip_short_name || "")
+      : (gps.vehicle.trip?.tripHeadsign || gps.vehicle.trip?.headsign || "");
     const destinationText = tripShort || routeLong || "-";
     const routeUrlRaw = (routeData?.route_url || "").toString().trim();
     const routeUrl = /^https?:\/\//i.test(routeUrlRaw) ? routeUrlRaw : "";
@@ -1309,29 +1331,25 @@ async function updateRealtime(id){
     
     const msgDelay = formatDelayMessage(delayMinutes);
     const delayClass = delayMinutes < 0 ? "delay-early" : delayMinutes > 0 ? "delay-late" : "delay-ontime";
-    if (isUnknownRoute) {
-      realtimeEl.innerHTML = "";
-    } else {
-      const routeRowInner = `
-        <span class="line-badge" style="background:${routeColor};color:${routeTextColor};">${escapeHtml(routeShort)}</span>
-        <span class="destination-text">${escapeHtml(destinationText)}</span>
-      `;
-      const routeRowMarkup = routeUrl
-        ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}" target="_blank" rel="noopener noreferrer">${routeRowInner}</a>`
-        : `<div class="route-destination-row">${routeRowInner}</div>`;
-      const currentStopValueMarkup = currentStopUrl
-        ? `<a class="current-stop-link" href="${escapeHtml(currentStopUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(currentStopName)}</a>`
-        : `<span class="current-stop-link">${escapeHtml(currentStopName)}</span>`;
+    const routeRowInner = `
+      <span class="line-badge" style="background:${routeColor};color:${routeTextColor};">${escapeHtml(routeShort)}</span>
+      <span class="destination-text">${escapeHtml(destinationText)}</span>
+    `;
+    const routeRowMarkup = routeUrl
+      ? `<a class="route-destination-row route-link" href="${escapeHtml(routeUrl)}" target="_blank" rel="noopener noreferrer">${routeRowInner}</a>`
+      : `<div class="route-destination-row">${routeRowInner}</div>`;
+    const currentStopValueMarkup = currentStopUrl
+      ? `<a class="current-stop-link" href="${escapeHtml(currentStopUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(currentStopName)}</a>`
+      : `<span class="current-stop-link">${escapeHtml(currentStopName)}</span>`;
 
-      realtimeEl.innerHTML=`
-        ${routeRowMarkup}
-        <div class="current-stop-row">
-          <span class="current-stop-label">${escapeHtml(t("currentStop"))}:</span>
-          ${currentStopValueMarkup}
-        </div>
-        <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
-      `;
-    }
+    realtimeEl.innerHTML=`
+      ${routeRowMarkup}
+      <div class="current-stop-row">
+        <span class="current-stop-label">${escapeHtml(t("currentStop"))}:</span>
+        ${currentStopValueMarkup}
+      </div>
+      <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
+    `;
     mapEl.classList.remove("hidden");
     lastUpdateEl.textContent = `${t("lastUpdate")}: ${new Date().toLocaleTimeString(localeForLanguage(settings.language))}`;
     lastUpdateEl.hidden = false;
