@@ -293,7 +293,7 @@ function normalizeUpdateIntervalMs(intervalMs) {
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutHandle = setTimeout(() => controller.abort("timeout"), timeoutMs);
 
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
@@ -301,6 +301,11 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_M
       throw new Error(`HTTP ${response.status} voor ${url}`);
     }
     return response;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`Timeout na ${timeoutMs}ms voor ${url}`);
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutHandle);
   }
@@ -976,10 +981,10 @@ async function laadStops() {
 }
 
 initAppPreferences();
-laadVoertuigen();
-laadTrips();
-laadRoutes();
-laadStops();
+void laadVoertuigen().catch((e) => console.warn("Warm-up voertuigen mislukt", e));
+void laadTrips().catch((e) => console.warn("Warm-up trips mislukt", e));
+void laadRoutes().catch((e) => console.warn("Warm-up routes mislukt", e));
+void laadStops().catch((e) => console.warn("Warm-up haltes mislukt", e));
 
 function toonSuggesties() {
   const query = voertuigInput.value.trim();
