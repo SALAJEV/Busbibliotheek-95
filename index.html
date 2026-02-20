@@ -1201,13 +1201,28 @@ function initMap(lat,lon){
   }
 }
 
+function getEntityVehiclePayload(entity) {
+  return entity?.vehicle || entity?.vehiclePosition || entity?.vehicle_position || null;
+}
+
+function getEntityTripUpdatePayload(entity) {
+  return entity?.tripUpdate || entity?.trip_update || null;
+}
+
 function extractTripDescriptor(...sources) {
   for (const source of sources) {
     if (!source || typeof source !== "object") continue;
-    const candidates = [source.trip, source.tripDescriptor, source.trip_descriptor, source];
+    const candidates = [
+      source.trip,
+      source.tripDescriptor,
+      source.trip_descriptor,
+      source.tripUpdate,
+      source.trip_update,
+      source
+    ];
     for (const candidate of candidates) {
       if (!candidate || typeof candidate !== "object") continue;
-      const tripId = cleanText(candidate.tripId || candidate.trip_id || candidate.tripID || candidate.id || "");
+      const tripId = cleanText(candidate.tripId || candidate.trip_id || candidate.tripID || "");
       const routeId = cleanText(candidate.routeId || candidate.route_id || candidate.lineId || candidate.line_id || "");
       const routeShortName = cleanText(candidate.routeShortName || candidate.route_short_name || candidate.lineShortName || candidate.line_short_name || "");
       const headsign = cleanText(candidate.tripHeadsign || candidate.trip_headsign || candidate.headsign || candidate.destination || "");
@@ -1235,37 +1250,52 @@ function getTripUpdateForVehicle(entities, vehicleId, tripId = "") {
   if (!Array.isArray(entities)) return null;
 
   const byVehicleId = entities.find((entity) => {
+    const tripUpdate = getEntityTripUpdatePayload(entity);
     const descriptor =
-      entity?.tripUpdate?.vehicle ||
-      entity?.tripUpdate?.vehicleDescriptor ||
-      entity?.tripUpdate?.vehicle_descriptor;
+      tripUpdate?.vehicle ||
+      tripUpdate?.vehicleDescriptor ||
+      tripUpdate?.vehicle_descriptor;
     return getVehicleDescriptorId(descriptor) === normalizedVehicleId;
   });
-  if (byVehicleId?.tripUpdate) return byVehicleId.tripUpdate;
+  if (byVehicleId) return getEntityTripUpdatePayload(byVehicleId);
 
   if (normalizedTripId) {
     const byTripId = entities.find((entity) => {
-      const descriptor = extractTripDescriptor(entity?.tripUpdate);
+      const descriptor = extractTripDescriptor(getEntityTripUpdatePayload(entity));
       return descriptor.tripId === normalizedTripId;
     });
-    if (byTripId?.tripUpdate) return byTripId.tripUpdate;
+    if (byTripId) return getEntityTripUpdatePayload(byTripId);
   }
 
   return null;
 }
 
+function getTripUpdateForEntityId(entities, entityId) {
+  const normalizedEntityId = cleanText(entityId);
+  if (!normalizedEntityId || !Array.isArray(entities)) return null;
+  const match = entities.find((entity) => {
+    const currentEntityId = cleanText(entity?.id || entity?.entityId || entity?.entity_id || "");
+    return currentEntityId === normalizedEntityId && !!getEntityTripUpdatePayload(entity);
+  });
+  return match ? getEntityTripUpdatePayload(match) : null;
+}
+
 function getDelaySecondsFromTripUpdate(tripUpdate) {
-  if (!tripUpdate?.stopTimeUpdate?.length) return null;
+  const updates = tripUpdate?.stopTimeUpdate || tripUpdate?.stop_time_update;
+  if (!Array.isArray(updates) || updates.length === 0) return null;
   const now = Math.floor(Date.now() / 1000);
   let best = null;
 
-  for (const stop of tripUpdate.stopTimeUpdate) {
+  for (const stop of updates) {
     const candidates = [stop.departure, stop.arrival];
     for (const c of candidates) {
-      if (!c || typeof c.delay !== "number") continue;
-      const score = typeof c.time === "number" ? Math.abs(c.time - now) : Number.MAX_SAFE_INTEGER;
+      if (!c) continue;
+      const delay = typeof c.delay === "number" ? c.delay : (typeof c.delay_seconds === "number" ? c.delay_seconds : null);
+      if (typeof delay !== "number") continue;
+      const eventTime = typeof c.time === "number" ? c.time : (typeof c.timestamp === "number" ? c.timestamp : null);
+      const score = typeof eventTime === "number" ? Math.abs(eventTime - now) : Number.MAX_SAFE_INTEGER;
       if (!best || score < best.score) {
-        best = { delay: c.delay, score };
+        best = { delay, score };
       }
     }
   }
@@ -1273,17 +1303,17 @@ function getDelaySecondsFromTripUpdate(tripUpdate) {
 }
 
 function getCurrentStopIdFromTripUpdate(tripUpdate) {
-  const updates = tripUpdate?.stopTimeUpdate;
+  const updates = tripUpdate?.stopTimeUpdate || tripUpdate?.stop_time_update;
   if (!Array.isArray(updates) || updates.length === 0) return "";
 
   const now = Math.floor(Date.now() / 1000);
   let best = null;
 
   updates.forEach((stop, index) => {
-    const stopId = cleanText(stop?.stopId || stop?.stop_id || "");
+    const stopId = cleanText(stop?.stopId || stop?.stop_id || stop?.assignedStopId || stop?.assigned_stop_id || "");
     if (!stopId) return;
 
-    const candidates = [stop.departure?.time, stop.arrival?.time]
+    const candidates = [stop.departure?.time, stop.arrival?.time, stop.departure?.timestamp, stop.arrival?.timestamp]
       .filter((t) => typeof t === "number");
     const score = candidates.length
       ? Math.min(...candidates.map((t) => Math.abs(t - now)))
@@ -1297,6 +1327,25 @@ function getCurrentStopIdFromTripUpdate(tripUpdate) {
   return best?.stopId || "";
 }
 
+function getDestinationFromTripUpdate(tripUpdate) {
+  const updates = tripUpdate?.stopTimeUpdate || tripUpdate?.stop_time_update;
+  if (!Array.isArray(updates) || updates.length === 0) return "";
+  for (let i = updates.length - 1; i >= 0; i -= 1) {
+    const stopId = cleanText(
+      updates[i]?.stopId ||
+      updates[i]?.stop_id ||
+      updates[i]?.assignedStopId ||
+      updates[i]?.assigned_stop_id ||
+      ""
+    );
+    if (!stopId) continue;
+    const stop = getStopByStopId(stopId);
+    const stopName = cleanText(stop?.stop_name);
+    if (stopName) return stopName;
+  }
+  return "";
+}
+
 function getStopByStopId(stopId) {
   const normalized = normalize(stopId);
   if (!normalized) return null;
@@ -1308,8 +1357,18 @@ async function updateRealtime(id){
     const res = await fetchWithTimeout(API_URL);
     const data = await res.json();
     const entities = Array.isArray(data.entity) ? data.entity : [];
-
-    const gps = [...entities].reverse().find(e=>e.vehicle?.vehicle?.id==id && e.vehicle.position);
+    const normalizedRequestedId = cleanText(id);
+    const gpsEntity = [...entities].reverse().find((entity) => {
+      const vehiclePayload = getEntityVehiclePayload(entity);
+      if (!vehiclePayload?.position) return false;
+      const descriptor =
+        vehiclePayload?.vehicle ||
+        vehiclePayload?.vehicleDescriptor ||
+        vehiclePayload?.vehicle_descriptor;
+      const descriptorId = getVehicleDescriptorId(descriptor);
+      return descriptorId === normalizedRequestedId;
+    });
+    const gps = gpsEntity ? { vehicle: getEntityVehiclePayload(gpsEntity) } : null;
 
     if(!gps){
       realtimeEl.innerHTML=t("noData");
@@ -1320,8 +1379,12 @@ async function updateRealtime(id){
     }
 
     const v=gps.vehicle;
-    const vehicleDescriptor = extractTripDescriptor(gps.vehicle, gps);
-    const tripUpdate = getTripUpdateForVehicle(entities, id, vehicleDescriptor.tripId);
+    const vehicleDescriptor = extractTripDescriptor(v);
+    let tripUpdate = getTripUpdateForVehicle(entities, id, vehicleDescriptor.tripId);
+    if (!tripUpdate) {
+      const gpsEntityId = cleanText(gpsEntity?.id || gpsEntity?.entityId || gpsEntity?.entity_id || "");
+      tripUpdate = getTripUpdateForEntityId(entities, gpsEntityId);
+    }
     const tripUpdateDescriptor = extractTripDescriptor(tripUpdate);
     const descriptor = {
       tripId: vehicleDescriptor.tripId || tripUpdateDescriptor.tripId,
@@ -1373,7 +1436,21 @@ async function updateRealtime(id){
     const tripShort = tripData
       ? pickFirstText(tripData.trip_headsign, tripData.trip_short_name)
       : pickFirstText(descriptor.headsign);
-    const destinationText = tripShort || routeLong || "-";
+    const destinationFromStops = getDestinationFromTripUpdate(tripUpdate);
+    const destinationText = tripShort || routeLong || destinationFromStops || "-";
+    if (routeShort === "?" || destinationText === "-") {
+      console.warn("[busbibliotheek] lijn/bestemming niet gevonden", {
+        vehicleId: normalizedRequestedId,
+        gpsEntityId: cleanText(gpsEntity?.id || ""),
+        vehicleDescriptor,
+        tripUpdateDescriptor,
+        tripId: nTripId,
+        routeId,
+        hasTripData: !!tripData,
+        hasRouteData: !!routeData,
+        hasTripUpdate: !!tripUpdate
+      });
+    }
     const routeUrlRaw = (routeData?.route_url || "").toString().trim();
     const routeUrl = /^https?:\/\//i.test(routeUrlRaw) ? routeUrlRaw : "";
     const routeColorRaw = (routeData?.route_color || "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
