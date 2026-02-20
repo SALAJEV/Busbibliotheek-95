@@ -829,6 +829,17 @@ function parseCSVLine(line){
 
 // Helper: normalize ids/strings for matching
 const normalize = s => (s||"").toString().replace(/"/g, "").trim();
+const cleanText = (value) => {
+  const normalized = normalize(value);
+  return normalized === "/" ? "" : normalized;
+};
+function pickFirstText(...values) {
+  for (const value of values) {
+    const cleaned = cleanText(value);
+    if (cleaned) return cleaned;
+  }
+  return "";
+}
 const normalizeLookup = s => normalize(s).toLowerCase();
 const normalizePlateLookup = s => normalizeLookup(s).replace(/[^a-z0-9]/g, "");
 
@@ -1190,9 +1201,57 @@ function initMap(lat,lon){
   }
 }
 
-function getTripUpdateForVehicle(entities, vehicleId) {
-  const match = entities.find(e => e.tripUpdate?.vehicle?.id == vehicleId);
-  return match?.tripUpdate || null;
+function extractTripDescriptor(...sources) {
+  for (const source of sources) {
+    if (!source || typeof source !== "object") continue;
+    const candidates = [source.trip, source.tripDescriptor, source.trip_descriptor, source];
+    for (const candidate of candidates) {
+      if (!candidate || typeof candidate !== "object") continue;
+      const tripId = cleanText(candidate.tripId || candidate.trip_id || candidate.tripID || candidate.id || "");
+      const routeId = cleanText(candidate.routeId || candidate.route_id || candidate.lineId || candidate.line_id || "");
+      const routeShortName = cleanText(candidate.routeShortName || candidate.route_short_name || candidate.lineShortName || candidate.line_short_name || "");
+      const headsign = cleanText(candidate.tripHeadsign || candidate.trip_headsign || candidate.headsign || candidate.destination || "");
+      if (tripId || routeId || routeShortName || headsign) {
+        return { tripId, routeId, routeShortName, headsign };
+      }
+    }
+  }
+  return { tripId: "", routeId: "", routeShortName: "", headsign: "" };
+}
+
+function getVehicleDescriptorId(vehicleDescriptor) {
+  return cleanText(
+    vehicleDescriptor?.id ||
+    vehicleDescriptor?.vehicleId ||
+    vehicleDescriptor?.vehicle_id ||
+    vehicleDescriptor?.label ||
+    ""
+  );
+}
+
+function getTripUpdateForVehicle(entities, vehicleId, tripId = "") {
+  const normalizedVehicleId = cleanText(vehicleId);
+  const normalizedTripId = cleanText(tripId);
+  if (!Array.isArray(entities)) return null;
+
+  const byVehicleId = entities.find((entity) => {
+    const descriptor =
+      entity?.tripUpdate?.vehicle ||
+      entity?.tripUpdate?.vehicleDescriptor ||
+      entity?.tripUpdate?.vehicle_descriptor;
+    return getVehicleDescriptorId(descriptor) === normalizedVehicleId;
+  });
+  if (byVehicleId?.tripUpdate) return byVehicleId.tripUpdate;
+
+  if (normalizedTripId) {
+    const byTripId = entities.find((entity) => {
+      const descriptor = extractTripDescriptor(entity?.tripUpdate);
+      return descriptor.tripId === normalizedTripId;
+    });
+    if (byTripId?.tripUpdate) return byTripId.tripUpdate;
+  }
+
+  return null;
 }
 
 function getDelaySecondsFromTripUpdate(tripUpdate) {
@@ -1221,7 +1280,7 @@ function getCurrentStopIdFromTripUpdate(tripUpdate) {
   let best = null;
 
   updates.forEach((stop, index) => {
-    const stopId = (stop?.stopId || "").toString().trim();
+    const stopId = cleanText(stop?.stopId || stop?.stop_id || "");
     if (!stopId) return;
 
     const candidates = [stop.departure?.time, stop.arrival?.time]
@@ -1261,7 +1320,16 @@ async function updateRealtime(id){
     }
 
     const v=gps.vehicle;
-    const tripid = gps.vehicle.trip?.tripId || gps.vehicle.trip?.trip_id || "";
+    const vehicleDescriptor = extractTripDescriptor(gps.vehicle, gps);
+    const tripUpdate = getTripUpdateForVehicle(entities, id, vehicleDescriptor.tripId);
+    const tripUpdateDescriptor = extractTripDescriptor(tripUpdate);
+    const descriptor = {
+      tripId: vehicleDescriptor.tripId || tripUpdateDescriptor.tripId,
+      routeId: vehicleDescriptor.routeId || tripUpdateDescriptor.routeId,
+      routeShortName: vehicleDescriptor.routeShortName || tripUpdateDescriptor.routeShortName,
+      headsign: vehicleDescriptor.headsign || tripUpdateDescriptor.headsign
+    };
+    const tripid = descriptor.tripId;
 
     // Zorg dat trips/routes geladen zijn
     if(trips.length===0) await laadTrips();
@@ -1269,7 +1337,7 @@ async function updateRealtime(id){
     if(stopsById.size===0) await laadStops();
 
     // Robuuste matching: normaliseer en probeer exact / endsWith / includes
-    const nTripId = normalize(tripid);
+    const nTripId = cleanText(tripid);
     let tripData = trips.find(t => normalize(t.trip_id) === nTripId);
     if(!tripData && nTripId){
       tripData = trips.find(t => {
@@ -1284,9 +1352,8 @@ async function updateRealtime(id){
       });
     }
     
-
-    const vehicleRouteId = normalize(gps.vehicle.trip?.routeId || gps.vehicle.trip?.route_id || "");
-    const routeId = normalize(tripData?.route_id || vehicleRouteId);
+    const vehicleRouteId = cleanText(descriptor.routeId);
+    const routeId = pickFirstText(tripData?.route_id, vehicleRouteId);
     let routeData = routes.find(r => normalize(r.route_id) === routeId);
     if(!routeData && routeId){
       routeData = routes.find(r => r.route_id && (
@@ -1296,17 +1363,16 @@ async function updateRealtime(id){
       ));
     }
 
-    const routeShortRaw = normalize(
-      routeData?.route_short_name ||
-      gps.vehicle.trip?.routeShortName ||
-      gps.vehicle.trip?.route_short_name ||
+    const routeShortRaw = pickFirstText(
+      routeData?.route_short_name,
+      descriptor.routeShortName,
       routeId
     );
     const routeShort = routeShortRaw || "?";
-    const routeLong = routeData?.route_long_name || "";
+    const routeLong = cleanText(routeData?.route_long_name);
     const tripShort = tripData
-      ? (tripData.trip_headsign || tripData.trip_short_name || "")
-      : (gps.vehicle.trip?.tripHeadsign || gps.vehicle.trip?.headsign || "");
+      ? pickFirstText(tripData.trip_headsign, tripData.trip_short_name)
+      : pickFirstText(descriptor.headsign);
     const destinationText = tripShort || routeLong || "-";
     const routeUrlRaw = (routeData?.route_url || "").toString().trim();
     const routeUrl = /^https?:\/\//i.test(routeUrlRaw) ? routeUrlRaw : "";
@@ -1316,7 +1382,6 @@ async function updateRealtime(id){
     const routeTextColor = routeTextColorRaw.length === 6 ? `#${routeTextColorRaw}` : "#ffffff";
 
     // Delay from trip updates is authoritative; fallback to vehicle payload
-    const tripUpdate = getTripUpdateForVehicle(entities, id);
     const currentStopId = getCurrentStopIdFromTripUpdate(tripUpdate);
     const currentStop = getStopByStopId(currentStopId);
     const currentStopName = (currentStop?.stop_name || currentStopId || "-").toString().trim() || "-";
