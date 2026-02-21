@@ -1309,6 +1309,15 @@ function getVehicleDescriptorId(vehicleDescriptor) {
   );
 }
 
+function getVehicleIdFromTripUpdate(tripUpdate) {
+  if (!tripUpdate || typeof tripUpdate !== "object") return "";
+  const descriptor =
+    tripUpdate?.vehicle ||
+    tripUpdate?.vehicleDescriptor ||
+    tripUpdate?.vehicle_descriptor;
+  return getVehicleDescriptorId(descriptor);
+}
+
 function getTripUpdateForVehicle(entities, vehicleId, tripId = "") {
   const normalizedVehicleId = cleanText(vehicleId);
   const normalizedTripId = cleanText(tripId);
@@ -1392,26 +1401,6 @@ function getCurrentStopIdFromTripUpdate(tripUpdate) {
   return best?.stopId || "";
 }
 
-function getDestinationFromTripUpdate(tripUpdate, excludedStopId = "") {
-  const updates = tripUpdate?.stopTimeUpdate || tripUpdate?.stop_time_update;
-  if (!Array.isArray(updates) || updates.length === 0) return "";
-  const excludedId = cleanText(excludedStopId);
-  for (let i = updates.length - 1; i >= 0; i -= 1) {
-    const stopId = cleanText(
-      updates[i]?.stopId ||
-      updates[i]?.stop_id ||
-      updates[i]?.assignedStopId ||
-      updates[i]?.assigned_stop_id ||
-      ""
-    );
-    if (!stopId || (excludedId && stopId === excludedId)) continue;
-    const stop = getStopByStopId(stopId);
-    const stopName = cleanText(stop?.stop_name);
-    if (stopName) return stopName;
-  }
-  return "";
-}
-
 function getStopByStopId(stopId) {
   const normalized = normalize(stopId);
   if (!normalized) return null;
@@ -1464,7 +1453,11 @@ async function updateRealtime(id){
     if(trips.length===0) await laadTrips();
     if(routes.length===0) await laadRoutes();
     if(stopsById.size===0) await laadStops();
-    const currentStopId = getCurrentStopIdFromTripUpdate(tripUpdate);
+    const tripUpdateVehicleId = getVehicleIdFromTripUpdate(tripUpdate);
+    const sameVehicleTripUpdate = !!tripUpdate && tripUpdateVehicleId === normalizedRequestedId;
+    const sameTripTripUpdate = !!tripUpdate && !!vehicleDescriptor.tripId && !!tripUpdateDescriptor.tripId && vehicleDescriptor.tripId === tripUpdateDescriptor.tripId;
+    const canUseTripUpdateStop = sameVehicleTripUpdate || sameTripTripUpdate;
+    const currentStopId = canUseTripUpdateStop ? getCurrentStopIdFromTripUpdate(tripUpdate) : "";
     const currentStop = getStopByStopId(currentStopId);
     const currentStopName = (currentStop?.stop_name || currentStopId || "-").toString().trim() || "-";
     const currentStopUrlRaw = (currentStop?.stop_url || "").toString().trim();
@@ -1484,17 +1477,15 @@ async function updateRealtime(id){
       routeId
     );
     const routeShort = routeShortRaw || "?";
-    const routeLong = cleanText(routeData?.route_long_name);
-    const tripShort = tripData
-      ? pickFirstText(tripData.trip_short_name)
-      : pickFirstText(descriptor.headsign);
-    const destinationFromStops = getDestinationFromTripUpdate(tripUpdate, currentStopId);
-    const destinationText = tripShort || routeLong || destinationFromStops || "-";
+    const tripShort = tripData ? pickFirstText(tripData.trip_short_name) : "";
+    const destinationText = tripShort || "-";
     if (routeShort === "?" || destinationText === "-") {
       console.warn("[busbibliotheek] lijn/bestemming niet gevonden", {
         vehicleId: normalizedRequestedId,
         gpsEntityId: cleanText(gpsEntity?.id || ""),
         currentStopId,
+        canUseTripUpdateStop,
+        tripUpdateVehicleId,
         vehicleDescriptor,
         tripUpdateDescriptor,
         tripId: nTripId,
@@ -1512,7 +1503,7 @@ async function updateRealtime(id){
     const routeTextColor = routeTextColorRaw.length === 6 ? `#${routeTextColorRaw}` : "#ffffff";
 
     // Delay from trip updates is authoritative; fallback to vehicle payload
-    let delaySeconds = getDelaySecondsFromTripUpdate(tripUpdate);
+    let delaySeconds = canUseTripUpdateStop ? getDelaySecondsFromTripUpdate(tripUpdate) : null;
     if (typeof delaySeconds !== "number" && typeof gps.vehicle.trip?.delay === "number") {
       delaySeconds = gps.vehicle.trip.delay;
     }
