@@ -1392,9 +1392,10 @@ function getCurrentStopIdFromTripUpdate(tripUpdate) {
   return best?.stopId || "";
 }
 
-function getDestinationFromTripUpdate(tripUpdate) {
+function getDestinationFromTripUpdate(tripUpdate, excludedStopId = "") {
   const updates = tripUpdate?.stopTimeUpdate || tripUpdate?.stop_time_update;
   if (!Array.isArray(updates) || updates.length === 0) return "";
+  const excludedId = cleanText(excludedStopId);
   for (let i = updates.length - 1; i >= 0; i -= 1) {
     const stopId = cleanText(
       updates[i]?.stopId ||
@@ -1403,7 +1404,7 @@ function getDestinationFromTripUpdate(tripUpdate) {
       updates[i]?.assigned_stop_id ||
       ""
     );
-    if (!stopId) continue;
+    if (!stopId || (excludedId && stopId === excludedId)) continue;
     const stop = getStopByStopId(stopId);
     const stopName = cleanText(stop?.stop_name);
     if (stopName) return stopName;
@@ -1463,6 +1464,11 @@ async function updateRealtime(id){
     if(trips.length===0) await laadTrips();
     if(routes.length===0) await laadRoutes();
     if(stopsById.size===0) await laadStops();
+    const currentStopId = getCurrentStopIdFromTripUpdate(tripUpdate);
+    const currentStop = getStopByStopId(currentStopId);
+    const currentStopName = (currentStop?.stop_name || currentStopId || "-").toString().trim() || "-";
+    const currentStopUrlRaw = (currentStop?.stop_url || "").toString().trim();
+    const currentStopUrl = /^https?:\/\//i.test(currentStopUrlRaw) ? currentStopUrlRaw : "";
 
     // Robuuste matching: normaliseer en probeer exact / endsWith / includes
     const nTripId = cleanText(tripid);
@@ -1482,12 +1488,13 @@ async function updateRealtime(id){
     const tripShort = tripData
       ? pickFirstText(tripData.trip_short_name)
       : pickFirstText(descriptor.headsign);
-    const destinationFromStops = getDestinationFromTripUpdate(tripUpdate);
-    const destinationText = tripShort || destinationFromStops || routeLong || "-";
+    const destinationFromStops = getDestinationFromTripUpdate(tripUpdate, currentStopId);
+    const destinationText = tripShort || routeLong || destinationFromStops || "-";
     if (routeShort === "?" || destinationText === "-") {
       console.warn("[busbibliotheek] lijn/bestemming niet gevonden", {
         vehicleId: normalizedRequestedId,
         gpsEntityId: cleanText(gpsEntity?.id || ""),
+        currentStopId,
         vehicleDescriptor,
         tripUpdateDescriptor,
         tripId: nTripId,
@@ -1505,11 +1512,6 @@ async function updateRealtime(id){
     const routeTextColor = routeTextColorRaw.length === 6 ? `#${routeTextColorRaw}` : "#ffffff";
 
     // Delay from trip updates is authoritative; fallback to vehicle payload
-    const currentStopId = getCurrentStopIdFromTripUpdate(tripUpdate);
-    const currentStop = getStopByStopId(currentStopId);
-    const currentStopName = (currentStop?.stop_name || currentStopId || "-").toString().trim() || "-";
-    const currentStopUrlRaw = (currentStop?.stop_url || "").toString().trim();
-    const currentStopUrl = /^https?:\/\//i.test(currentStopUrlRaw) ? currentStopUrlRaw : "";
     let delaySeconds = getDelaySecondsFromTripUpdate(tripUpdate);
     if (typeof delaySeconds !== "number" && typeof gps.vehicle.trip?.delay === "number") {
       delaySeconds = gps.vehicle.trip.delay;
