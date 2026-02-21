@@ -249,6 +249,9 @@ let trips = [];
 let routes = [];
 let stops = [];
 const stopsById = new Map();
+const tripsById = new Map();
+const routesById = new Map();
+const routesByKey = new Map();
 let map, marker, refresh;
 let trailLine = null;
 let routeTrail = [];
@@ -840,6 +843,53 @@ function pickFirstText(...values) {
   }
   return "";
 }
+function getRouteKey(routeId) {
+  const normalized = cleanText(routeId);
+  if (!normalized) return "";
+  return cleanText(normalized.split("_")[0]);
+}
+function getRouteKeyFromTripId(tripId) {
+  const normalized = cleanText(tripId);
+  if (!normalized) return "";
+  return cleanText(normalized.split("_")[0]);
+}
+function findTripDataByTripId(tripId) {
+  const normalizedTripId = cleanText(tripId);
+  if (!normalizedTripId) return null;
+  const exact = tripsById.get(normalizedTripId);
+  if (exact) return exact;
+
+  return trips.find((trip) => {
+    const currentTripId = normalize(trip.trip_id);
+    return currentTripId && (
+      currentTripId.endsWith(normalizedTripId) ||
+      normalizedTripId.endsWith(currentTripId) ||
+      currentTripId.includes(normalizedTripId) ||
+      normalizedTripId.includes(currentTripId)
+    );
+  }) || null;
+}
+function findRouteDataByRouteId(routeId, tripId = "") {
+  const normalizedRouteId = cleanText(routeId);
+  if (normalizedRouteId) {
+    const exact = routesById.get(normalizedRouteId);
+    if (exact) return exact;
+
+    const fuzzy = routes.find((route) => {
+      const currentRouteId = normalize(route.route_id);
+      return currentRouteId && (
+        currentRouteId === normalizedRouteId ||
+        currentRouteId.includes(normalizedRouteId) ||
+        normalizedRouteId.includes(currentRouteId)
+      );
+    });
+    if (fuzzy) return fuzzy;
+  }
+
+  const routeKey = getRouteKey(normalizedRouteId) || getRouteKeyFromTripId(tripId);
+  if (routeKey && routesByKey.has(routeKey)) return routesByKey.get(routeKey);
+  return null;
+}
 const normalizeLookup = s => normalize(s).toLowerCase();
 const normalizePlateLookup = s => normalizeLookup(s).replace(/[^a-z0-9]/g, "");
 
@@ -953,6 +1003,12 @@ async function laadTrips() {
     headers.forEach((h, i) => obj[h] = values[i] || "/");
     return obj;
   });
+
+  tripsById.clear();
+  trips.forEach((trip) => {
+    const tripId = normalize(trip.trip_id);
+    if (tripId) tripsById.set(tripId, trip);
+  });
 }
 
 async function laadRoutes() {
@@ -966,6 +1022,15 @@ async function laadRoutes() {
     const obj = {};
     headers.forEach((h, i) => obj[h] = values[i] || "/");
     return obj;
+  });
+
+  routesById.clear();
+  routesByKey.clear();
+  routes.forEach((route) => {
+    const routeId = normalize(route.route_id);
+    if (routeId) routesById.set(routeId, route);
+    const routeKey = getRouteKey(routeId);
+    if (routeKey && !routesByKey.has(routeKey)) routesByKey.set(routeKey, route);
   });
 }
 
@@ -1401,30 +1466,11 @@ async function updateRealtime(id){
 
     // Robuuste matching: normaliseer en probeer exact / endsWith / includes
     const nTripId = cleanText(tripid);
-    let tripData = trips.find(t => normalize(t.trip_id) === nTripId);
-    if(!tripData && nTripId){
-      tripData = trips.find(t => {
-        const tId = normalize(t.trip_id);
-        return tId && (
-          tId === nTripId ||
-          tId.endsWith(nTripId) ||
-          nTripId.endsWith(tId) ||
-          tId.includes(nTripId) ||
-          nTripId.includes(tId)
-        );
-      });
-    }
+    const tripData = findTripDataByTripId(nTripId);
     
     const vehicleRouteId = cleanText(descriptor.routeId);
-    const routeId = pickFirstText(tripData?.route_id, vehicleRouteId);
-    let routeData = routes.find(r => normalize(r.route_id) === routeId);
-    if(!routeData && routeId){
-      routeData = routes.find(r => r.route_id && (
-        normalize(r.route_id) === routeId ||
-        normalize(r.route_id).includes(routeId) ||
-        routeId.includes(normalize(r.route_id))
-      ));
-    }
+    const routeId = pickFirstText(tripData?.route_id, vehicleRouteId, getRouteKeyFromTripId(nTripId));
+    const routeData = findRouteDataByRouteId(routeId, nTripId);
 
     const routeShortRaw = pickFirstText(
       routeData?.route_short_name,
@@ -1434,10 +1480,10 @@ async function updateRealtime(id){
     const routeShort = routeShortRaw || "?";
     const routeLong = cleanText(routeData?.route_long_name);
     const tripShort = tripData
-      ? pickFirstText(tripData.trip_headsign, tripData.trip_short_name)
+      ? pickFirstText(tripData.trip_short_name)
       : pickFirstText(descriptor.headsign);
     const destinationFromStops = getDestinationFromTripUpdate(tripUpdate);
-    const destinationText = tripShort || routeLong || destinationFromStops || "-";
+    const destinationText = tripShort || destinationFromStops || routeLong || "-";
     if (routeShort === "?" || destinationText === "-") {
       console.warn("[busbibliotheek] lijn/bestemming niet gevonden", {
         vehicleId: normalizedRequestedId,
