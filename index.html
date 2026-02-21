@@ -250,6 +250,8 @@ let routes = [];
 let stops = [];
 const stopsById = new Map();
 const tripsById = new Map();
+const tripsByRouteId = new Map();
+const tripsByRouteKey = new Map();
 const routesById = new Map();
 const routesByKey = new Map();
 let map, marker, refresh;
@@ -869,6 +871,44 @@ function findTripDataByTripId(tripId) {
     );
   }) || null;
 }
+function addTripToLookup(map, key, trip) {
+  if (!key) return;
+  if (!map.has(key)) map.set(key, []);
+  map.get(key).push(trip);
+}
+function getTripsForRoute(routeId, fallbackTripId = "") {
+  const normalizedRouteId = cleanText(routeId);
+  if (normalizedRouteId && tripsByRouteId.has(normalizedRouteId)) {
+    return tripsByRouteId.get(normalizedRouteId);
+  }
+
+  const routeKey = getRouteKey(normalizedRouteId) || getRouteKeyFromTripId(fallbackTripId);
+  if (routeKey && tripsByRouteKey.has(routeKey)) {
+    return tripsByRouteKey.get(routeKey);
+  }
+  return [];
+}
+function findTripData(routeId, tripId, headsign) {
+  const byTripId = findTripDataByTripId(tripId);
+  if (byTripId) return byTripId;
+
+  const normalizedHeadsign = cleanText(headsign).toLowerCase();
+  if (!normalizedHeadsign) return null;
+
+  const candidates = getTripsForRoute(routeId, tripId);
+  if (!candidates.length) return null;
+
+  const exact = candidates.find((trip) => cleanText(trip.trip_headsign).toLowerCase() === normalizedHeadsign);
+  if (exact) return exact;
+
+  return candidates.find((trip) => {
+    const currentHeadsign = cleanText(trip.trip_headsign).toLowerCase();
+    return currentHeadsign && (
+      currentHeadsign.includes(normalizedHeadsign) ||
+      normalizedHeadsign.includes(currentHeadsign)
+    );
+  }) || null;
+}
 function findRouteDataByRouteId(routeId, tripId = "") {
   const normalizedRouteId = cleanText(routeId);
   if (normalizedRouteId) {
@@ -1005,9 +1045,15 @@ async function laadTrips() {
   });
 
   tripsById.clear();
+  tripsByRouteId.clear();
+  tripsByRouteKey.clear();
   trips.forEach((trip) => {
     const tripId = normalize(trip.trip_id);
     if (tripId) tripsById.set(tripId, trip);
+    const routeId = normalize(trip.route_id);
+    addTripToLookup(tripsByRouteId, routeId, trip);
+    const routeKey = getRouteKey(routeId);
+    addTripToLookup(tripsByRouteKey, routeKey, trip);
   });
 }
 
@@ -1465,10 +1511,10 @@ async function updateRealtime(id){
 
     // Robuuste matching: normaliseer en probeer exact / endsWith / includes
     const nTripId = cleanText(tripid);
-    const tripData = findTripDataByTripId(nTripId);
+    const provisionalRouteId = pickFirstText(cleanText(descriptor.routeId), getRouteKeyFromTripId(nTripId));
+    const tripData = findTripData(provisionalRouteId, nTripId, descriptor.headsign);
     
-    const vehicleRouteId = cleanText(descriptor.routeId);
-    const routeId = pickFirstText(tripData?.route_id, vehicleRouteId, getRouteKeyFromTripId(nTripId));
+    const routeId = pickFirstText(tripData?.route_id, provisionalRouteId, getRouteKeyFromTripId(nTripId));
     const routeData = findRouteDataByRouteId(routeId, nTripId);
 
     const routeShortRaw = pickFirstText(
@@ -1486,6 +1532,8 @@ async function updateRealtime(id){
         currentStopId,
         canUseTripUpdateStop,
         tripUpdateVehicleId,
+        descriptorHeadsign: cleanText(descriptor.headsign),
+        provisionalRouteId,
         vehicleDescriptor,
         tripUpdateDescriptor,
         tripId: nTripId,
