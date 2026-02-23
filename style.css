@@ -1334,6 +1334,10 @@ body.funny-open {
   animation-delay: 0.08s;
 }
 
+.results-wrap.show .card:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
 .grid {
   position: relative;
   display: grid;
@@ -1537,6 +1541,44 @@ tr + tr td {
     linear-gradient(145deg, rgba(245, 158, 11, 0.9), rgba(234, 88, 12, 0.84)),
     radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.3), transparent 62%);
   color: #fff;
+}
+
+.photo-card {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+.vehicle-photo-frame {
+  position: relative;
+  margin-top: 0.15rem;
+  border-radius: calc(var(--radius-md) + 2px);
+  overflow: hidden;
+  border: 1px solid var(--stroke-soft);
+  background:
+    radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 56%),
+    linear-gradient(160deg, color-mix(in srgb, var(--surface-alt) 88%, #fff 12%), color-mix(in srgb, var(--surface) 86%, #000 14%));
+}
+
+.vehicle-photo-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  transition: transform 0.32s ease, filter 0.32s ease;
+}
+
+.photo-card:hover .vehicle-photo-image {
+  transform: scale(1.015);
+  filter: saturate(1.04);
+}
+
+.vehicle-photo-caption {
+  margin: 0.72rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .meta-row {
@@ -1988,6 +2030,10 @@ footer h3 {
 
   #map {
     height: 260px;
+  }
+
+  .vehicle-photo-image {
+    aspect-ratio: 4 / 3;
   }
 
   footer {
