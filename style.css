@@ -1703,6 +1703,10 @@ tr + tr td {
   animation: pageLoadingFade 0.22s ease;
 }
 
+.page-loading-overlay[hidden] {
+  display: none !important;
+}
+
 .page-loading-shell {
   min-width: min(320px, calc(100vw - 2rem));
   padding: 1.2rem 1.3rem;
