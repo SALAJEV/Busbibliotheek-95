@@ -2118,6 +2118,14 @@ footer h3 {
 }
 
 @media (max-width: 700px) {
+  :root {
+    --radius-lg: 30px;
+    --radius-md: 22px;
+    --radius-sm: 18px;
+    --button-radius-theme: 20px;
+    --icon-radius-theme: 18px;
+  }
+
   .container {
     width: 100%;
     min-height: 100dvh;
@@ -2149,6 +2157,7 @@ footer h3 {
     width: min(320px, calc(100vw - 0.8rem));
     max-height: min(52vh, 390px);
     transform-origin: top right;
+    border-radius: 26px;
   }
 
   .header-actions #installBtn {
@@ -2157,8 +2166,12 @@ footer h3 {
   }
 
   .search-row {
-    border-radius: 20px;
+    border-radius: 28px;
     padding: 0.24rem;
+  }
+
+  .search-row input {
+    border-radius: 24px 0 0 24px;
   }
 
   .btn,
@@ -2177,7 +2190,7 @@ footer h3 {
     min-width: 44px;
     padding: 0;
     margin-left: 0.08rem;
-    border-radius: 15px;
+    border-radius: 22px;
   }
 
   .close-btn {
@@ -2192,10 +2205,12 @@ footer h3 {
     width: auto;
     max-height: calc(100vh - 1.2rem);
     padding: 0.88rem 0.86rem 0.95rem;
+    border-radius: 28px;
   }
 
   #map {
     height: 260px;
+    border-radius: 24px;
   }
 
   .vehicle-photo-image {
@@ -2217,7 +2232,7 @@ footer h3 {
 
   .stack-card,
   .card {
-    border-radius: 18px;
+    border-radius: 26px;
   }
 
   .voertuignummer-display {
