@@ -1513,7 +1513,16 @@ function toonVasteData(id){
   }
   html+="</table>";
 
-  const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent('#dl' + id);
+  const operatorValue = normalizeFieldKey(getVehicleField(bus, "Vervoersmaatschappij"));
+  let instagramPrefix = "#dl";
+  if (operatorValue.includes("le tec")) {
+    instagramPrefix = "#tec";
+  } else if (operatorValue.includes("mivb")) {
+    instagramPrefix = "#mivb";
+  } else if (operatorValue.includes("de lijn")) {
+    instagramPrefix = "#dl";
+  }
+  const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent(instagramPrefix + id);
   const links = [
     `<a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener">${localWord("instagramSearch")}</a>`
   ];
