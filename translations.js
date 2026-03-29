@@ -44,7 +44,7 @@ nl: {
   noFixed: "Geen voertuiggegevens gevonden.",
   noFavoritesYet: "Nog geen favorieten toegevoegd.",
   vehiclePlaceholder: "Voertuignummer of nummerplaat",
-  notOutOfService: "Niet uit dienst",
+  notOutOfService: "Bus nog in dienst",
   outOfServiceNoRealtime: "Realtime locatie niet beschikbaar: voertuig is uit dienst.",
   realtimeError: "Fout bij het ophalen van realtimegegevens.",
   story44xx: "Het verhaal van 44xx",

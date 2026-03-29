@@ -1515,11 +1515,11 @@ function toonVasteData(id){
 
   const operatorValue = normalizeFieldKey(getVehicleField(bus, "Vervoersmaatschappij"));
   let instagramPrefix = "#dl";
-  if (operatorValue.includes("le tec")) {
+  if (operatorValue.includes("Le TEC")) {
     instagramPrefix = "#tec";
-  } else if (operatorValue.includes("mivb")) {
+  } else if (operatorValue.includes("MIVB")) {
     instagramPrefix = "#mivb";
-  } else if (operatorValue.includes("de lijn")) {
+  } else if (operatorValue.includes("De Lijn")) {
     instagramPrefix = "#dl";
   }
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent(instagramPrefix + id);
@@ -1903,4 +1903,3 @@ if (prefersColorScheme?.addEventListener) {
 </script>
 </body>
 </html>
-
