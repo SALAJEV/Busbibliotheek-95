@@ -346,6 +346,7 @@ let tripsLoadPromise = null;
 let routesLoadPromise = null;
 let stopsLoadPromise = null;
 let jsPdfLoadPromise = null;
+let html2CanvasLoadPromise = null;
 let lastVerifiedInternetAt = 0;
 let lastVerifiedInternetState = true;
 let settings = {
@@ -983,6 +984,25 @@ async function loadJsPdfLibrary() {
   return jsPdfLoadPromise;
 }
 
+async function loadHtml2CanvasLibrary() {
+  if (window.html2canvas) return window.html2canvas;
+  if (html2CanvasLoadPromise) return html2CanvasLoadPromise;
+
+  html2CanvasLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.html2canvas) resolve(window.html2canvas);
+      else reject(new Error("html2canvas kon niet geladen worden"));
+    };
+    script.onerror = () => reject(new Error("html2canvas-script kon niet geladen worden"));
+    document.head.appendChild(script);
+  });
+
+  return html2CanvasLoadPromise;
+}
+
 function drawPdfRoundedCard(doc, x, y, w, h, fillHex, strokeHex) {
   const [fillR, fillG, fillB] = hexToRgb(fillHex);
   const [strokeR, strokeG, strokeB] = hexToRgb(strokeHex);
@@ -991,120 +1011,293 @@ function drawPdfRoundedCard(doc, x, y, w, h, fillHex, strokeHex) {
   doc.roundedRect(x, y, w, h, 5, 5, "FD");
 }
 
+function buildBusPdfHtml(bus, vehicleId, themeKey = "geel") {
+  const theme = PDF_EXPORT_THEMES[themeKey] || PDF_EXPORT_THEMES.geel;
+  const vehicleNumber = escapeHtml(bus.Voertuignummer || vehicleId || "");
+  const busType = escapeHtml(bus.Type || "Onbekend type");
+  const plate = escapeHtml(getVehicleField(bus, "Nummerplaat") || "-");
+  const owner = escapeHtml(getVehicleField(bus, "Eigenaar") || "-");
+  const hansea = getVehicleField(bus, "Hansea nummer");
+  const intern = getVehicleField(bus, "Intern nummer");
+  const inDienst = escapeHtml(formatBusFieldValueForDisplay(bus, "Datum in dienst", getVehicleField(bus, "Datum in dienst")) || "Bus nog niet in dienst");
+  const uitDienst = escapeHtml(formatBusFieldValueForDisplay(bus, "Uit dienst", getVehicleField(bus, "Uit dienst")) || "Bus nog in dienst");
+  const exportDate = escapeHtml(new Date().toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" }));
+  const logoHtml = `<img class="logo" src="media/logo.png" alt="Busbibliotheek 95 logo">`;
+
+  const extraParts = [];
+  if (hansea && hansea !== "/") {
+    extraParts.push(`<span><span class="label">Hansea</span> <span class="hansea">${escapeHtml(hansea)}</span></span>`);
+  }
+  if (intern && intern !== "/") {
+    extraParts.push(`<span><span class="label">Intern</span> ${escapeHtml(intern)}</span>`);
+  }
+  const extraHtml = extraParts.length ? `<div class="meta-right">${extraParts.join('<span class="sep">|</span>')}</div>` : "";
+
+  return `
+    <style>
+      .pdf-render-root {
+        width: 210mm;
+        background: ${theme.pageBg};
+        font-family: Calibri, "Segoe UI", Arial, sans-serif;
+        color: #1f2937;
+      }
+      .pdf-render-root * {
+        box-sizing: border-box;
+      }
+      .pdf-render-root .page {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 12mm;
+      }
+      .pdf-render-root .page-inner {
+        min-height: 273mm;
+        background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.96));
+        border-radius: 22px;
+        box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+        padding: 7mm 7mm 6mm 7mm;
+        border: 1px solid ${theme.cardLine};
+        display: flex;
+        flex-direction: column;
+      }
+      .pdf-render-root .header {
+        margin-bottom: 4.6mm;
+      }
+      .pdf-render-root .hero-band {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8mm;
+        padding: 6mm 6.2mm 5.4mm 6.2mm;
+        border-radius: 16px;
+        background: linear-gradient(145deg, ${theme.accent}, ${theme.accentSoft});
+      }
+      .pdf-render-root .hero-copy {
+        min-width: 0;
+      }
+      .pdf-render-root .eyebrow {
+        display: inline-block;
+        margin-bottom: 3mm;
+        padding: 1.3mm 3.4mm;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.2);
+        color: #ffffff;
+        font-size: 9pt;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+      }
+      .pdf-render-root h1 {
+        margin: 0 0 2.8mm 0;
+        font-size: 23pt;
+        color: #ffffff;
+        letter-spacing: 0.1px;
+        line-height: 1.1;
+      }
+      .pdf-render-root .sub {
+        color: rgba(255,255,255,0.9);
+        font-size: 10.4pt;
+        font-weight: 600;
+      }
+      .pdf-render-root .meta-strip {
+        margin-top: 3mm;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3.2mm 4.2mm;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.82);
+        border: 1px solid ${theme.cardLine};
+      }
+      .pdf-render-root .meta-label {
+        color: #64748b;
+        font-size: 9.2pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .pdf-render-root .meta-value {
+        color: #0f172a;
+        font-size: 10pt;
+        font-weight: 700;
+      }
+      .pdf-render-root .logo {
+        width: 19mm;
+        height: 19mm;
+        object-fit: contain;
+        flex: 0 0 auto;
+        background: rgba(255,255,255,0.96);
+        border-radius: 14px;
+        padding: 2.4mm;
+      }
+      .pdf-render-root .kaarten {
+        flex: 1;
+        display: grid;
+        gap: 2.4mm;
+      }
+      .pdf-render-root .buskaart {
+        border: 1px solid ${theme.cardLine};
+        border-radius: 14px;
+        padding: 3.2mm 3.6mm;
+        background: rgba(255,255,255,0.92);
+      }
+      .pdf-render-root .regel-boven {
+        display: flex;
+        justify-content: space-between;
+        gap: 4mm;
+        align-items: baseline;
+        flex-wrap: wrap;
+        margin-bottom: 0.8mm;
+      }
+      .pdf-render-root .main {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2.6mm;
+        align-items: baseline;
+      }
+      .pdf-render-root .nummer {
+        font-weight: 700;
+        font-size: 11pt;
+        color: #0f172a;
+        min-width: 16mm;
+      }
+      .pdf-render-root .type {
+        font-weight: 600;
+        color: #1e293b;
+      }
+      .pdf-render-root .plaat,
+      .pdf-render-root .meta-right,
+      .pdf-render-root .regel-onder,
+      .pdf-render-root .eigenaar-lijn {
+        color: #475569;
+        font-size: 9pt;
+      }
+      .pdf-render-root .eigenaar-lijn {
+        margin: 1.1mm 0;
+      }
+      .pdf-render-root .label {
+        font-weight: 700;
+        color: #334155;
+      }
+      .pdf-render-root .hansea {
+        color: #c62828;
+        font-weight: 700;
+      }
+      .pdf-render-root .sep {
+        margin: 0 2.2mm;
+        color: #94a3b8;
+      }
+      .pdf-render-root .page-footer {
+        margin-top: auto;
+        padding-top: 3.4mm;
+        padding-bottom: 1mm;
+        border-top: 1px solid ${theme.accentSoft};
+        font-size: 9pt;
+        color: #64748b;
+        display: flex;
+        justify-content: space-between;
+      }
+    </style>
+    <div class="pdf-render-root">
+      <section class="page">
+        <div class="page-inner">
+          <div class="header hero">
+            <div class="hero-band">
+              <div class="hero-copy">
+                <div class="eyebrow">Busbibliotheek 95</div>
+                <h1>${vehicleNumber}</h1>
+                <div class="sub">${busType}</div>
+              </div>
+              ${logoHtml}
+            </div>
+            <div class="meta-strip">
+              <span class="meta-label">Exportdatum</span>
+              <span class="meta-value">${exportDate}</span>
+            </div>
+          </div>
+          <div class="kaarten">
+            <div class="buskaart">
+              <div class="regel-boven">
+                <div class="main">
+                  <span class="nummer">${vehicleNumber}</span>
+                  <span class="type">${busType}</span>
+                  <span class="plaat">${plate}</span>
+                </div>
+                ${extraHtml}
+              </div>
+              <div class="eigenaar-lijn"><span class="label">Eigenaar</span> ${owner}</div>
+              <div class="regel-onder">
+                <span><span class="label">In dienst</span> ${inDienst}</span>
+                <span class="sep">|</span>
+                <span><span class="label">Uit dienst</span> ${uitDienst}</span>
+              </div>
+            </div>
+            ${getBusPdfRows(bus).map((row) => `
+              <div class="buskaart">
+                <div class="regel-boven">
+                  <div class="main">
+                    <span class="nummer">${escapeHtml(row.label)}</span>
+                    <span class="type">${row.isHansea ? `<span class="hansea">${escapeHtml(row.value)}</span>` : escapeHtml(row.value)}</span>
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="page-footer">
+            <span>Busbibliotheek 95</span>
+            <span>Pagina 1 / 1</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+async function renderHtmlToPdfDownload(htmlMarkup, fileName) {
+  const jsPDF = await loadJsPdfLibrary();
+  const html2canvas = await loadHtml2CanvasLibrary();
+
+  const host = document.createElement("div");
+  host.style.position = "fixed";
+  host.style.left = "-20000px";
+  host.style.top = "0";
+  host.style.width = "210mm";
+  host.style.zIndex = "-1";
+  host.innerHTML = htmlMarkup;
+  document.body.appendChild(host);
+
+  try {
+    const pageEls = Array.from(host.querySelectorAll(".page"));
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+      compress: true
+    });
+
+    for (let index = 0; index < pageEls.length; index += 1) {
+      if (index > 0) pdf.addPage();
+      const canvas = await html2canvas(pageEls[index], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.94);
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+    }
+
+    pdf.save(fileName);
+  } finally {
+    host.remove();
+  }
+}
+
 async function exportBusPdf(vehicleId, themeKey = "geel") {
   const bus = findBusById(vehicleId);
   if (!bus) return;
-
-  const theme = PDF_EXPORT_THEMES[themeKey] || PDF_EXPORT_THEMES.geel;
-  const jsPDF = await loadJsPdfLibrary();
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-    compress: true
-  });
-
-  const rows = getBusPdfRows(bus);
-  const logoDataUrl = await loadImageAsDataUrl("media/logo.png");
-  const owner = getVehicleField(bus, "Eigenaar") || "-";
-  const vehicleType = bus.Type || "Onbekend type";
-  const exportDate = new Date().toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" });
-  const [pageR, pageG, pageB] = hexToRgb(theme.pageBg);
-  const [accentR, accentG, accentB] = hexToRgb(theme.accent);
-  const [lineR, lineG, lineB] = hexToRgb(theme.cardLine);
-  const pageBottomY = 264;
-
-  const drawPageShell = (continued = false) => {
-    doc.setFillColor(pageR, pageG, pageB);
-    doc.rect(0, 0, 210, 297, "F");
-
-    drawPdfRoundedCard(doc, 9, 9, 192, 279, "FFFFFF", theme.cardLine);
-
-    doc.setFillColor(accentR, accentG, accentB);
-    doc.roundedRect(15, 15, 180, 34, 8, 8, "F");
-
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(15, 55, 180, 18, 6, 6, "F");
-    doc.setDrawColor(lineR, lineG, lineB);
-    doc.roundedRect(15, 55, 180, 18, 6, 6, "S");
-
-    if (logoDataUrl) {
-      doc.addImage(logoDataUrl, inferImageFormat(logoDataUrl), 171, 18, 16, 16);
-    }
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text("BUSBIBLIOTHEEK 95", 21, 22);
-
-    doc.setFontSize(24);
-    doc.text(String(bus.Voertuignummer || vehicleId), 21, 33.5);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11.5);
-    doc.text(vehicleType, 21, 42, { maxWidth: 135 });
-
-    doc.setTextColor(71, 85, 105);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text("Eigenaar", 21, 63.2);
-    doc.text("Exportdatum", 107, 63.2);
-
-    doc.setTextColor(15, 23, 42);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.5);
-    doc.text(owner, 39, 63.2, { maxWidth: 58 });
-    doc.text(exportDate, 132, 63.2);
-
-    doc.setTextColor(17, 24, 39);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text(continued ? "Voertuiggegevens vervolg" : "Voertuigfiche", 20, 86);
-  };
-
-  drawPageShell(false);
-
-  let currentY = 96;
-  rows.forEach((row) => {
-    const valueLines = doc.splitTextToSize(String(row.value), 92);
-    const blockHeight = Math.max(16, valueLines.length * 5 + 8);
-
-    if (currentY + blockHeight > pageBottomY) {
-      doc.addPage();
-      drawPageShell(true);
-      currentY = 96;
-    }
-
-    drawPdfRoundedCard(doc, 20, currentY - 6, 170, blockHeight, "FFFFFF", theme.cardLine);
-    doc.setFillColor(pageR, pageG, pageB);
-    doc.roundedRect(24, currentY - 2, 44, 9, 3, 3, "F");
-
-    doc.setTextColor(100, 116, 139);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text(String(row.label).toUpperCase(), 28, currentY + 3.2);
-
-    if (row.isHansea) {
-      doc.setTextColor(185, 28, 28);
-    } else {
-      doc.setTextColor(15, 23, 42);
-    }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11.5);
-    doc.text(valueLines, 76, currentY + 3);
-    currentY += blockHeight + 4;
-  });
-
-  doc.setDrawColor(lineR, lineG, lineB);
-  doc.line(18, 274, 192, 274);
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text("Busbibliotheek 95", 20, 280);
-  doc.text(`Voertuig ${String(bus.Voertuignummer || vehicleId)}`, 190, 280, { align: "right" });
-
+  const htmlMarkup = buildBusPdfHtml(bus, vehicleId, themeKey);
   const fileName = sanitizeFileName(`Bus ${vehicleId}`) + ".pdf";
-  doc.save(fileName);
+  await renderHtmlToPdfDownload(htmlMarkup, fileName);
 }
 
 function updateVehiclePhotoTexts() {
