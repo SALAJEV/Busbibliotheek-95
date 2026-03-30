@@ -1013,106 +1013,97 @@ async function exportBusPdf(vehicleId, themeKey = "geel") {
   const exportDate = new Date().toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" });
   const [pageR, pageG, pageB] = hexToRgb(theme.pageBg);
   const [accentR, accentG, accentB] = hexToRgb(theme.accent);
+  const [lineR, lineG, lineB] = hexToRgb(theme.cardLine);
+  const pageBottomY = 264;
 
-  doc.setFillColor(pageR, pageG, pageB);
-  doc.rect(0, 0, 210, 297, "F");
+  const drawPageShell = (continued = false) => {
+    doc.setFillColor(pageR, pageG, pageB);
+    doc.rect(0, 0, 210, 297, "F");
 
-  drawPdfRoundedCard(doc, 10, 10, 190, 277, "FFFFFF", theme.cardLine);
-  drawPdfRoundedCard(doc, 16, 18, 178, 242, "FFFFFF", theme.cardLine);
+    drawPdfRoundedCard(doc, 9, 9, 192, 279, "FFFFFF", theme.cardLine);
 
-  if (logoDataUrl) {
-    doc.addImage(logoDataUrl, inferImageFormat(logoDataUrl), 168, 18, 18, 18);
-  }
+    doc.setFillColor(accentR, accentG, accentB);
+    doc.roundedRect(15, 15, 180, 34, 8, 8, "F");
 
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("BUSBIBLIOTHEEK 95", 20, 25);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(15, 55, 180, 18, 6, 6, "F");
+    doc.setDrawColor(lineR, lineG, lineB);
+    doc.roundedRect(15, 55, 180, 18, 6, 6, "S");
 
-  doc.setTextColor(17, 24, 39);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(23);
-  doc.text(String(bus.Voertuignummer || vehicleId), 20, 37);
+    if (logoDataUrl) {
+      doc.addImage(logoDataUrl, inferImageFormat(logoDataUrl), 171, 18, 16, 16);
+    }
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
-  doc.text(vehicleType, 20, 45, { maxWidth: 120 });
-  doc.setTextColor(71, 85, 105);
-  doc.setFontSize(11);
-  doc.text(`Eigenaar: ${owner}`, 20, 52, { maxWidth: 140 });
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text("BUSBIBLIOTHEEK 95", 21, 22);
 
-  doc.setFillColor(accentR, accentG, accentB);
-  doc.roundedRect(20, 60, 32, 8, 3, 3, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("Voertuigfiche", 36, 65.2, { align: "center" });
+    doc.setFontSize(24);
+    doc.text(String(bus.Voertuignummer || vehicleId), 21, 33.5);
 
-  doc.setTextColor(17, 24, 39);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("Voertuiggegevens", 20, 78);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11.5);
+    doc.text(vehicleType, 21, 42, { maxWidth: 135 });
 
-  let currentY = 88;
-  const pageBottomY = 258;
+    doc.setTextColor(71, 85, 105);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text("Eigenaar", 21, 63.2);
+    doc.text("Exportdatum", 107, 63.2);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
+    doc.text(owner, 39, 63.2, { maxWidth: 58 });
+    doc.text(exportDate, 132, 63.2);
+
+    doc.setTextColor(17, 24, 39);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(continued ? "Voertuiggegevens vervolg" : "Voertuigfiche", 20, 86);
+  };
+
+  drawPageShell(false);
+
+  let currentY = 96;
   rows.forEach((row) => {
-    const valueLines = doc.splitTextToSize(String(row.value), 106);
-    const blockHeight = Math.max(11, valueLines.length * 5 + 5);
+    const valueLines = doc.splitTextToSize(String(row.value), 92);
+    const blockHeight = Math.max(16, valueLines.length * 5 + 8);
 
     if (currentY + blockHeight > pageBottomY) {
       doc.addPage();
-      doc.setFillColor(pageR, pageG, pageB);
-      doc.rect(0, 0, 210, 297, "F");
-      drawPdfRoundedCard(doc, 10, 10, 190, 277, "FFFFFF", theme.cardLine);
-      drawPdfRoundedCard(doc, 16, 18, 178, 242, "FFFFFF", theme.cardLine);
-      if (logoDataUrl) {
-        doc.addImage(logoDataUrl, inferImageFormat(logoDataUrl), 168, 18, 18, 18);
-      }
-      doc.setTextColor(100, 116, 139);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text("BUSBIBLIOTHEEK 95", 20, 25);
-      doc.setTextColor(17, 24, 39);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.text(String(bus.Voertuignummer || vehicleId), 20, 36);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10.5);
-      doc.setTextColor(71, 85, 105);
-      doc.text(vehicleType, 20, 43, { maxWidth: 130 });
-      doc.setTextColor(17, 24, 39);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.text("Voertuiggegevens", 20, 57);
-      currentY = 68;
+      drawPageShell(true);
+      currentY = 96;
     }
 
-    doc.setDrawColor(...hexToRgb(theme.cardLine));
-    doc.line(20, currentY - 3, 188, currentY - 3);
+    drawPdfRoundedCard(doc, 20, currentY - 6, 170, blockHeight, "FFFFFF", theme.cardLine);
+    doc.setFillColor(pageR, pageG, pageB);
+    doc.roundedRect(24, currentY - 2, 44, 9, 3, 3, "F");
 
     doc.setTextColor(100, 116, 139);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(String(row.label), 20, currentY + 2);
+    doc.setFontSize(9.5);
+    doc.text(String(row.label).toUpperCase(), 28, currentY + 3.2);
 
     if (row.isHansea) {
       doc.setTextColor(185, 28, 28);
     } else {
       doc.setTextColor(15, 23, 42);
     }
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.text(valueLines, 78, currentY + 2);
-    currentY += blockHeight;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.text(valueLines, 76, currentY + 3);
+    currentY += blockHeight + 4;
   });
 
-  doc.setDrawColor(...hexToRgb(theme.cardLine));
-  doc.line(16, 266, 190, 266);
+  doc.setDrawColor(lineR, lineG, lineB);
+  doc.line(18, 274, 192, 274);
   doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("Busbibliotheek 95", 18, 273);
-  doc.text(`Exportdatum: ${exportDate}`, 188, 273, { align: "right" });
+  doc.text("Busbibliotheek 95", 20, 280);
+  doc.text(`Voertuig ${String(bus.Voertuignummer || vehicleId)}`, 190, 280, { align: "right" });
 
   const fileName = sanitizeFileName(`Bus ${vehicleId}`) + ".pdf";
   doc.save(fileName);
