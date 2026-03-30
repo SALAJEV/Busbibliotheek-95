@@ -46,8 +46,10 @@ def _print_header():
 
 def _print_welkom():
     """Toon een vriendelijke begroeting bij het opstarten."""
+    current_year = date.today().year
     print("Welkom bij Busbibliotheek 95.")
     print("Met dit script kunt u voertuigen opzoeken en lijsten per eigenaar exporteren.")
+    print(f"Copyright Busspotter 95, 2023-{current_year}.")
     print("Dank u om Busbibliotheek 95 te gebruiken.\n")
 
 
@@ -530,7 +532,7 @@ def _maak_eigenaar_html(eigenaar, data, include_retired=True, removed_bussen=Non
                 </div>
                 <div class="page-footer">
                   <span>Busbibliotheek 95</span>
-                  <span>Pagina {index} / {totaal_paginas}</span>
+                  <span>Copyright Busspotter 95, 2023-{date.today().year}</span>
                 </div>
               </div>
             </section>

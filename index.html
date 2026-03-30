@@ -111,6 +111,7 @@
   <footer>
     <h3 id="disclaimerTitle">Disclaimer</h3>
     <p id="disclaimerText">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertragingen, fouten of onnauwkeurigheden in realtimegegevens. Gebruik op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij.</p>
+    <p id="copyrightText" class="footer-meta">&copy; Busspotter 95, 2023-<span id="currentYear"></span></p>
   </footer>
 
 </div>
@@ -271,6 +272,7 @@ function hideSplash(ms = 260) {
 window.addEventListener('load', () => setTimeout(hideSplash, 520));
 splash?.addEventListener('click', () => hideSplash(150));
 document.addEventListener('touchstart', () => hideSplash(150), { once: true });
+if (currentYearEl) currentYearEl.textContent = String(new Date().getFullYear());
 
 // Install Prompt (beter gecontroleerde PWA-installatie)
 let deferredPrompt = null;
@@ -363,6 +365,7 @@ const vehiclePhotoImgEl = document.getElementById("vehiclePhotoImg");
 const vehiclePhotoCaptionEl = document.getElementById("vehiclePhotoCaption");
 const disclaimerTitleEl = document.getElementById("disclaimerTitle");
 const disclaimerTextEl = document.getElementById("disclaimerText");
+const currentYearEl = document.getElementById("currentYear");
 const feedStatusEl = document.getElementById("feedStatus");
 const funnyModalEl = document.getElementById("funnyModal");
 const funnyModalCloseBtn = document.getElementById("funnyModalCloseBtn");
