@@ -1,9 +1,8 @@
-const CACHE_NAME = 'busbibliotheek-v21';
+const CACHE_NAME = 'busbibliotheek-v22';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/offline.html',
   '/style.css',
   '/style.css?v=20260218-3',
   '/translations.js',
@@ -59,11 +58,20 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
+  if (url.searchParams.has('network-check')) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then(() => new Response(null, { status: 204, statusText: 'No Content' }))
+        .catch(() => new Response(null, { status: 503, statusText: 'Offline' }))
+    );
+    return;
+  }
+
   if (request.method !== 'GET') {
     return;
   }
 
-  // HTML navigation: network first with offline fallback page
+  // HTML navigation: network first with cached index fallback
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -73,8 +81,6 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(async () => {
-          const offlinePage = await caches.match('/offline.html', { ignoreSearch: true });
-          if (offlinePage) return offlinePage;
           const cachedIndex = await caches.match('/index.html', { ignoreSearch: true });
           return cachedIndex || new Response('Offline', {
             status: 503,

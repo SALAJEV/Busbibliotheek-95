@@ -98,6 +98,16 @@
   </div>
 </div>
 
+<div id="offlineOverlay" class="offline-overlay" hidden aria-hidden="true">
+  <div class="offline-shell" role="alert" aria-live="assertive">
+    <span class="offline-pill">Offline</span>
+    <h2>Geen internetverbinding</h2>
+    <p>Busbibliotheek kon geen werkende internetverbinding bevestigen.</p>
+    <p>Realtimegegevens en live-opzoekingen zijn tijdelijk niet beschikbaar.</p>
+    <button id="offlineRetryBtn" type="button">Opnieuw proberen</button>
+  </div>
+</div>
+
 <div id="settingsBackdrop" class="settings-backdrop"></div>
 <aside id="settingsPanel" class="settings-panel" aria-hidden="true" inert>
   <div class="settings-panel-header">
@@ -211,7 +221,10 @@ window.addEventListener('appinstalled', () => {
 // Constants
 const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
 const API_URL = "https://busbibliotheek95.pages.dev/api";
-const PYTHON_MAIN_DOWNLOAD_URL = `${BASE_URL}/python/main.py`;
+const PYTHON_MAIN_DOWNLOAD_URL = "https://busbibliotheek95.pages.dev/python/script.py";
+const NETWORK_CHECK_URL = `${window.location.origin}/manifest.json?network-check=1`;
+const NETWORK_CHECK_TIMEOUT_MS = 5000;
+const NETWORK_CHECK_INTERVAL_MS = 15000;
 const FAVORITES_KEY = "bb_favorites_v1";
 const SETTINGS_KEY = "bb_settings_v1";
 let updateIntervalMs = 10000;
@@ -266,6 +279,8 @@ const funnyModalEl = document.getElementById("funnyModal");
 const funnyModalCloseBtn = document.getElementById("funnyModalCloseBtn");
 const pageLoadingOverlayEl = document.getElementById("pageLoadingOverlay");
 const pageLoadingTextEl = document.getElementById("pageLoadingText");
+const offlineOverlayEl = document.getElementById("offlineOverlay");
+const offlineRetryBtn = document.getElementById("offlineRetryBtn");
 
 let voertuigen = [];
 let trips = [];
@@ -297,6 +312,7 @@ const INACTIVITY_CHECK_MS = 15000;
 let lastUserInteractionAt = Date.now();
 let realtimePausedByInactivity = false;
 let inactivityCheckHandle = null;
+let networkCheckHandle = null;
 let settings = {
   intervalMs: 10000,
   theme: "auto",
@@ -485,6 +501,48 @@ function setPageLoading(active) {
   pageLoadingOverlayEl.hidden = !active;
   pageLoadingOverlayEl.setAttribute("aria-hidden", String(!active));
   document.body.classList.toggle("page-loading", !!active);
+}
+
+function setOfflineOverlayVisible(visible) {
+  if (!offlineOverlayEl) return;
+  offlineOverlayEl.hidden = !visible;
+  offlineOverlayEl.setAttribute("aria-hidden", String(!visible));
+  document.body.classList.toggle("offline-active", !!visible);
+}
+
+async function hasVerifiedInternetConnection() {
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort("timeout"), NETWORK_CHECK_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${NETWORK_CHECK_URL}&ts=${Date.now()}`, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-store, no-cache, max-age=0",
+        Pragma: "no-cache"
+      },
+      signal: controller.signal
+    });
+    return response.ok;
+  } catch (_) {
+    return false;
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
+}
+
+async function verifyInternetConnection() {
+  const online = await hasVerifiedInternetConnection();
+  setOfflineOverlayVisible(!online);
+  return online;
+}
+
+function startInternetChecks() {
+  if (networkCheckHandle) clearInterval(networkCheckHandle);
+  networkCheckHandle = window.setInterval(() => {
+    verifyInternetConnection().catch(() => {});
+  }, NETWORK_CHECK_INTERVAL_MS);
 }
 
 function hideVehiclePhotoCard() {
@@ -788,13 +846,13 @@ function hideFunnyModal() {
 function startPythonDownload() {
   const downloadLink = document.createElement("a");
   downloadLink.href = PYTHON_MAIN_DOWNLOAD_URL;
-  downloadLink.download = "main.py";
+  downloadLink.download = "script.py";
   downloadLink.rel = "noopener";
   downloadLink.style.display = "none";
   document.body.appendChild(downloadLink);
   downloadLink.click();
   downloadLink.remove();
-  window.alert("De download van main.py is gestart.");
+  window.alert("De download van script.py is gestart.");
 }
 
 function loadFavorites() {
@@ -1018,6 +1076,9 @@ funnyModalCloseBtn?.addEventListener("click", hideFunnyModal);
 funnyModalEl?.addEventListener("click", (event) => {
   if (event.target === funnyModalEl) hideFunnyModal();
 });
+offlineRetryBtn?.addEventListener("click", () => {
+  verifyInternetConnection().catch(() => {});
+});
 settingsToggleBtn.addEventListener("click", () => setSettingsPanel(!settingsOpen));
 settingsCloseBtn.addEventListener("click", () => setSettingsPanel(false));
 settingsBackdropEl.addEventListener("click", () => setSettingsPanel(false));
@@ -1032,6 +1093,17 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape" && settingsOpen) {
     setSettingsPanel(false);
+  }
+});
+window.addEventListener("online", () => {
+  verifyInternetConnection().catch(() => {});
+});
+window.addEventListener("offline", () => {
+  setOfflineOverlayVisible(true);
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    verifyInternetConnection().catch(() => {});
   }
 });
 
@@ -1371,6 +1443,11 @@ async function zoekAlles() {
   markUserInteraction();
   const query = voertuigInput.value.trim();
   if(!query) return;
+  const hasInternet = await verifyInternetConnection();
+  if (!hasInternet) {
+    suggestieLijst.innerHTML = "";
+    return;
+  }
   setPageLoading(true);
   setFavoritesPanel(false);
   if (query.toLowerCase() === "python") {
@@ -1903,6 +1980,9 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js')
     .catch(err => console.error('Service Worker registratie mislukt:', err));
 }
+
+verifyInternetConnection().catch(() => {});
+startInternetChecks();
 
 // Dark scheme preference listener
 const prefersColorScheme = window.matchMedia("(prefers-color-scheme: dark)");
