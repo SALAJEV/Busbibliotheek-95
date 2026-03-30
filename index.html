@@ -19,7 +19,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=20260330-1">
+<link rel="stylesheet" href="style.css?v=20260330-2">
 </head>
 <body>
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
@@ -78,6 +78,17 @@
           <img id="vehiclePhotoImg" class="vehicle-photo-image" alt="" loading="lazy" decoding="async">
         </div>
         <p id="vehiclePhotoCaption" class="vehicle-photo-caption"></p>
+      </div>
+
+      <div id="compareCard" class="card compare-card" hidden aria-hidden="true">
+        <div class="compare-card-header">
+          <div>
+            <h2>Vergelijking</h2>
+            <p id="compareCardSummary" class="compare-card-summary">Vergelijk twee voertuigen naast elkaar.</p>
+          </div>
+          <button id="compareClearBtn" class="settings-close-btn" type="button" aria-label="Vergelijking sluiten">&times;</button>
+        </div>
+        <div id="compareContent"></div>
       </div>
     </div>
   </div>
@@ -182,6 +193,29 @@
     <div class="pdf-modal-actions">
       <button id="pdfModalCancelBtn" type="button">Annuleren</button>
       <button id="pdfModalConfirmBtn" class="btn btn--pdf" type="button">PDF downloaden</button>
+    </div>
+  </div>
+</div>
+
+<div id="compareModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="compareModalTitle">
+  <div class="pdf-modal-card compare-modal-card">
+    <div class="pdf-modal-header">
+      <div>
+        <h3 id="compareModalTitle">Voertuig vergelijken</h3>
+        <p class="pdf-modal-summary">Kies een tweede voertuig om naast de huidige bus te zetten.</p>
+      </div>
+      <button id="compareModalCloseBtn" class="settings-close-btn" type="button" aria-label="Sluiten">&times;</button>
+    </div>
+    <div class="pdf-modal-body">
+      <label class="pdf-theme-field compare-field" for="compareVehicleInput">
+        <span>Voertuignummer of nummerplaat</span>
+        <input id="compareVehicleInput" type="text" placeholder="Bijvoorbeeld 5292">
+      </label>
+      <p id="compareModalNote" class="pdf-modal-note">De vergelijking toont vaste voertuiggegevens van beide bussen.</p>
+    </div>
+    <div class="pdf-modal-actions">
+      <button id="compareModalCancelBtn" type="button">Annuleren</button>
+      <button id="compareModalConfirmBtn" class="btn" type="button">Vergelijken</button>
     </div>
   </div>
 </div>
@@ -309,6 +343,15 @@ const pdfThemeSelectEl = document.getElementById("pdfThemeSelect");
 const pdfModalCloseBtn = document.getElementById("pdfModalCloseBtn");
 const pdfModalCancelBtn = document.getElementById("pdfModalCancelBtn");
 const pdfModalConfirmBtn = document.getElementById("pdfModalConfirmBtn");
+const compareCardEl = document.getElementById("compareCard");
+const compareContentEl = document.getElementById("compareContent");
+const compareCardSummaryEl = document.getElementById("compareCardSummary");
+const compareClearBtn = document.getElementById("compareClearBtn");
+const compareModalEl = document.getElementById("compareModal");
+const compareVehicleInputEl = document.getElementById("compareVehicleInput");
+const compareModalCloseBtn = document.getElementById("compareModalCloseBtn");
+const compareModalCancelBtn = document.getElementById("compareModalCancelBtn");
+const compareModalConfirmBtn = document.getElementById("compareModalConfirmBtn");
 
 let voertuigen = [];
 let trips = [];
@@ -325,6 +368,7 @@ let trailLine = null;
 let routeTrail = [];
 let delayMinutes = 0;
 let currentVehicleId = "";
+let compareVehicleId = "";
 let currentPhotoVehicleId = "";
 let favorites = [];
 let settingsOpen = false;
@@ -339,6 +383,7 @@ const INACTIVITY_LIMIT_MS = 5 * 60 * 1000;
 const INACTIVITY_CHECK_MS = 15000;
 let lastUserInteractionAt = Date.now();
 let realtimePausedByInactivity = false;
+let deeplinkHandled = false;
 let inactivityCheckHandle = null;
 let networkCheckHandle = null;
 let pdfModalVehicleId = "";
@@ -585,6 +630,61 @@ function sanitizeFileName(value, fallback = "bus") {
   return cleaned || fallback;
 }
 
+function updateUrlState() {
+  const url = new URL(window.location.href);
+  if (currentVehicleId) url.searchParams.set("bus", currentVehicleId);
+  else url.searchParams.delete("bus");
+
+  if (compareVehicleId) url.searchParams.set("compare", compareVehicleId);
+  else url.searchParams.delete("compare");
+
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+  window.history.replaceState({}, "", nextUrl);
+}
+
+function getVehicleDisplayValue(bus, fieldKey, rawValue) {
+  const value = rawValue == null ? "" : rawValue.toString().trim();
+  const key = fieldKey.toLowerCase();
+  if (key.includes("datum in dienst")) {
+    if (!value || value === "/") return "Bus nog niet in dienst";
+    return formatDateForUi(value, { year: "numeric", month: "long", day: "numeric" });
+  }
+  if (key.includes("uit dienst")) {
+    if (!value || value === "/") return t("notOutOfService");
+    return formatDateForUi(value, { year: "numeric", month: "long", day: "numeric" });
+  }
+  if (key.includes("datum")) {
+    if (!value || value === "/") return "";
+    return formatDateForUi(value, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  }
+  if (!value || value === "/") return "";
+  return value;
+}
+
+function collectVehicleDisplayRows(bus) {
+  const rows = [];
+  if (!bus) return rows;
+  const shouldHideVin = getVehicleField(bus, vehicleHideVinFieldKey) === "1" && normalize(getVehicleField(bus, "VIN")) !== "/";
+
+  for (const [fieldKey, rawValue] of Object.entries(bus)) {
+    if (fieldKey === "Vervoersmaatschappij" || fieldKey === "Voertuignummer" || fieldKey === "Type" || fieldKey === vehicleHideVinFieldKey) continue;
+    if (fieldKey === "VIN" && shouldHideVin) continue;
+    if (fieldKey === "Gespot?" || fieldKey === "Opmerkingen") continue;
+
+    const displayValue = getVehicleDisplayValue(bus, fieldKey, rawValue);
+    if (!displayValue) continue;
+
+    rows.push({
+      key: normalizeFieldKey(fieldKey),
+      label: translateVehicleFieldLabel(fieldKey),
+      value: displayValue,
+      isHansea: normalizeFieldKey(fieldKey) === "hansea nummer"
+    });
+  }
+
+  return rows;
+}
+
 function getBusPdfThemeOptionsMarkup(selectedTheme = "geel") {
   return Object.keys(PDF_EXPORT_THEMES).map((themeKey) => {
     const selected = themeKey === selectedTheme ? " selected" : "";
@@ -660,6 +760,122 @@ function hidePdfModal() {
   if (!pdfModalEl) return;
   pdfModalEl.hidden = true;
   document.body.classList.remove("pdf-modal-open");
+}
+
+function showCompareModal() {
+  if (!currentVehicleId || !compareModalEl) return;
+  compareVehicleInputEl.value = "";
+  compareModalEl.hidden = false;
+  document.body.classList.add("pdf-modal-open");
+  window.setTimeout(() => compareVehicleInputEl?.focus(), 20);
+}
+
+function hideCompareModal() {
+  if (!compareModalEl) return;
+  compareModalEl.hidden = true;
+  document.body.classList.remove("pdf-modal-open");
+}
+
+function clearComparison() {
+  compareVehicleId = "";
+  if (compareCardEl) {
+    compareCardEl.hidden = true;
+    compareCardEl.setAttribute("aria-hidden", "true");
+  }
+  if (compareContentEl) compareContentEl.innerHTML = "";
+  updateUrlState();
+}
+
+function renderComparison() {
+  if (!compareCardEl || !compareContentEl || !currentVehicleId || !compareVehicleId) {
+    clearComparison();
+    return;
+  }
+
+  const baseBus = findBusById(currentVehicleId);
+  const compareBus = findBusById(compareVehicleId);
+  if (!baseBus || !compareBus) {
+    clearComparison();
+    return;
+  }
+
+  const baseRows = collectVehicleDisplayRows(baseBus);
+  const compareRows = collectVehicleDisplayRows(compareBus);
+  const rowMap = new Map();
+
+  for (const row of baseRows) rowMap.set(row.key, { label: row.label, left: row, right: null });
+  for (const row of compareRows) {
+    const existing = rowMap.get(row.key);
+    if (existing) existing.right = row;
+    else rowMap.set(row.key, { label: row.label, left: null, right: row });
+  }
+
+  const renderCellValue = (row) => {
+    if (!row) return '<span class="compare-empty">-</span>';
+    const safeValue = escapeHtml(row.value);
+    return row.isHansea ? `<span class="compare-hansea">${safeValue}</span>` : safeValue;
+  };
+
+  const rowsHtml = Array.from(rowMap.values()).map((row) => `
+    <tr>
+      <th>${escapeHtml(row.label)}</th>
+      <td>${renderCellValue(row.left)}</td>
+      <td>${renderCellValue(row.right)}</td>
+    </tr>
+  `).join("");
+
+  compareContentEl.innerHTML = `
+    <div class="compare-vehicles-head">
+      <div class="compare-vehicle-pill">
+        <strong>${escapeHtml(baseBus.Voertuignummer || currentVehicleId)}</strong>
+        <span>${escapeHtml(baseBus.Type || "Onbekend type")}</span>
+      </div>
+      <div class="compare-vs">vs</div>
+      <div class="compare-vehicle-pill">
+        <strong>${escapeHtml(compareBus.Voertuignummer || compareVehicleId)}</strong>
+        <span>${escapeHtml(compareBus.Type || "Onbekend type")}</span>
+      </div>
+    </div>
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Veld</th>
+            <th>${escapeHtml(baseBus.Voertuignummer || currentVehicleId)}</th>
+            <th>${escapeHtml(compareBus.Voertuignummer || compareVehicleId)}</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+
+  compareCardSummaryEl.textContent = `${baseBus.Voertuignummer} naast ${compareBus.Voertuignummer}`;
+  compareCardEl.hidden = false;
+  compareCardEl.setAttribute("aria-hidden", "false");
+  updateUrlState();
+}
+
+async function applyDeepLinkIfNeeded() {
+  if (deeplinkHandled) return;
+  deeplinkHandled = true;
+
+  const params = new URLSearchParams(window.location.search);
+  const busParam = params.get("bus") || "";
+  const compareParam = params.get("compare") || "";
+  if (!busParam) return;
+
+  voertuigInput.value = busParam;
+  await zoekAlles();
+
+  if (compareParam) {
+    const resolvedCompare = resolveVehicleSearch(compareParam);
+    const compareId = resolvedCompare.vehicleId || normalize(compareParam);
+    if (compareId && compareId !== currentVehicleId && resolvedCompare.bus) {
+      compareVehicleId = compareId;
+      renderComparison();
+    }
+  }
 }
 
 
@@ -1454,6 +1670,12 @@ vasteDataEl.addEventListener("click", (event) => {
   if (pdfButton) {
     const id = pdfButton.getAttribute("data-id") || currentVehicleId || "";
     showPdfModal(id);
+    return;
+  }
+
+  const compareButton = target.closest("#vehicleCompareBtn");
+  if (compareButton) {
+    showCompareModal();
   }
 });
 intervalSelect.addEventListener("change", () => {
@@ -1479,6 +1701,8 @@ languageSelect.addEventListener("change", () => {
   saveSettings();
   applyTranslations();
   renderFavorites();
+  if (currentVehicleId) toonVasteData(currentVehicleId);
+  if (compareVehicleId) renderComparison();
 });
 funnyModalCloseBtn?.addEventListener("click", hideFunnyModal);
 funnyModalEl?.addEventListener("click", (event) => {
@@ -1486,6 +1710,9 @@ funnyModalEl?.addEventListener("click", (event) => {
 });
 pdfModalCloseBtn?.addEventListener("click", hidePdfModal);
 pdfModalCancelBtn?.addEventListener("click", hidePdfModal);
+compareModalCloseBtn?.addEventListener("click", hideCompareModal);
+compareModalCancelBtn?.addEventListener("click", hideCompareModal);
+compareClearBtn?.addEventListener("click", clearComparison);
 pdfModalConfirmBtn?.addEventListener("click", async () => {
   if (!pdfModalVehicleId) return;
   const voertuigId = pdfModalVehicleId;
@@ -1504,8 +1731,35 @@ pdfModalConfirmBtn?.addEventListener("click", async () => {
     pdfModalConfirmBtn.textContent = oorspronkelijkeTekst;
   }
 });
+compareModalConfirmBtn?.addEventListener("click", async () => {
+  const query = compareVehicleInputEl?.value.trim() || "";
+  if (!query) return;
+  if (voertuigen.length === 0) await laadVoertuigen();
+  const resolved = resolveVehicleSearch(query);
+  const resolvedId = resolved.vehicleId || normalize(query);
+  if (!resolved.bus) {
+    window.alert("Geen tweede voertuig gevonden.");
+    return;
+  }
+  if (resolvedId === currentVehicleId) {
+    window.alert("Kies een ander voertuig om te vergelijken.");
+    return;
+  }
+  compareVehicleId = resolvedId;
+  hideCompareModal();
+  renderComparison();
+});
+compareVehicleInputEl?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    compareModalConfirmBtn?.click();
+  }
+});
 pdfModalEl?.addEventListener("click", (event) => {
   if (event.target === pdfModalEl) hidePdfModal();
+});
+compareModalEl?.addEventListener("click", (event) => {
+  if (event.target === compareModalEl) hideCompareModal();
 });
 offlineRetryBtn?.addEventListener("click", () => {
   verifyInternetConnection(true).catch(() => {});
@@ -1514,6 +1768,10 @@ settingsToggleBtn.addEventListener("click", () => setSettingsPanel(!settingsOpen
 settingsCloseBtn.addEventListener("click", () => setSettingsPanel(false));
 settingsBackdropEl.addEventListener("click", () => setSettingsPanel(false));
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !compareModalEl?.hidden) {
+    hideCompareModal();
+    return;
+  }
   if (event.key === "Escape" && !pdfModalEl?.hidden) {
     hidePdfModal();
     return;
@@ -1879,7 +2137,9 @@ async function laadStops() {
 }
 
 initAppPreferences();
-void laadVoertuigen().catch((e) => console.warn("Warm-up voertuigen mislukt", e));
+void laadVoertuigen()
+  .then(() => applyDeepLinkIfNeeded())
+  .catch((e) => console.warn("Warm-up voertuigen mislukt", e));
 
 function toonSuggesties() {
   const query = voertuigInput.value.trim();
@@ -1938,6 +2198,7 @@ async function zoekAlles() {
   const bus = resolved.bus;
   currentVehicleId = activeVehicleId;
   realtimePausedByInactivity = false;
+  if (compareVehicleId === currentVehicleId) compareVehicleId = "";
   if (resolved.vehicleId && activeVehicleId !== query) {
     voertuigInput.value = activeVehicleId;
   }
@@ -1947,8 +2208,10 @@ async function zoekAlles() {
   resultsWrapEl.classList.add("show");
   resultsGridEl.classList.add("show");
   closeBtnEl.style.display = "block";
+  updateUrlState();
 
   toonVasteData(activeVehicleId);
+  renderComparison();
   lastUpdateEl.hidden = true;
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
 
@@ -1995,6 +2258,7 @@ function terug() {
   voertuigInput.value = "";
   currentVehicleId = "";
   realtimePausedByInactivity = false;
+  compareVehicleId = "";
   routeTrail = [];
   if(refresh) {
     clearInterval(refresh);
@@ -2008,6 +2272,7 @@ function terug() {
   lastUpdateEl.hidden = true;
   mapEl.classList.add("hidden");
   if(marker){ map.removeLayer(marker); marker=null; }
+  clearComparison();
   updateFavoriteButtonState();
 }
 
@@ -2040,36 +2305,17 @@ function toonVasteData(id){
   let html=`<div class="vehicle-title-row"><p class="voertuignummer-display">${bus.Voertuignummer}</p><button id="favoriteInlineBtn" class="${favoriteClass}" type="button" title="${favoriteLabel}" aria-label="${favoriteLabel}" aria-pressed="${favorites.includes(id)}" data-id="${safeFavoriteId}">${favoriteStateSymbol}</button></div>`;
   if(bus.Type) html += `<p class="vehicle-type">${bus.Type}</p>`;
   html+="<table>";
-  const shouldHideVin = getVehicleField(bus, vehicleHideVinFieldKey) === "1" && normalize(getVehicleField(bus, "VIN")) !== "/";
-  for(const [k,v] of Object.entries(bus)){
-    if(k==="Vervoersmaatschappij"||k==="Voertuignummer"||k==="Type"||k===vehicleHideVinFieldKey) continue;
-    if (k === "VIN" && shouldHideVin) continue;
-    if (k === "Gespot?" || k === "Opmerkingen") continue;
-
-    let waarde = v;
-    const key = k.toLowerCase();
-    const normalizedKey = normalizeFieldKey(k);
-
-    if(key.includes("datum in dienst") && v!=="/") {
-      waarde = formatDateForUi(v, { year:'numeric', month:'long', day:'numeric' });
-    } else if(key.includes("uit dienst")) {
-      if(v==="/") waarde = t("notOutOfService");
-      else waarde = formatDateForUi(v, { year:'numeric', month:'long', day:'numeric' });
-    } else if(key.includes("datum") && v!=="/") {
-      waarde = formatDateForUi(v, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    } else {
-      if(v==="/") continue;
-    }
-    let waardeMarkup = escapeHtml(waarde);
-    if (normalizedKey === "hansea nummer") {
+  for (const row of collectVehicleDisplayRows(bus)) {
+    let waardeMarkup = escapeHtml(row.value);
+    if (row.isHansea) {
       waardeMarkup = `
         <span class="hansea-number-display">
           <img src="media/hansea.png" alt="Hansea" class="hansea-logo" loading="lazy" decoding="async">
-          <span>${escapeHtml(waarde)}</span>
+          <span>${escapeHtml(row.value)}</span>
         </span>
       `;
     }
-    html+=`<tr><th>${translateVehicleFieldLabel(k)}</th><td>${waardeMarkup}</td></tr>`;
+    html+=`<tr><th>${escapeHtml(row.label)}</th><td>${waardeMarkup}</td></tr>`;
   }
   html+="</table>";
 
@@ -2085,7 +2331,8 @@ function toonVasteData(id){
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent(instagramPrefix + id);
   const links = [
     `<a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener">${localWord("instagramSearch")}</a>`,
-    `<button id="vehiclePdfBtn" class="btn btn--pdf" type="button" data-id="${safeFavoriteId}">PDF downloaden</button>`
+    `<button id="vehiclePdfBtn" class="btn btn--pdf" type="button" data-id="${safeFavoriteId}">PDF downloaden</button>`,
+    `<button id="vehicleCompareBtn" class="btn" type="button" data-id="${safeFavoriteId}">Vergelijken</button>`
   ];
   const idNum = Number(id);
   if (Number.isInteger(idNum) && idNum >= 4404 && idNum <= 4459) {
