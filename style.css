@@ -9,6 +9,8 @@
   --radius-lg: 18px;
   --radius-md: 14px;
   --radius-sm: 10px;
+  --panel-radius: 20px;
+  --panel-radius-sm: 14px;
   --button-radius-theme: 14px;
   --button-radius-style-adjust: 0px;
   --button-radius: calc(var(--button-radius-theme) + var(--button-radius-style-adjust));
@@ -47,6 +49,8 @@
 
   --success: #166534;
   --danger: #dc2626;
+  --overlay-bg: rgba(2, 8, 23, 0.56);
+  --overlay-blur: 8px;
 
   --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.05);
   --shadow-card: 0 10px 28px rgba(15, 23, 42, 0.07);
@@ -96,6 +100,7 @@
   --accent-soft: rgba(148, 163, 184, 0.12);
   --success: #4ade80;
   --danger: #f87171;
+  --overlay-bg: rgba(2, 8, 23, 0.74);
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.22);
   --shadow-card: 0 12px 30px rgba(2, 8, 23, 0.32);
   --shadow-strong: 0 24px 56px rgba(2, 8, 23, 0.46);
@@ -335,6 +340,7 @@ p {
 
 .favorites-top {
   position: relative;
+  isolation: isolate;
 }
 
 .more-toggle-btn {
@@ -347,6 +353,7 @@ p {
 }
 
 .favorites-panel {
+  display: grid;
   position: absolute;
   top: calc(100% + 0.35rem);
   right: 0;
@@ -354,8 +361,8 @@ p {
   width: min(430px, calc(100vw - 1.6rem));
   max-height: min(76vh, 640px);
   overflow: auto;
-  padding: 0.8rem;
-  border-radius: var(--radius-md);
+  padding: 0.9rem;
+  border-radius: var(--panel-radius);
   border: 1px solid var(--stroke-strong);
   background: var(--surface-strong);
   box-shadow: var(--shadow-card);
@@ -363,6 +370,10 @@ p {
   -webkit-backdrop-filter: none;
   transform-origin: top right;
   animation: panelDropIn 0.16s ease both;
+}
+
+.favorites-panel[hidden] {
+  display: none !important;
 }
 
 .favorites-panel h3 {
@@ -408,10 +419,10 @@ p {
 .more-panel-section {
   display: grid;
   gap: 0.68rem;
-  padding: 0.78rem;
-  border-radius: 18px;
+  padding: 0.82rem;
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--surface-alt) 88%, transparent);
+  background: var(--surface-alt);
 }
 
 .more-panel-section-head {
@@ -587,10 +598,8 @@ button:disabled,
   margin-top: 0;
   display: none;
   white-space: nowrap;
-  border-color: color-mix(in srgb, var(--success) 54%, transparent);
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--success) 90%, white 10%), color-mix(in srgb, var(--success) 70%, black 18%)),
-    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.22), transparent 58%);
+  border-color: var(--button-border);
+  background: var(--button-bg);
 }
 
 #installBtn::before {
@@ -723,7 +732,7 @@ button:disabled,
 .stack-card {
   margin-top: 0.8rem;
   padding: 0.85rem 0.95rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius);
   background: var(--surface-strong);
   border: 1px solid var(--stroke);
   box-shadow: var(--shadow-card);
@@ -741,7 +750,7 @@ button:disabled,
 .hint {
   margin-top: 0.45rem;
   padding: 0.55rem 0.68rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke);
   background: var(--surface-alt);
   color: var(--muted);
@@ -758,7 +767,7 @@ button:disabled,
   margin-top: 0;
   min-height: 38px;
   padding: 0.5rem 0.82rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--panel-radius-sm);
   font-size: 0.86rem;
   font-weight: 600;
   border: 1px solid var(--button-secondary-border);
@@ -791,7 +800,7 @@ button:disabled,
 .chip:hover {
   background: var(--button-secondary-bg-hover);
   border-color: color-mix(in srgb, var(--accent) 48%, var(--button-secondary-border));
-  box-shadow: 0 12px 24px color-mix(in srgb, var(--accent-soft) 24%, transparent);
+  box-shadow: none;
   transform: translateY(-1px);
 }
 
@@ -807,7 +816,7 @@ button:disabled,
 }
 
 .settings-grid > div {
-  border-radius: var(--radius-md);
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke-soft);
   background: var(--surface-alt);
   padding: 0.55rem 0.62rem;
@@ -830,7 +839,7 @@ button:disabled,
 .settings-feed-status {
   margin-top: 0.55rem;
   padding: 0.52rem 0.62rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke-soft);
   background: var(--surface-alt);
   color: var(--muted);
@@ -846,8 +855,8 @@ button:disabled,
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(2, 8, 23, 0.48);
-  backdrop-filter: blur(3px);
+  background: var(--overlay-bg);
+  backdrop-filter: blur(calc(var(--overlay-blur) - 4px));
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.24s ease;
@@ -855,17 +864,17 @@ button:disabled,
 
 .settings-panel {
   position: fixed;
-  top: 0.7rem;
-  right: 0.7rem;
+  top: 0.85rem;
+  right: 0.85rem;
   z-index: 1300;
-  width: min(390px, calc(100vw - 1rem));
-  max-height: calc(100vh - 1.4rem);
+  width: min(390px, calc(100vw - 1.2rem));
+  max-height: calc(100vh - 1.7rem);
   overflow: auto;
-  padding: 0.75rem 0.8rem 0.8rem;
-  border-radius: var(--radius-lg);
+  padding: 0.95rem;
+  border-radius: var(--panel-radius);
   border: 1px solid var(--stroke-strong);
   background: var(--surface-strong);
-  box-shadow: var(--shadow-strong);
+  box-shadow: var(--shadow-card);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   opacity: 0;
@@ -932,9 +941,9 @@ body.settings-open .settings-panel {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(2, 8, 23, 0.52);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background: var(--overlay-bg);
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
 }
 
 .funny-modal[hidden] {
@@ -943,12 +952,10 @@ body.settings-open .settings-panel {
 
 .funny-modal-card {
   width: min(520px, calc(100vw - 2rem));
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius);
   border: 1px solid var(--stroke-strong);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 38%),
-    var(--surface-strong);
-  box-shadow: 0 20px 48px color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-card);
   padding: 1rem 1rem 1.1rem;
   animation: panelDropIn 0.16s ease both;
 }
@@ -975,9 +982,9 @@ body.funny-open {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(2, 8, 23, 0.56);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: var(--overlay-bg);
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
 }
 
 .pdf-modal[hidden] {
@@ -986,13 +993,10 @@ body.funny-open {
 
 .pdf-modal-card {
   width: min(560px, calc(100vw - 2rem));
-  border-radius: 24px;
+  border-radius: var(--panel-radius);
   border: 1px solid var(--stroke-strong);
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-soft) 50%, transparent), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 38%),
-    var(--surface-strong);
-  box-shadow: var(--shadow-strong);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-card);
   padding: 1rem 1rem 1.05rem;
   animation: panelDropIn 0.16s ease both;
 }
@@ -1026,9 +1030,9 @@ body.funny-open {
   display: grid;
   gap: 0.42rem;
   padding: 0.8rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--surface-alt) 84%, transparent);
+  background: var(--surface-alt);
 }
 
 .pdf-theme-field span {
@@ -1067,12 +1071,9 @@ body.pdf-modal-open {
 .dashboard-panel {
   margin-top: 1rem;
   padding: 1rem;
-  border-radius: 26px;
+  border-radius: var(--panel-radius);
   border: 1px solid var(--stroke);
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-soft) 46%, transparent), transparent 38%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 34%),
-    var(--surface-strong);
+  background: var(--surface-strong);
   box-shadow: var(--shadow-card);
 }
 
@@ -1113,10 +1114,10 @@ body.pdf-modal-open {
 
 .dashboard-map {
   height: 390px;
-  border-radius: 22px;
+  border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--stroke-strong);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 .dashboard-grid {
@@ -1129,10 +1130,10 @@ body.pdf-modal-open {
   display: grid;
   gap: 0.55rem;
   padding: 0.92rem 0.96rem;
-  border-radius: 20px;
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--surface-alt) 88%, transparent);
-  box-shadow: var(--shadow-soft);
+  background: var(--surface-alt);
+  box-shadow: none;
 }
 
 .dashboard-card.is-live {
@@ -1196,9 +1197,9 @@ body.pdf-modal-open {
   display: grid;
   gap: 0.42rem;
   padding: 0.8rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--surface-alt) 84%, transparent);
+  background: var(--surface-alt);
 }
 
 .dashboard-setup-field span {
@@ -1225,9 +1226,9 @@ body.pdf-modal-open {
   display: grid;
   gap: 0.18rem;
   padding: 0.82rem 0.86rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--surface-alt) 88%, transparent);
+  background: var(--surface-alt);
 }
 
 .info-label {
@@ -1306,7 +1307,7 @@ body.pdf-modal-open {
   flex-direction: column;
   min-height: 260px;
   padding: 0.95rem 1rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius);
   border: 1px solid var(--stroke);
   background: var(--surface-strong);
   box-shadow: var(--shadow-card);
@@ -1365,9 +1366,9 @@ body.pdf-modal-open {
   display: grid;
   gap: 0.16rem;
   padding: 0.8rem 0.88rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius-sm);
   border: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--surface-alt) 88%, transparent);
+  background: var(--surface-alt);
 }
 
 .compare-vehicle-pill strong {
@@ -1609,14 +1610,10 @@ tr + tr td {
 
 .btn--instagram {
   margin-top: 0;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background:
-    linear-gradient(145deg, rgba(250, 126, 30, 0.94), rgba(214, 41, 118, 0.9) 52%, rgba(79, 91, 213, 0.88)),
-    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.28), transparent 58%);
-  color: #fff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 12px 24px rgba(214, 41, 118, 0.22);
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-text);
+  box-shadow: none;
 }
 
 .btn--instagram::before {
@@ -1633,11 +1630,9 @@ tr + tr td {
 
 .btn--pdf {
   margin-top: 0;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--accent) 92%, white 8%), color-mix(in srgb, var(--accent-2) 82%, black 8%)),
-    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.24), transparent 55%);
-  color: #fff;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-text);
 }
 
 .btn--pdf::before {
@@ -1654,14 +1649,10 @@ tr + tr td {
 
 .btn--story {
   margin-top: 0;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background:
-    linear-gradient(145deg, rgba(245, 158, 11, 0.94), rgba(234, 88, 12, 0.88)),
-    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.3), transparent 62%);
-  color: #fff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 12px 24px rgba(234, 88, 12, 0.18);
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-text);
+  box-shadow: none;
 }
 
 .photo-card {
@@ -1749,11 +1740,9 @@ tr + tr td {
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--bg) 68%, transparent), color-mix(in srgb, var(--bg) 86%, transparent)),
-    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 16%, transparent), transparent 46%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--overlay-bg);
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
   animation: pageLoadingFade 0.16s ease;
 }
 
@@ -1764,12 +1753,10 @@ tr + tr td {
 .page-loading-shell {
   min-width: min(320px, calc(100vw - 2rem));
   padding: 1.2rem 1.3rem;
-  border-radius: 24px;
+  border-radius: var(--panel-radius);
   border: 1px solid var(--stroke-strong);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 96%, white 4%), color-mix(in srgb, var(--surface) 90%, transparent)),
-    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 10%, transparent), transparent 44%);
-  box-shadow: var(--shadow-strong);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1809,11 +1796,9 @@ body.offline-active {
   display: grid;
   place-items: center;
   padding: 1.25rem;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.14), transparent 45%),
-    rgba(6, 10, 18, 0.72);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--overlay-bg);
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
 }
 
 .offline-overlay[hidden] {
@@ -1823,12 +1808,10 @@ body.offline-active {
 .offline-shell {
   width: min(100%, 34rem);
   padding: 1.5rem 1.35rem;
-  border-radius: 24px;
-  border: 1px solid color-mix(in srgb, var(--stroke-strong) 82%, white 18%);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 96%, white 4%), color-mix(in srgb, var(--surface) 90%, transparent)),
-    var(--surface);
-  box-shadow: var(--shadow-strong);
+  border-radius: var(--panel-radius);
+  border: 1px solid var(--stroke-strong);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-card);
   text-align: center;
 }
 
@@ -2379,10 +2362,7 @@ body.offline-active {
 ================================ */
 
 body {
-  background:
-    radial-gradient(circle at top left, var(--bg-glow-a), transparent 34%),
-    radial-gradient(circle at top right, var(--bg-glow-b), transparent 30%),
-    linear-gradient(180deg, var(--bg-gradient-top), var(--bg-gradient-bottom));
+  background: linear-gradient(180deg, var(--bg-gradient-top), var(--bg-gradient-bottom));
 }
 
 .container {
@@ -2450,100 +2430,6 @@ button:active,
 
 #installBtn {
   background: color-mix(in srgb, var(--accent) 92%, white 8%);
-}
-
-.search-row,
-#suggestielijst,
-.stack-card,
-.hint,
-.settings-panel,
-.favorites-panel,
-.funny-modal-card,
-.pdf-modal-card,
-.dashboard-panel,
-.card,
-.dashboard-card,
-.dashboard-setup-field,
-.pdf-theme-field,
-.settings-grid > div,
-.settings-feed-status,
-.photo-frame,
-.vehicle-theme-picker,
-.compare-table-wrap {
-  background: var(--surface-strong);
-}
-
-.search-row,
-#suggestielijst,
-.stack-card,
-.hint,
-.settings-panel,
-.favorites-panel,
-.funny-modal-card,
-.pdf-modal-card,
-.dashboard-panel,
-.card,
-.dashboard-card,
-.dashboard-setup-field,
-.pdf-theme-field,
-.settings-grid > div,
-.settings-feed-status {
-  border-color: var(--stroke);
-}
-
-.favorites-panel,
-.settings-panel,
-.funny-modal-card,
-.pdf-modal-card,
-.dashboard-panel,
-.card,
-.stack-card {
-  border-radius: 20px;
-  box-shadow: var(--shadow-card);
-}
-
-.more-panel-section,
-.dashboard-card,
-.dashboard-setup-field,
-.pdf-theme-field,
-.settings-grid > div,
-.settings-feed-status,
-.hint {
-  background: var(--surface-alt);
-  border-radius: var(--radius-md);
-}
-
-.more-panel-section {
-  border: 1px solid var(--stroke);
-}
-
-.dashboard-card {
-  box-shadow: none;
-}
-
-.dashboard-card.is-live {
-  border-color: color-mix(in srgb, var(--accent) 20%, var(--stroke));
-}
-
-.card:hover,
-.dashboard-card:hover,
-.stack-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 22%, var(--stroke));
-}
-
-.dashboard-map,
-#map {
-  border-radius: 16px;
-  box-shadow: none;
-}
-
-.dashboard-map-tooltip-card {
-  box-shadow: none;
-}
-
-.bus-div-icon img,
-.bus-div-icon__img {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.18));
 }
 
 /* ===============================

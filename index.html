@@ -39,7 +39,7 @@
       <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
       <div class="favorites-top">
         <button id="favoritesToggleBtn" class="icon-btn more-toggle-btn" type="button" title="Meer" aria-label="Meer" aria-controls="favoritesPanel" aria-expanded="false">&#8942;</button>
-        <div id="favoritesPanel" class="favorites-panel more-panel" hidden>
+        <div id="favoritesPanel" class="favorites-panel more-panel" hidden aria-hidden="true" inert>
           <div class="more-panel-header">
             <div>
               <h3 id="morePanelTitle">Meer</h3>
@@ -1740,6 +1740,7 @@ function loadSettings() {
     const parsed = JSON.parse(raw);
     settings = { ...settings, ...parsed };
     settings.colorTheme = normalizeColorTheme(settings.colorTheme);
+    window.settings = settings;
   } catch (e) {
     console.warn("Settings laden mislukt", e);
   }
@@ -1749,6 +1750,7 @@ function saveSettings() {
   try {
     if (!window.localStorage) return;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    window.settings = settings;
   } catch (e) {
     console.warn("Settings opslaan mislukt", e);
   }
@@ -1783,6 +1785,8 @@ function updateSystemUiThemeColor() {
     metaEl.setAttribute("content", nextThemeColor);
   });
 }
+
+window.updateSystemUiThemeColor = updateSystemUiThemeColor;
 
 function applyTranslations() {
   appSubtitleEl.textContent = t("subtitle");
@@ -1965,8 +1969,11 @@ function setFavoritesPanel(open) {
   if (shouldOpen && settingsOpen) setSettingsPanel(false);
   favoritesPanelOpen = shouldOpen;
   favoritesPanelEl.hidden = !favoritesPanelOpen;
+  favoritesPanelEl.setAttribute("aria-hidden", String(!favoritesPanelOpen));
+  favoritesPanelEl.toggleAttribute("inert", !favoritesPanelOpen);
   favoritesToggleBtn.setAttribute("aria-expanded", String(favoritesPanelOpen));
   favoritesToggleBtn.classList.toggle("active", favoritesPanelOpen);
+  document.body.classList.toggle("more-open", favoritesPanelOpen);
 }
 
 function showFunnyModal() {
@@ -2129,6 +2136,7 @@ function initInactivityMonitor() {
 
 function initAppPreferences() {
   loadSettings();
+  window.settings = settings;
   loadFavorites();
   settings.intervalMs = normalizeUpdateIntervalMs(settings.intervalMs);
   updateIntervalMs = settings.intervalMs;
