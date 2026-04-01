@@ -63,16 +63,20 @@
           </section>
           <section class="more-panel-section halte-module">
             <div class="more-panel-section-head">
-              <h4 id="haltModuleTitle">Haltecode zoeken</h4>
+              <h4 id="haltModuleTitle">Halte zoeken</h4>
             </div>
-            <p id="haltModuleDescription" class="halte-module-description">Voer een geldige haltecode in om de realtime haltepagina van De Lijn te openen.</p>
+            <p id="haltModuleDescription" class="halte-module-description">Voer een haltecode of haltenaam in om een halte van De Lijn te zoeken.</p>
             <div class="halte-module-form">
-              <input type="text" id="haltecodeInput" inputmode="numeric" autocomplete="off" placeholder="Haltecode">
-              <button id="haltecodeSearchBtn" class="btn" type="button">Halte openen</button>
+              <input type="text" id="haltecodeInput" inputmode="search" autocomplete="off" placeholder="Haltecode of naam">
+              <button id="haltecodeSearchBtn" class="btn" type="button">Zoek halte</button>
             </div>
-            <p id="haltecodeError" class="halte-module-error" hidden>Ongeldige haltecode.</p>
+            <p id="haltecodeError" class="halte-module-error" hidden>Voer een haltecode of haltenaam in.</p>
+            <div id="haltSearchResultsContainer" class="halte-history" hidden>
+              <h5 id="haltSearchResultsTitle">Gevonden haltes</h5>
+              <div id="haltSearchResultsList" class="chip-row"></div>
+            </div>
             <div id="lastCodesContainer" class="halte-history" hidden>
-              <h5>Laatste haltecodes</h5>
+              <h5 id="lastCodesTitle">Laatste haltecodes</h5>
               <div id="lastCodesList" class="chip-row"></div>
             </div>
           </section>
@@ -460,7 +464,11 @@ const haltModuleDescriptionEl = document.getElementById("haltModuleDescription")
 const haltecodeInputEl = document.getElementById("haltecodeInput");
 const haltecodeSearchBtn = document.getElementById("haltecodeSearchBtn");
 const haltecodeErrorEl = document.getElementById("haltecodeError");
+const haltSearchResultsContainerEl = document.getElementById("haltSearchResultsContainer");
+const haltSearchResultsTitleEl = document.getElementById("haltSearchResultsTitle");
+const haltSearchResultsListEl = document.getElementById("haltSearchResultsList");
 const lastCodesContainerEl = document.getElementById("lastCodesContainer");
+const lastCodesTitleEl = document.getElementById("lastCodesTitle");
 const lastCodesListEl = document.getElementById("lastCodesList");
 
 let voertuigen = [];
@@ -528,6 +536,9 @@ let settings = {
   language: "nl"
 };
 const LAST_HALTES_KEY = "lastHaltes";
+const HALTE_CODE_REGEX = /^[1-5]\d{5}$/;
+const HALTE_SEARCH_LIMIT = 8;
+let halteSearchRequestToken = 0;
 
 const translationsConfig = window.BB_TRANSLATIONS || {};
 const i18n = translationsConfig.i18n || { nl: {} };
@@ -1823,11 +1834,15 @@ function applyTranslations() {
   staticCardTitleEl.textContent = t("staticCard");
   realtimeCardTitleEl.textContent = t("realtimeCard");
   dashboardToggleBtn.textContent = getLabel("dashboard", "9 Live");
-  if (haltModuleTitleEl) haltModuleTitleEl.textContent = getLabel("haltSearch", "Haltecode zoeken");
-  if (haltModuleDescriptionEl) haltModuleDescriptionEl.textContent = getLabel("haltSearchDescription", "Voer een geldige haltecode in om de realtime haltepagina van De Lijn te openen.");
-  if (haltecodeInputEl) haltecodeInputEl.placeholder = getLabel("haltCodePlaceholder", "Haltecode");
-  if (haltecodeSearchBtn) haltecodeSearchBtn.textContent = getLabel("haltSearchOpen", "Halte openen");
-  if (haltecodeErrorEl) haltecodeErrorEl.textContent = getLabel("haltSearchInvalid", "Ongeldige haltecode.");
+  if (haltModuleTitleEl) haltModuleTitleEl.textContent = getLabel("haltSearch", "Halte zoeken");
+  if (haltModuleDescriptionEl) haltModuleDescriptionEl.textContent = getLabel("haltSearchDescription", "Voer een haltecode of haltenaam in om een halte van De Lijn te zoeken.");
+  if (haltecodeInputEl) haltecodeInputEl.placeholder = getLabel("haltCodePlaceholder", "Haltecode of naam");
+  if (haltecodeSearchBtn) haltecodeSearchBtn.textContent = getLabel("haltSearchOpen", "Zoek halte");
+  if (haltSearchResultsTitleEl) haltSearchResultsTitleEl.textContent = getLabel("haltSearchResultsTitle", "Gevonden haltes");
+  if (lastCodesTitleEl) lastCodesTitleEl.textContent = getLabel("haltSearchRecent", "Laatste haltecodes");
+  if (!haltecodeErrorEl?.hidden) {
+    haltecodeErrorEl.textContent = getLabel("haltSearchInvalid", "Voer een haltecode of haltenaam in.");
+  }
   updateVehiclePhotoTexts();
   disclaimerTitleEl.textContent = t("disclaimerTitle");
   disclaimerTextEl.textContent = t("disclaimerText");
@@ -1889,25 +1904,115 @@ function renderLastHaltes() {
   });
 }
 
-function setHalteError(visible) {
+function setHalteStatus(message = "") {
   if (!haltecodeErrorEl) return;
-  haltecodeErrorEl.hidden = !visible;
+  haltecodeErrorEl.hidden = !message;
+  haltecodeErrorEl.textContent = message;
+}
+
+function clearHalteSearchResults() {
+  if (!haltSearchResultsContainerEl || !haltSearchResultsListEl) return;
+  haltSearchResultsListEl.innerHTML = "";
+  haltSearchResultsContainerEl.hidden = true;
+}
+
+function renderHalteSearchResults(haltes = []) {
+  if (!haltSearchResultsContainerEl || !haltSearchResultsListEl) return;
+  haltSearchResultsListEl.innerHTML = "";
+  haltSearchResultsContainerEl.hidden = haltes.length === 0;
+  if (!haltes.length) return;
+
+  haltes.forEach((halte) => {
+    const halteCode = String(halte?.haltenummer || "").trim();
+    if (!HALTE_CODE_REGEX.test(halteCode)) return;
+
+    const omschrijving = String(halte?.omschrijvingLang || halte?.omschrijving || halteCode).trim();
+    const gemeente = String(halte?.omschrijvingGemeente || "").trim();
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.innerHTML = `
+      <span class="chip-title">${escapeHtml(omschrijving)}</span>
+      <span class="chip-subtitle">${escapeHtml(gemeente ? `${gemeente} · ${halteCode}` : halteCode)}</span>
+    `;
+    chip.addEventListener("click", () => {
+      if (haltecodeInputEl) haltecodeInputEl.value = halteCode;
+      openHalteRealtime(halteCode);
+    });
+    haltSearchResultsListEl.appendChild(chip);
+  });
+
+  haltSearchResultsContainerEl.hidden = haltSearchResultsListEl.childElementCount === 0;
 }
 
 function openHalteRealtime(codeOverride = "") {
   const haltecode = (codeOverride || haltecodeInputEl?.value || "").trim();
-  if (!/^[1-5]\d{5}$/.test(haltecode)) {
-    setHalteError(true);
+  if (!HALTE_CODE_REGEX.test(haltecode)) {
+    setHalteStatus(getLabel("haltSearchInvalid", "Voer een haltecode of haltenaam in."));
+    clearHalteSearchResults();
     if (navigator.vibrate) navigator.vibrate(160);
-    return;
+    return false;
   }
 
-  setHalteError(false);
+  halteSearchRequestToken += 1;
+  setHalteStatus("");
+  clearHalteSearchResults();
   const lastHaltes = loadLastHaltes().filter((code) => code !== haltecode);
   lastHaltes.unshift(haltecode);
   saveLastHaltes(lastHaltes.slice(0, 5));
   renderLastHaltes();
   window.open(`https://www.delijn.be/realtime/${haltecode}/20`, "_blank", "noopener,noreferrer");
+  return true;
+}
+
+async function searchHaltes() {
+  const zoekTerm = (haltecodeInputEl?.value || "").trim();
+  if (!zoekTerm) {
+    setHalteStatus(getLabel("haltSearchInvalid", "Voer een haltecode of haltenaam in."));
+    clearHalteSearchResults();
+    if (navigator.vibrate) navigator.vibrate(160);
+    return;
+  }
+
+  if (HALTE_CODE_REGEX.test(zoekTerm)) {
+    openHalteRealtime(zoekTerm);
+    return;
+  }
+
+  const requestToken = ++halteSearchRequestToken;
+  setHalteStatus(getLabel("haltSearchLoading", "Haltes worden gezocht..."));
+  clearHalteSearchResults();
+
+  try {
+    const url = new URL(API_URL);
+    url.searchParams.set("resource", "haltes");
+    url.searchParams.set("zoekArgument", zoekTerm);
+    url.searchParams.set("maxAantalHits", String(HALTE_SEARCH_LIMIT));
+    const response = await fetchWithTimeout(url.toString(), {
+      headers: {
+        "Accept": "application/json",
+        "Cache-Control": "no-store"
+      }
+    });
+    const data = await response.json();
+    if (requestToken !== halteSearchRequestToken) return;
+
+    const haltes = Array.isArray(data?.haltes) ? data.haltes : [];
+    renderHalteSearchResults(haltes);
+    if (!haltes.length) {
+      setHalteStatus(getLabel("haltSearchNoResults", "Geen haltes gevonden."));
+      if (navigator.vibrate) navigator.vibrate(120);
+      return;
+    }
+
+    setHalteStatus("");
+  } catch (error) {
+    if (requestToken !== halteSearchRequestToken) return;
+    console.error("Haltezoekopdracht mislukt", error);
+    clearHalteSearchResults();
+    setHalteStatus(getLabel("haltSearchFailed", "Haltes konden niet worden opgehaald."));
+    if (navigator.vibrate) navigator.vibrate(160);
+  }
 }
 
 function updateFeedStatusText() {
@@ -2183,12 +2288,15 @@ favoritesToggleBtn.addEventListener("click", (event) => {
 favoritesPanelEl.addEventListener("click", (event) => {
   event.stopPropagation();
 });
-haltecodeSearchBtn?.addEventListener("click", () => openHalteRealtime());
+haltecodeSearchBtn?.addEventListener("click", () => searchHaltes());
 haltecodeInputEl?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
-    openHalteRealtime();
+    searchHaltes();
   }
+});
+haltecodeInputEl?.addEventListener("input", () => {
+  setHalteStatus("");
 });
 document.addEventListener("click", (event) => {
   if (!favoritesPanelOpen) return;
