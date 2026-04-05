@@ -383,6 +383,8 @@ body {
 
 body {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   overflow-x: hidden;
   font-family: "Source Sans 3", "Segoe UI", Arial, sans-serif;
@@ -423,6 +425,7 @@ a {
   margin-inline: auto;
   max-width: 1100px;
   min-height: 100dvh;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   padding:
@@ -603,7 +606,8 @@ p {
   z-index: 1300;
   width: min(430px, calc(100vw - 1.2rem));
   max-height: calc(100vh - 1.7rem);
-  overflow: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.95rem;
   border-radius: var(--panel-radius);
   border: 1px solid var(--stroke-strong);
@@ -2864,6 +2868,7 @@ footer h3 {
 
   .container {
     width: 100%;
+    flex: 1 0 auto;
     min-height: 100dvh;
     padding:
       max(0.7rem, env(safe-area-inset-top))
@@ -2894,14 +2899,14 @@ footer h3 {
   }
 
   .favorites-panel {
-    top: max(0.7rem, env(safe-area-inset-top) + 0.45rem);
-    right: 0.5rem;
-    left: 0.5rem;
+    top: calc(env(safe-area-inset-top) + 3.7rem);
+    right: 0.7rem;
+    left: 0.7rem;
     width: auto;
-    max-height: calc(100dvh - max(1.4rem, env(safe-area-inset-top) + 0.9rem));
+    max-height: calc(100dvh - env(safe-area-inset-top) - 4.5rem);
     border-radius: var(--radius-md);
-    z-index: 1700;
-    padding: 0.88rem;
+    z-index: 1720;
+    padding: 1rem 0.95rem 1.05rem;
     box-shadow: var(--shadow-strong);
   }
 
@@ -2913,8 +2918,8 @@ footer h3 {
 
   .favorites-top {
     position: fixed;
-    top: max(0.7rem, env(safe-area-inset-top) + 0.45rem);
-    right: 0.5rem;
+    top: max(0.42rem, env(safe-area-inset-top) + 0.22rem);
+    right: 0.7rem;
     z-index: 1710;
     order: 2;
     margin-left: 0;
@@ -2923,16 +2928,24 @@ footer h3 {
   .more-toggle-btn {
     width: auto;
     min-width: 0;
-    height: 38px;
-    min-height: 38px;
-    padding-inline: 0.68rem 0.78rem;
+    height: 34px;
+    min-height: 34px;
+    padding-inline: 0.64rem 0.74rem;
     gap: 0.28rem;
-    font-size: 0.86rem;
+    font-size: 0.82rem;
     border-radius: 999px;
   }
 
   .favorites-backdrop {
     z-index: 1690;
+  }
+
+  .more-panel {
+    gap: 0.78rem;
+  }
+
+  .more-panel-header {
+    align-items: flex-start;
   }
 
   .search-row {
@@ -3063,7 +3076,7 @@ footer h3 {
   }
 
   .more-toggle-btn {
-    padding-inline: 0.62rem 0.7rem;
+    padding-inline: 0.58rem 0.66rem;
   }
 
   .title-home-btn {
