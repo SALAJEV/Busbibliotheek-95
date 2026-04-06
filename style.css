@@ -3269,6 +3269,78 @@ footer h3 {
   letter-spacing: 0.01em;
 }
 
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.72rem;
+  margin-top: 1rem;
+}
+
+.footer-link-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.footer-link-btn:hover,
+.footer-link-btn:focus-visible {
+  color: color-mix(in srgb, var(--accent) 78%, var(--text));
+}
+
+.legal-modal-card {
+  width: min(100%, 52rem);
+}
+
+.legal-modal-body {
+  gap: 1rem;
+}
+
+.legal-copy h4 {
+  margin: 0.2rem 0 0.45rem;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.legal-copy p {
+  margin: 0 0 0.95rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.review-embed-shell {
+  width: 100%;
+  max-height: min(70vh, 820px);
+  overflow: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--stroke-strong);
+  background: var(--surface-alt);
+}
+
+.review-form-frame {
+  display: block;
+  width: 100%;
+  min-width: 640px;
+  border: 0;
+  background: #ffffff;
+}
+
+.review-mobile-fallback {
+  display: none;
+}
+
+.instagram-help-text {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
 /* ===============================
    MOTION
 ================================ */

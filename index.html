@@ -182,6 +182,10 @@
   <footer>
     <h3 id="disclaimerTitle">Disclaimer</h3>
     <p id="disclaimerText">De informatie op deze website wordt verstrekt zonder garanties. Busbibliotheek is niet aansprakelijk voor vertragingen, fouten of onnauwkeurigheden in realtimegegevens. Gebruik op eigen risico. Raadpleeg voor officiele ritinformatie de bevoegde vervoersmaatschappij.</p>
+    <div class="footer-links">
+      <button id="footerReviewBtn" class="footer-link-btn" type="button">Review afleggen</button>
+      <button id="footerTermsBtn" class="footer-link-btn" type="button">Gebruiksvoorwaarden</button>
+    </div>
     <p id="copyrightText" class="footer-meta">&copy; Busspotter 95, 2023-<span id="currentYear"></span></p>
   </footer>
 
@@ -342,6 +346,46 @@
     <div id="infoModalBody" class="pdf-modal-body info-modal-body"></div>
     <div class="pdf-modal-actions">
       <button id="infoModalOkBtn" class="btn" type="button">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<div id="reviewModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+  <div class="pdf-modal-card legal-modal-card">
+    <div class="pdf-modal-header">
+      <div>
+        <h3 id="reviewModalTitle">Review afleggen</h3>
+        <p id="reviewModalSummary" class="pdf-modal-summary">Laat weten wat beter kan of wat je goed vindt aan Busbibliotheek.</p>
+      </div>
+      <button id="reviewModalCloseBtn" class="settings-close-btn" type="button" aria-label="Sluiten">&times;</button>
+    </div>
+    <div class="pdf-modal-body legal-modal-body">
+      <div class="review-embed-shell">
+        <iframe id="reviewFormFrame" class="review-form-frame" src="https://docs.google.com/forms/d/e/1FAIpQLSeuWQPblp0uBjQ2W2EKwd3LH_qVITWjQcS2EQhHQcbubS7KRw/viewform?embedded=true" width="640" height="2843" frameborder="0" marginheight="0" marginwidth="0" title="Busbibliotheek reviewformulier">Laden…</iframe>
+      </div>
+      <div class="review-mobile-fallback">
+        <p id="reviewMobileText">Op smartphone opent het formulier beter rechtstreeks in je browser.</p>
+        <a id="reviewMobileLink" class="btn" href="https://forms.gle/3uKCBA779JwVjN8d7" target="_blank" rel="noopener noreferrer">Open reviewformulier</a>
+      </div>
+    </div>
+    <div class="pdf-modal-actions">
+      <button id="reviewModalDoneBtn" class="btn" type="button">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<div id="termsModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
+  <div class="pdf-modal-card legal-modal-card">
+    <div class="pdf-modal-header">
+      <div>
+        <h3 id="termsModalTitle">Gebruiksvoorwaarden</h3>
+        <p id="termsModalSummary" class="pdf-modal-summary">Korte standaardvoorwaarden voor het gebruik van Busbibliotheek.</p>
+      </div>
+      <button id="termsModalCloseBtn" class="settings-close-btn" type="button" aria-label="Sluiten">&times;</button>
+    </div>
+    <div id="termsModalBody" class="pdf-modal-body legal-modal-body"></div>
+    <div class="pdf-modal-actions">
+      <button id="termsModalDoneBtn" class="btn" type="button">Sluiten</button>
     </div>
   </div>
 </div>

@@ -129,6 +129,8 @@ const vehiclePhotoMetaEl = document.getElementById("vehiclePhotoMeta");
 const vehiclePhotoCaptionEl = document.getElementById("vehiclePhotoCaption");
 const disclaimerTitleEl = document.getElementById("disclaimerTitle");
 const disclaimerTextEl = document.getElementById("disclaimerText");
+const footerReviewBtn = document.getElementById("footerReviewBtn");
+const footerTermsBtn = document.getElementById("footerTermsBtn");
 const currentYearEl = document.getElementById("currentYear");
 const infoModalEl = document.getElementById("infoModal");
 const infoModalTitleEl = document.getElementById("infoModalTitle");
@@ -136,6 +138,19 @@ const infoModalBodyEl = document.getElementById("infoModalBody");
 const infoModalSummaryEl = document.getElementById("infoModalSummary");
 const infoModalCloseBtn = document.getElementById("infoModalCloseBtn");
 const infoModalOkBtn = document.getElementById("infoModalOkBtn");
+const reviewModalEl = document.getElementById("reviewModal");
+const reviewModalTitleEl = document.getElementById("reviewModalTitle");
+const reviewModalSummaryEl = document.getElementById("reviewModalSummary");
+const reviewModalCloseBtn = document.getElementById("reviewModalCloseBtn");
+const reviewModalDoneBtn = document.getElementById("reviewModalDoneBtn");
+const reviewMobileTextEl = document.getElementById("reviewMobileText");
+const reviewMobileLinkEl = document.getElementById("reviewMobileLink");
+const termsModalEl = document.getElementById("termsModal");
+const termsModalTitleEl = document.getElementById("termsModalTitle");
+const termsModalSummaryEl = document.getElementById("termsModalSummary");
+const termsModalBodyEl = document.getElementById("termsModalBody");
+const termsModalCloseBtn = document.getElementById("termsModalCloseBtn");
+const termsModalDoneBtn = document.getElementById("termsModalDoneBtn");
 const feedStatusEl = document.getElementById("feedStatus");
 const funnyModalEl = document.getElementById("funnyModal");
 const funnyModalTitleEl = document.getElementById("funnyModalTitle");
@@ -564,6 +579,61 @@ function showInfoModal() {
 function hideInfoModal() {
   if (!infoModalEl) return;
   infoModalEl.hidden = true;
+  document.body.classList.remove("pdf-modal-open");
+}
+
+function showReviewModal() {
+  if (!reviewModalEl) return;
+  reviewModalEl.hidden = false;
+  document.body.classList.add("pdf-modal-open");
+}
+
+function hideReviewModal() {
+  if (!reviewModalEl) return;
+  reviewModalEl.hidden = true;
+  document.body.classList.remove("pdf-modal-open");
+}
+
+function renderTermsModalContent() {
+  if (!termsModalBodyEl) return;
+  const sections = [
+    {
+      title: getLabel("termsSectionUse", "Gebruik van de website"),
+      body: getLabel("termsUseBody", "Busbibliotheek is bedoeld voor informatief persoonlijk gebruik. Misbruik, overbelasting van de site of gebruik in strijd met de wet is niet toegestaan.")
+    },
+    {
+      title: getLabel("termsSectionData", "Realtime en juistheid"),
+      body: getLabel("termsDataBody", "Realtimegegevens, voertuiginfo en andere inhoud worden zo goed mogelijk getoond, maar kunnen vertragingen, fouten of onvolledigheden bevatten. Aan de inhoud kunnen geen rechten worden ontleend.")
+    },
+    {
+      title: getLabel("termsSectionPhotos", "Externe links en media"),
+      body: getLabel("termsPhotosBody", "Sommige knoppen openen externe websites zoals Instagram of Google Forms. Die diensten hebben hun eigen voorwaarden, kunnen anders werken op smartphone en kunnen vereisen dat je bent ingelogd.")
+    },
+    {
+      title: getLabel("termsSectionPrivacy", "Privacy en contact"),
+      body: getLabel("termsPrivacyBody", "Als je vrijwillig feedback of een review indient, gebeurt dat via externe formulieren. Deel geen gevoelige persoonsgegevens tenzij dat echt nodig is.")
+    }
+  ];
+  termsModalBodyEl.innerHTML = `
+    <div class="legal-copy">
+      ${sections.map((section) => `
+        <h4>${escapeHtml(section.title)}</h4>
+        <p>${escapeHtml(section.body)}</p>
+      `).join("")}
+    </div>
+  `;
+}
+
+function showTermsModal() {
+  if (!termsModalEl) return;
+  renderTermsModalContent();
+  termsModalEl.hidden = false;
+  document.body.classList.add("pdf-modal-open");
+}
+
+function hideTermsModal() {
+  if (!termsModalEl) return;
+  termsModalEl.hidden = true;
   document.body.classList.remove("pdf-modal-open");
 }
 
@@ -2008,6 +2078,8 @@ function applyTranslations() {
   updateVehiclePhotoTexts();
   disclaimerTitleEl.textContent = t("disclaimerTitle");
   disclaimerTextEl.textContent = t("disclaimerText");
+  if (footerReviewBtn) footerReviewBtn.textContent = getLabel("footerReview", "Review afleggen");
+  if (footerTermsBtn) footerTermsBtn.textContent = getLabel("footerTerms", "Gebruiksvoorwaarden");
   closeBtnEl.title = getLabel("back", "Terug");
   closeBtnEl.setAttribute("aria-label", getLabel("back", "Terug"));
   if (closeBtnTextEl) closeBtnTextEl.textContent = getLabel("back", "Terug");
@@ -2044,6 +2116,17 @@ function applyTranslations() {
   if (infoModalSummaryEl) infoModalSummaryEl.textContent = getLabel("infoSummary", "Versie en laatste updates van de databronnen.");
   infoModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
   infoModalOkBtn.textContent = getLabel("close", "Sluiten");
+  if (reviewModalTitleEl) reviewModalTitleEl.textContent = getLabel("footerReview", "Review afleggen");
+  if (reviewModalSummaryEl) reviewModalSummaryEl.textContent = getLabel("reviewSummary", "Laat weten wat beter kan of wat je goed vindt aan Busbibliotheek.");
+  if (reviewModalCloseBtn) reviewModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
+  if (reviewModalDoneBtn) reviewModalDoneBtn.textContent = getLabel("close", "Sluiten");
+  if (reviewMobileTextEl) reviewMobileTextEl.textContent = getLabel("reviewMobileText", "Op smartphone opent het formulier beter rechtstreeks in je browser.");
+  if (reviewMobileLinkEl) reviewMobileLinkEl.textContent = getLabel("reviewMobileOpen", "Open reviewformulier");
+  if (termsModalTitleEl) termsModalTitleEl.textContent = getLabel("footerTerms", "Gebruiksvoorwaarden");
+  if (termsModalSummaryEl) termsModalSummaryEl.textContent = getLabel("termsSummary", "Korte standaardvoorwaarden voor het gebruik van Busbibliotheek.");
+  if (termsModalCloseBtn) termsModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
+  if (termsModalDoneBtn) termsModalDoneBtn.textContent = getLabel("close", "Sluiten");
+  if (!termsModalEl?.hidden) renderTermsModalContent();
   if (pageLoadingTextEl) pageLoadingTextEl.textContent = t("loading");
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
   lastUpdateEl.hidden = true;
@@ -3528,6 +3611,7 @@ function toonVasteData(id){
     links.push(`<a class="btn btn--story" href="https://sites.google.com/view/delijn-busspotter/dampkap" target="_blank" rel="noopener">${t("story44xx")}</a>`);
   }
   html += `<div class="ig-btn-wrap">${links.join("")}</div>`;
+  html += `<p class="instagram-help-text">${escapeHtml(getLabel("instagramHelp", "Instagram zoeken werkt niet altijd goed op smartphone. Via de browser werkt het doorgaans wel, maar je moet meestal ingelogd zijn."))}</p>`;
   vasteDataEl.innerHTML=html;
   updateFavoriteButtonState();
 }
