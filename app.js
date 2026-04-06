@@ -1562,6 +1562,16 @@ function getPhotoDescriptionsLookup() {
   return vehiclePhotoDescriptions;
 }
 
+function pickPhotoValue(source = {}, ...keys) {
+  for (const key of keys) {
+    const value = source?.[key];
+    if (value !== undefined && value !== null && `${value}`.trim() !== "") {
+      return value;
+    }
+  }
+  return "";
+}
+
 async function loadVehiclePhotoDescriptions() {
   if (vehiclePhotoDescriptions) return vehiclePhotoDescriptions;
   if (vehiclePhotoDescriptionsPromise) return vehiclePhotoDescriptionsPromise;
@@ -1587,35 +1597,35 @@ async function loadVehiclePhotoDescriptions() {
   return vehiclePhotoDescriptionsPromise;
 }
 
-function normalizePhotoEntry(entry, fallbackVehicleId, index = 0) {
+function normalizePhotoEntry(entry, fallbackVehicleId, index = 0, defaults = {}) {
   if (!entry) return null;
   if (typeof entry === "string") {
     return {
-      src: entry,
+      src: /^[a-z]+:|^\//i.test(entry) || entry.startsWith("media/") ? entry : `media/${entry}`,
       caption: "",
-      meta: "",
+      meta: [pickPhotoValue(defaults, "by", "maker", "fotograaf", "author"), pickPhotoValue(defaults, "at", "place", "plaats", "location"), formatPhotoMetaDate(pickPhotoValue(defaults, "on", "date", "datum")), pickPhotoValue(defaults, "credit", "credits")].filter(Boolean).join(" • "),
       alt: "",
       sortOrder: index
     };
   }
   if (typeof entry !== "object") return null;
-  const rawSrc = (entry.file || entry.src || "").toString().trim();
+  const rawSrc = pickPhotoValue(entry, "file", "src", "image", "foto", "bestand") || pickPhotoValue(defaults, "file", "src", "image", "foto", "bestand");
   if (!rawSrc) return null;
   const src = /^[a-z]+:|^\//i.test(rawSrc) || rawSrc.startsWith("media/")
     ? rawSrc
     : `media/${rawSrc}`;
-  const dateText = formatPhotoMetaDate(entry.date || entry.datum || "");
-  const makerText = (entry.maker || entry.fotograaf || entry.author || "").toString().trim();
-  const placeText = (entry.place || entry.plaats || entry.location || "").toString().trim();
-  const creditText = (entry.credit || entry.credits || "").toString().trim();
-  const descriptionText = (entry.description || entry.caption || entry.beschrijving || entry.title || "").toString().trim();
+  const dateText = formatPhotoMetaDate(pickPhotoValue(entry, "on", "date", "datum") || pickPhotoValue(defaults, "on", "date", "datum"));
+  const makerText = `${pickPhotoValue(entry, "by", "maker", "fotograaf", "author") || pickPhotoValue(defaults, "by", "maker", "fotograaf", "author")}`.trim();
+  const placeText = `${pickPhotoValue(entry, "at", "place", "plaats", "location") || pickPhotoValue(defaults, "at", "place", "plaats", "location")}`.trim();
+  const creditText = `${pickPhotoValue(entry, "credit", "credits") || pickPhotoValue(defaults, "credit", "credits")}`.trim();
+  const descriptionText = `${pickPhotoValue(entry, "text", "description", "caption", "beschrijving", "title") || pickPhotoValue(defaults, "text", "description", "caption", "beschrijving", "title")}`.trim();
   const metaParts = [makerText, placeText, dateText, creditText].filter(Boolean);
   return {
     src,
     caption: descriptionText,
     meta: metaParts.join(" • "),
-    alt: (entry.alt || "").toString().trim(),
-    sortOrder: Number.isFinite(Number(entry.order)) ? Number(entry.order) : index
+    alt: `${pickPhotoValue(entry, "alt") || pickPhotoValue(defaults, "alt")}`.trim(),
+    sortOrder: Number.isFinite(Number(pickPhotoValue(entry, "order"))) ? Number(pickPhotoValue(entry, "order")) : index
   };
 }
 
@@ -1631,12 +1641,36 @@ function getConfiguredPhotoEntries(vehicleId) {
 
   const entries = [];
   aliases.forEach((alias) => {
-    const directEntries = lookup[alias];
-    if (Array.isArray(directEntries)) {
-      directEntries.forEach((entry, index) => {
+    const config = lookup[alias];
+    if (!config) return;
+
+    if (Array.isArray(config)) {
+      config.forEach((entry, index) => {
         const normalizedEntry = normalizePhotoEntry(entry, alias, index);
         if (normalizedEntry) entries.push(normalizedEntry);
       });
+      return;
+    }
+
+    if (typeof config !== "object") return;
+
+    const photoItems = Array.isArray(config.photos)
+      ? config.photos
+      : Array.isArray(config.items)
+        ? config.items
+        : [];
+
+    if (photoItems.length) {
+      photoItems.forEach((entry, index) => {
+        const normalizedEntry = normalizePhotoEntry(entry, alias, index, config.defaults || config);
+        if (normalizedEntry) entries.push(normalizedEntry);
+      });
+      return;
+    }
+
+    const normalizedEntry = normalizePhotoEntry(config, alias, 0, config.defaults || config);
+    if (normalizedEntry) {
+      entries.push(normalizedEntry);
     }
   });
 

@@ -1,25 +1,15 @@
 {
-  "_instructions": "Gebruik per voertuignummer of oud voertuignummer een array van foto's. Velden per foto: file, description, maker, place, date, alt, order. 'file' mag alleen de bestandsnaam zijn (bijvoorbeeld 4452-1.jpeg, 4452-1.jpg of 4452-1.png) of een pad zoals media/4452-1.jpeg. De combinatie maker/plaats/datum komt automatisch onder de foto.",
-  "2889": [
-    {
-      "file": "2889.jpeg",
-      "description": "",
-      "maker": "",
-      "place": "",
-      "date": "",
-      "alt": "",
-      "order": 1
-    }
+  "_instructions": [
+    "Je mag nu 3 makkelijke vormen gebruiken per voertuig:",
+    "1. Enkel bestand: \"2889\": \"2889.jpeg\"",
+    "2. Eén foto als object: \"2894\": { \"file\": \"2894.jpeg\", \"by\": \"Anzor\" }",
+    "3. Meerdere foto's met gedeelde info: \"4452\": { \"by\": \"Anzor\", \"at\": \"Gent\", \"photos\": [\"4452.jpeg\", { \"file\": \"4452 (1).jpeg\", \"text\": \"Op lijn 5\" }] }",
+    "Korte veldnamen die werken: by = auteur/fotograaf, at = plaats, on = datum, text = beschrijving. Oude velden zoals maker/place/date/description blijven ook werken.",
+    "'file' mag alleen de bestandsnaam zijn (zoals 4452.jpeg) of een pad zoals media/4452.jpeg."
   ],
-  "2894": [
-    {
-      "file": "2894.jpeg",
-      "description": "",
-      "maker": "Anzor",
-      "place": "",
-      "date": "",
-      "alt": "",
-      "order": 1
-    }
-  ]
+  "2889": "2889.jpeg",
+  "2894": {
+    "file": "2894.jpeg",
+    "by": "Anzor"
+  }
 }
