@@ -116,6 +116,10 @@ const realtimeCardTitleEl = document.getElementById("realtimeCardTitle");
 const photoCardTitleEl = document.getElementById("photoCardTitle");
 const vehiclePhotoCardEl = document.getElementById("vehiclePhotoCard");
 const vehiclePhotoImgEl = document.getElementById("vehiclePhotoImg");
+const vehiclePhotoPrevBtn = document.getElementById("vehiclePhotoPrevBtn");
+const vehiclePhotoNextBtn = document.getElementById("vehiclePhotoNextBtn");
+const vehiclePhotoCounterEl = document.getElementById("vehiclePhotoCounter");
+const vehiclePhotoMetaEl = document.getElementById("vehiclePhotoMeta");
 const vehiclePhotoCaptionEl = document.getElementById("vehiclePhotoCaption");
 const disclaimerTitleEl = document.getElementById("disclaimerTitle");
 const disclaimerTextEl = document.getElementById("disclaimerText");
@@ -209,11 +213,15 @@ let dashboardRefreshHandle = null;
 let dashboardMap = null;
 let dashboardMapMarkers = null;
 let currentPhotoVehicleId = "";
+let currentVehiclePhotoEntries = [];
+let currentVehiclePhotoIndex = 0;
 let favorites = [];
 let settingsOpen = false;
 let favoritesPanelOpen = false;
 let feedEndDateValue = "";
 let vehiclePhotoLookupToken = 0;
+let vehiclePhotoDescriptions = null;
+let vehiclePhotoDescriptionsPromise = null;
 let vehiclePlateFieldKey = "";
 let oldVehicleNumbersFieldKey = "";
 let oldLicensePlatesFieldKey = "";
@@ -223,7 +231,7 @@ const INACTIVITY_CHECK_MS = 15000;
 let lastUserInteractionAt = Date.now();
 let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
-const APP_VERSION = "2026.03.31-2";
+const APP_VERSION = "2026.04.06-1";
 const dataLoadTimestamps = {
   vehicles: 0,
   trips: 0,
@@ -559,7 +567,7 @@ function updateUrlState() {
 function getVehicleDisplayValue(bus, fieldKey, rawValue) {
   const value = rawValue == null ? "" : rawValue.toString().trim();
   const key = fieldKey.toLowerCase();
-  if (key.includes("datum in dienst")) {
+  if (key.includes("in dienst")) {
     if (!value || value === "/") return "Bus nog niet in dienst";
     return formatDateForUi(value, { year: "numeric", month: "long", day: "numeric" });
   }
@@ -624,7 +632,7 @@ function formatBusFieldValueForDisplay(bus, fieldKey, rawValue) {
   const value = rawValue == null ? "" : rawValue.toString().trim();
   const key = fieldKey.toLowerCase();
 
-  if (key.includes("datum in dienst")) {
+  if (key.includes("in dienst")) {
     if (!value || value === "/") return "Bus nog niet in dienst";
     return formatDateForUi(value, { year: "numeric", month: "long", day: "numeric" });
   }
@@ -1328,15 +1336,170 @@ async function exportBusPdf(vehicleId, themeKey = "geel") {
 function updateVehiclePhotoTexts() {
   if (!photoCardTitleEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
   photoCardTitleEl.textContent = translateTemplate("photoCard", "Voertuigfoto");
-  if (!currentPhotoVehicleId) {
-    vehiclePhotoImgEl.alt = "";
-    vehiclePhotoCaptionEl.textContent = "";
-    return;
+  renderActiveVehiclePhoto();
+}
+
+function formatPhotoMetaDate(rawValue) {
+  if (!rawValue) return "";
+  return formatDateForUi(rawValue, { day: "numeric", month: "long", year: "numeric" });
+}
+
+function getPhotoDescriptionsLookup() {
+  if (!vehiclePhotoDescriptions || typeof vehiclePhotoDescriptions !== "object") return {};
+  return vehiclePhotoDescriptions;
+}
+
+async function loadVehiclePhotoDescriptions() {
+  if (vehiclePhotoDescriptions) return vehiclePhotoDescriptions;
+  if (vehiclePhotoDescriptionsPromise) return vehiclePhotoDescriptionsPromise;
+
+  vehiclePhotoDescriptionsPromise = fetch(`photo-descriptions.json?v=${APP_VERSION}`, { cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`photo-descriptions ${response.status}`);
+      return response.json();
+    })
+    .then((data) => {
+      vehiclePhotoDescriptions = data && typeof data === "object" ? data : {};
+      return vehiclePhotoDescriptions;
+    })
+    .catch((error) => {
+      console.warn("Fotobeschrijvingen laden mislukt", error);
+      vehiclePhotoDescriptions = {};
+      return vehiclePhotoDescriptions;
+    })
+    .finally(() => {
+      vehiclePhotoDescriptionsPromise = null;
+    });
+
+  return vehiclePhotoDescriptionsPromise;
+}
+
+function normalizePhotoEntry(entry, fallbackVehicleId, index = 0) {
+  if (!entry) return null;
+  if (typeof entry === "string") {
+    return {
+      src: entry,
+      caption: "",
+      meta: "",
+      alt: "",
+      sortOrder: index
+    };
   }
+  if (typeof entry !== "object") return null;
+  const rawSrc = (entry.file || entry.src || "").toString().trim();
+  if (!rawSrc) return null;
+  const src = /^[a-z]+:|^\//i.test(rawSrc) || rawSrc.startsWith("media/")
+    ? rawSrc
+    : `media/${rawSrc}`;
+  const dateText = formatPhotoMetaDate(entry.date || entry.datum || "");
+  const makerText = (entry.maker || entry.fotograaf || entry.author || "").toString().trim();
+  const placeText = (entry.place || entry.plaats || entry.location || "").toString().trim();
+  const creditText = (entry.credit || entry.credits || "").toString().trim();
+  const descriptionText = (entry.description || entry.caption || entry.beschrijving || entry.title || "").toString().trim();
+  const metaParts = [makerText, placeText, dateText, creditText].filter(Boolean);
+  return {
+    src,
+    caption: descriptionText,
+    meta: metaParts.join(" • "),
+    alt: (entry.alt || "").toString().trim(),
+    sortOrder: Number.isFinite(Number(entry.order)) ? Number(entry.order) : index
+  };
+}
+
+function getConfiguredPhotoEntries(vehicleId) {
+  const lookup = getPhotoDescriptionsLookup();
+  const directEntries = lookup[vehicleId] ?? lookup[normalize(vehicleId)];
+  if (!Array.isArray(directEntries)) return [];
+  return directEntries
+    .map((entry, index) => normalizePhotoEntry(entry, vehicleId, index))
+    .filter(Boolean)
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+}
+
+function getFallbackPhotoEntries(vehicleId) {
+  const normalizedVehicleId = normalize(vehicleId);
+  if (!normalizedVehicleId) return [];
+  const extensions = ["jpeg", "jpg", "png", "webp"];
+  const fallbackEntries = [];
+  extensions.forEach((extension) => {
+    fallbackEntries.push({ src: `media/${encodeURIComponent(normalizedVehicleId)}.${extension}`, caption: "", meta: "", alt: "", sortOrder: fallbackEntries.length });
+  });
+  return fallbackEntries;
+}
+
+function probePhotoEntry(entry) {
+  return new Promise((resolve) => {
+    const probe = new Image();
+    probe.decoding = "async";
+    probe.loading = "eager";
+    probe.onload = () => resolve(entry);
+    probe.onerror = () => resolve(null);
+    probe.src = entry.src;
+  });
+}
+
+async function resolveVehiclePhotoEntries(vehicleId) {
+  await loadVehiclePhotoDescriptions();
+  const configuredEntries = getConfiguredPhotoEntries(vehicleId);
+  const candidates = configuredEntries.length ? configuredEntries : getFallbackPhotoEntries(vehicleId);
+  const resolvedEntries = [];
+  for (const entry of candidates) {
+    const resolved = await probePhotoEntry(entry);
+    if (resolved) resolvedEntries.push(resolved);
+  }
+  return resolvedEntries;
+}
+
+function buildVehiclePhotoCopy(entry, vehicleId) {
   const altTemplate = translateTemplate("photoAlt", "Foto van voertuig {id}");
   const captionTemplate = translateTemplate("photoCaption", "Voertuig {id}");
-  vehiclePhotoImgEl.alt = fillTemplate(altTemplate, currentPhotoVehicleId);
-  vehiclePhotoCaptionEl.textContent = fillTemplate(captionTemplate, currentPhotoVehicleId);
+  return {
+    alt: entry?.alt || fillTemplate(altTemplate, vehicleId),
+    caption: entry?.caption || fillTemplate(captionTemplate, vehicleId),
+    meta: entry?.meta || ""
+  };
+}
+
+function updateVehiclePhotoNavigation() {
+  const hasMultiplePhotos = currentVehiclePhotoEntries.length > 1;
+  if (vehiclePhotoPrevBtn) vehiclePhotoPrevBtn.hidden = !hasMultiplePhotos;
+  if (vehiclePhotoNextBtn) vehiclePhotoNextBtn.hidden = !hasMultiplePhotos;
+  if (vehiclePhotoCounterEl) {
+    if (!hasMultiplePhotos) {
+      vehiclePhotoCounterEl.hidden = true;
+      vehiclePhotoCounterEl.textContent = "";
+    } else {
+      vehiclePhotoCounterEl.hidden = false;
+      vehiclePhotoCounterEl.textContent = `${currentVehiclePhotoIndex + 1} / ${currentVehiclePhotoEntries.length}`;
+    }
+  }
+}
+
+function renderActiveVehiclePhoto() {
+  if (!vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
+  if (!currentPhotoVehicleId || !currentVehiclePhotoEntries.length) {
+    vehiclePhotoImgEl.alt = "";
+    vehiclePhotoCaptionEl.textContent = "";
+    if (vehiclePhotoMetaEl) {
+      vehiclePhotoMetaEl.hidden = true;
+      vehiclePhotoMetaEl.textContent = "";
+    }
+    updateVehiclePhotoNavigation();
+    return;
+  }
+
+  const safeIndex = Math.min(Math.max(currentVehiclePhotoIndex, 0), currentVehiclePhotoEntries.length - 1);
+  currentVehiclePhotoIndex = safeIndex;
+  const activeEntry = currentVehiclePhotoEntries[safeIndex];
+  const copy = buildVehiclePhotoCopy(activeEntry, currentPhotoVehicleId);
+  vehiclePhotoImgEl.src = activeEntry.src;
+  vehiclePhotoImgEl.alt = copy.alt;
+  vehiclePhotoCaptionEl.textContent = copy.caption;
+  if (vehiclePhotoMetaEl) {
+    vehiclePhotoMetaEl.textContent = copy.meta;
+    vehiclePhotoMetaEl.hidden = !copy.meta;
+  }
+  updateVehiclePhotoNavigation();
 }
 
 function setPageLoading(active) {
@@ -1401,6 +1564,8 @@ function startInternetChecks() {
 function hideVehiclePhotoCard() {
   vehiclePhotoLookupToken += 1;
   currentPhotoVehicleId = "";
+  currentVehiclePhotoEntries = [];
+  currentVehiclePhotoIndex = 0;
   if (!vehiclePhotoCardEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
   vehiclePhotoCardEl.hidden = true;
   vehiclePhotoCardEl.setAttribute("aria-hidden", "true");
@@ -1409,9 +1574,17 @@ function hideVehiclePhotoCard() {
   vehiclePhotoImgEl.removeAttribute("src");
   vehiclePhotoImgEl.alt = "";
   vehiclePhotoCaptionEl.textContent = "";
+  if (vehiclePhotoMetaEl) {
+    vehiclePhotoMetaEl.hidden = true;
+    vehiclePhotoMetaEl.textContent = "";
+  }
+  if (vehiclePhotoCounterEl) {
+    vehiclePhotoCounterEl.hidden = true;
+    vehiclePhotoCounterEl.textContent = "";
+  }
 }
 
-function updateVehiclePhotoCard(vehicleId) {
+async function updateVehiclePhotoCard(vehicleId) {
   if (!vehiclePhotoCardEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
   const normalizedVehicleId = normalize(vehicleId);
   if (!normalizedVehicleId) {
@@ -1421,6 +1594,8 @@ function updateVehiclePhotoCard(vehicleId) {
 
   const lookupToken = ++vehiclePhotoLookupToken;
   currentPhotoVehicleId = "";
+  currentVehiclePhotoEntries = [];
+  currentVehiclePhotoIndex = 0;
   vehiclePhotoCardEl.hidden = true;
   vehiclePhotoCardEl.setAttribute("aria-hidden", "true");
   vehiclePhotoImgEl.removeAttribute("src");
@@ -1429,33 +1604,28 @@ function updateVehiclePhotoCard(vehicleId) {
   vehiclePhotoImgEl.onload = null;
   vehiclePhotoImgEl.onerror = null;
 
-  const photoCandidates = ["jpeg", "jpg", "png", "webp"].map((extension) => `media/${encodeURIComponent(normalizedVehicleId)}.${extension}`);
-  const preloadNextPhoto = (candidateIndex = 0) => {
-    if (candidateIndex >= photoCandidates.length) {
-      if (lookupToken === vehiclePhotoLookupToken) hideVehiclePhotoCard();
-      return;
-    }
+  if (vehiclePhotoMetaEl) {
+    vehiclePhotoMetaEl.hidden = true;
+    vehiclePhotoMetaEl.textContent = "";
+  }
+  if (vehiclePhotoCounterEl) {
+    vehiclePhotoCounterEl.hidden = true;
+    vehiclePhotoCounterEl.textContent = "";
+  }
 
-    const photoSrc = photoCandidates[candidateIndex];
-    const probe = new Image();
-    probe.decoding = "async";
-    probe.loading = "eager";
-    probe.onload = () => {
-      if (lookupToken !== vehiclePhotoLookupToken) return;
-      currentPhotoVehicleId = normalizedVehicleId;
-      vehiclePhotoImgEl.src = photoSrc;
-      updateVehiclePhotoTexts();
-      vehiclePhotoCardEl.hidden = false;
-      vehiclePhotoCardEl.setAttribute("aria-hidden", "false");
-    };
-    probe.onerror = () => {
-      if (lookupToken !== vehiclePhotoLookupToken) return;
-      preloadNextPhoto(candidateIndex + 1);
-    };
-    probe.src = photoSrc;
-  };
+  const photoEntries = await resolveVehiclePhotoEntries(normalizedVehicleId);
+  if (lookupToken !== vehiclePhotoLookupToken) return;
+  if (!photoEntries.length) {
+    hideVehiclePhotoCard();
+    return;
+  }
 
-  preloadNextPhoto();
+  currentPhotoVehicleId = normalizedVehicleId;
+  currentVehiclePhotoEntries = photoEntries;
+  currentVehiclePhotoIndex = 0;
+  renderActiveVehiclePhoto();
+  vehiclePhotoCardEl.hidden = false;
+  vehiclePhotoCardEl.setAttribute("aria-hidden", "false");
 }
 
 function parseFlexibleDateParts(rawValue) {
@@ -1652,6 +1822,8 @@ function applyTranslations() {
   if (!haltecodeErrorEl?.hidden) {
     haltecodeErrorEl.textContent = getLabel("haltSearchInvalid", "Voer een haltecode of haltenaam in.");
   }
+  if (vehiclePhotoPrevBtn) vehiclePhotoPrevBtn.setAttribute("aria-label", getLabel("photoPrevious", "Vorige foto"));
+  if (vehiclePhotoNextBtn) vehiclePhotoNextBtn.setAttribute("aria-label", getLabel("photoNext", "Volgende foto"));
   updateVehiclePhotoTexts();
   disclaimerTitleEl.textContent = t("disclaimerTitle");
   disclaimerTextEl.textContent = t("disclaimerText");
@@ -2278,6 +2450,16 @@ pdfModalCancelBtn?.addEventListener("click", hidePdfModal);
 compareModalCloseBtn?.addEventListener("click", hideCompareModal);
 compareModalCancelBtn?.addEventListener("click", hideCompareModal);
 compareClearBtn?.addEventListener("click", clearComparison);
+vehiclePhotoPrevBtn?.addEventListener("click", () => {
+  if (currentVehiclePhotoEntries.length < 2) return;
+  currentVehiclePhotoIndex = (currentVehiclePhotoIndex - 1 + currentVehiclePhotoEntries.length) % currentVehiclePhotoEntries.length;
+  renderActiveVehiclePhoto();
+});
+vehiclePhotoNextBtn?.addEventListener("click", () => {
+  if (currentVehiclePhotoEntries.length < 2) return;
+  currentVehiclePhotoIndex = (currentVehiclePhotoIndex + 1) % currentVehiclePhotoEntries.length;
+  renderActiveVehiclePhoto();
+});
 pdfModalConfirmBtn?.addEventListener("click", async () => {
   if (!pdfModalVehicleId) return;
   const voertuigId = pdfModalVehicleId;
@@ -2616,9 +2798,11 @@ function buildSuggestionLabel(vehicle) {
   const vehicleNumber = normalize(vehicle.Voertuignummer);
   const vehicleType = normalize(vehicle.Type);
   const plate = normalize(getVehicleField(vehicle, vehiclePlateFieldKey));
+  const oldVehicleNumbers = splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true).slice(0, 2);
   const parts = [`${vehicleNumber}`];
   if (vehicleType && vehicleType !== "/") parts.push(vehicleType);
   if (plate && plate !== "/") parts.push(plate);
+  if (oldVehicleNumbers.length) parts.push(`oud ${oldVehicleNumbers.join(", ")}`);
   return parts.join(" - ");
 }
 
@@ -2831,7 +3015,7 @@ async function zoekAlles() {
   suggestieLijst.innerHTML = "";
   resultsWrapEl.classList.add("show");
   resultsGridEl.classList.add("show");
-  closeBtnEl.style.display = "block";
+  closeBtnEl.style.display = "inline-flex";
   updateUrlState();
 
   toonVasteData(activeVehicleId);

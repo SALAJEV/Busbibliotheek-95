@@ -1,0 +1,25 @@
+{
+  "_instructions": "Gebruik per voertuignummer een array van foto's. Velden per foto: file, description, maker, place, date, alt, order. 'file' mag alleen de bestandsnaam zijn (bijvoorbeeld 4452-1.jpeg) of een pad zoals media/4452-1.jpeg.",
+  "2889": [
+    {
+      "file": "2889.jpeg",
+      "description": "",
+      "maker": "",
+      "place": "",
+      "date": "",
+      "alt": "",
+      "order": 1
+    }
+  ],
+  "2894": [
+    {
+      "file": "2894.jpeg",
+      "description": "",
+      "maker": "",
+      "place": "",
+      "date": "",
+      "alt": "",
+      "order": 1
+    }
+  ]
+}

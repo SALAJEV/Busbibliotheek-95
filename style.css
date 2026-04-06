@@ -682,9 +682,9 @@ p {
 
 .favorites-top {
   position: relative;
-  isolation: isolate;
   display: flex;
   margin-left: 0;
+  z-index: 1350;
 }
 
 .more-toggle-btn {
@@ -706,35 +706,46 @@ p {
   background: var(--button-secondary-bg-active);
 }
 
-.favorites-panel {
+.floating-panel {
   display: grid;
   position: fixed;
-  top: 0.85rem;
-  right: 0.85rem;
-  z-index: 1300;
-  width: min(430px, calc(100vw - 1.2rem));
-  max-height: calc(100vh - 1.7rem);
+  top: 1rem;
+  right: 1rem;
+  z-index: 1400;
+  width: min(430px, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 2rem);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0.95rem;
-  border-radius: var(--panel-radius);
-  border: 1px solid var(--stroke-strong);
-  background: var(--surface-strong);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  padding: 1rem;
+  border-radius: calc(var(--panel-radius) + 2px);
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--stroke-strong));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 96%, transparent), color-mix(in srgb, var(--surface) 98%, transparent)),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-soft) 72%, transparent), transparent 56%);
+  box-shadow: var(--shadow-strong);
+  backdrop-filter: blur(calc(var(--blur) + 6px));
+  -webkit-backdrop-filter: blur(calc(var(--blur) + 6px));
   opacity: 0;
-  transform: translateY(-10px) scale(0.96);
+  transform: translateY(-14px) scale(0.97);
   pointer-events: none;
   transition: opacity 0.26s ease, transform 0.26s ease;
 }
 
-.favorites-panel[hidden] {
+.favorites-panel {
+  width: min(440px, calc(100vw - 1.5rem));
+}
+
+.favorites-panel[hidden],
+.settings-panel[hidden] {
   display: none !important;
 }
 
+.panel-backdrop {
+  z-index: 1360;
+}
+
 .favorites-backdrop {
-  z-index: 1200;
+  z-index: 1360;
 }
 
 body.more-open .favorites-backdrop {
@@ -746,6 +757,10 @@ body.more-open .favorites-panel {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
+}
+
+body.more-open {
+  overflow: hidden;
 }
 
 .favorites-panel h3 {
@@ -779,6 +794,8 @@ body.more-open .favorites-panel {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.8rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-soft) 46%, var(--stroke-soft));
 }
 
 .more-panel-subtitle {
@@ -791,10 +808,10 @@ body.more-open .favorites-panel {
 .more-panel-section {
   display: grid;
   gap: 0.52rem;
-  padding: 0.68rem;
-  border-radius: var(--panel-radius-sm);
-  border: 1px solid var(--stroke);
-  background: var(--surface-alt);
+  padding: 0.72rem;
+  border-radius: calc(var(--panel-radius-sm) + 1px);
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 94%, transparent), color-mix(in srgb, var(--surface) 96%, transparent));
 }
 
 .more-panel-section-head {
@@ -1183,10 +1200,10 @@ button:disabled,
 }
 
 .settings-grid > div {
-  border-radius: var(--panel-radius-sm);
-  border: 1px solid var(--stroke-soft);
-  background: var(--surface-alt);
-  padding: 0.55rem 0.62rem;
+  border-radius: calc(var(--panel-radius-sm) + 1px);
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke-soft));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 94%, transparent), color-mix(in srgb, var(--surface) 96%, transparent));
+  padding: 0.62rem 0.68rem;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
@@ -1221,7 +1238,7 @@ button:disabled,
 .settings-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: 1360;
   background: var(--overlay-bg);
   backdrop-filter: blur(calc(var(--overlay-blur) - 4px));
   opacity: 0;
@@ -1230,24 +1247,7 @@ button:disabled,
 }
 
 .settings-panel {
-  position: fixed;
-  top: 0.85rem;
-  right: 0.85rem;
-  z-index: 1300;
-  width: min(390px, calc(100vw - 1.2rem));
-  max-height: calc(100vh - 1.7rem);
-  overflow: auto;
-  padding: 0.95rem;
-  border-radius: var(--panel-radius);
-  border: 1px solid var(--stroke-strong);
-  background: var(--surface-strong);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  opacity: 0;
-  transform: translateY(-10px) scale(0.96);
-  pointer-events: none;
-  transition: opacity 0.26s ease, transform 0.26s ease;
+  width: min(430px, calc(100vw - 1.5rem));
 }
 
 .settings-panel-header {
@@ -1255,7 +1255,9 @@ button:disabled,
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-soft) 46%, var(--stroke-soft));
 }
 
 .settings-panel-header h3 {
@@ -1632,8 +1634,7 @@ body.dashboard-open {
 .results-wrap {
   display: none;
   position: relative;
-  margin-top: 1.9rem;
-  padding-top: 0.25rem;
+  margin-top: 1.2rem;
 }
 
 .results-wrap.show {
@@ -1643,6 +1644,13 @@ body.dashboard-open {
 
 .results-wrap.show .card {
   animation: none;
+}
+
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 0.6rem;
 }
 
 .grid {
@@ -1663,24 +1671,23 @@ body.dashboard-open {
 
 .close-btn {
   display: none;
-  position: absolute;
-  top: -0.2rem;
-  left: 0;
-  z-index: 10;
+  position: relative;
   margin-top: 0 !important;
+  align-items: center;
+  justify-content: center;
   width: auto;
   min-width: 0;
   height: var(--button-height);
-  padding: 0 0.86rem 0 0.72rem;
-  border-radius: 999px;
-  gap: 0.38rem;
+  padding: 0 0.92rem 0 0.76rem;
+  border-radius: calc(var(--button-radius) + 999px);
+  gap: 0.44rem;
   font-size: 0.92rem;
   font-weight: 700;
   line-height: 1;
-  border: 1px solid var(--button-secondary-border);
-  background: var(--button-secondary-bg);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--button-secondary-border));
+  background: color-mix(in srgb, var(--button-secondary-bg) 92%, var(--accent-soft));
   color: var(--text);
-  box-shadow: var(--button-secondary-shadow);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent-soft) 20%, transparent);
 }
 
 .close-btn-icon {
@@ -2107,6 +2114,11 @@ tr + tr td {
 .photo-card {
   grid-column: 1 / -1;
   min-height: 0;
+  gap: 0.7rem;
+  padding-bottom: 1.05rem;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 94%, transparent), color-mix(in srgb, var(--surface) 98%, transparent)),
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent-soft) 64%, transparent), transparent 52%);
 }
 
 .photo-card[hidden] {
@@ -2116,10 +2128,11 @@ tr + tr td {
 .vehicle-photo-frame {
   position: relative;
   margin-top: 0.15rem;
-  border-radius: var(--radius-md);
+  border-radius: calc(var(--panel-radius-sm) + 2px);
   overflow: hidden;
-  border: 1px solid var(--stroke-soft);
-  background: var(--surface-alt);
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--stroke-soft));
+  background: color-mix(in srgb, var(--surface-alt) 96%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .vehicle-photo-image {
@@ -2128,14 +2141,84 @@ tr + tr td {
   height: auto;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  transition: none;
+  transition: transform 0.24s ease;
+}
+
+.photo-card:hover .vehicle-photo-image {
+  transform: scale(1.015);
+}
+
+.photo-nav-btn {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(15, 23, 42, 0.56);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(2, 8, 23, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.photo-nav-btn[hidden] {
+  display: none !important;
+}
+
+.photo-nav-btn span {
+  display: block;
+  font-size: 1.8rem;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.photo-nav-btn--prev {
+  left: 0.8rem;
+}
+
+.photo-nav-btn--next {
+  right: 0.8rem;
+}
+
+.vehicle-photo-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.vehicle-photo-counter {
+  margin: 0;
+  padding: 0.34rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--stroke-soft));
+  background: color-mix(in srgb, var(--surface-alt) 92%, transparent);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.vehicle-photo-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .vehicle-photo-caption {
-  margin: 0.45rem 0 0;
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 600;
+  margin: -0.15rem 0 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.45;
   letter-spacing: 0;
 }
 
@@ -3000,13 +3083,6 @@ footer h3 {
   body {
     overflow-x: hidden;
   }
-  :root {
-    --radius-lg: 8px;
-    --radius-md: 7px;
-    --radius-sm: 6px;
-    --button-radius-theme: 6px;
-    --icon-radius-theme: 6px;
-  }
 
   .container {
     width: 100%;
@@ -3041,14 +3117,14 @@ footer h3 {
   }
 
   .favorites-panel {
-    top: calc(env(safe-area-inset-top) + 3.7rem);
+    top: calc(env(safe-area-inset-top) + 4.1rem);
     right: 0.7rem;
     left: 0.7rem;
     width: auto;
     max-height: calc(100dvh - env(safe-area-inset-top) - 4.5rem);
-    border-radius: var(--radius-md);
+    border-radius: calc(var(--panel-radius-sm) + 2px);
     z-index: 1720;
-    padding: 1rem 0.95rem 1.05rem;
+    padding: 0.96rem 0.92rem 1rem;
     box-shadow: var(--shadow-strong);
   }
 
@@ -3070,12 +3146,11 @@ footer h3 {
   .more-toggle-btn {
     width: auto;
     min-width: 0;
-    height: 34px;
-    min-height: 34px;
-    padding-inline: 0.64rem 0.74rem;
+    height: 40px;
+    min-height: 40px;
+    padding-inline: 0.78rem 0.86rem;
     gap: 0.28rem;
-    font-size: 0.82rem;
-    border-radius: 999px;
+    font-size: 0.9rem;
   }
 
   .favorites-backdrop {
@@ -3091,18 +3166,12 @@ footer h3 {
   }
 
   .search-row {
-    border-radius: var(--radius-md);
-    padding: 0.18rem;
-    min-height: 50px;
+    padding: 0.2rem;
+    min-height: 54px;
   }
 
   .search-row input {
-    border-radius: calc(var(--radius-md) - 3px);
-  }
-
-  .btn,
-  button:not(.close-btn):not(.icon-btn):not(.settings-close-btn):not(#searchBtn):not(.vehicle-favorite-btn):not(.chip) {
-    width: 100%;
+    border-radius: calc(var(--radius-md) - 2px);
   }
 
   .favorites-panel .chip {
@@ -3117,7 +3186,8 @@ footer h3 {
   }
 
   .pdf-modal-actions {
-    flex-direction: column-reverse;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .dashboard-grid,
@@ -3167,25 +3237,20 @@ footer h3 {
   }
 
   #searchBtn {
-    width: 44px;
-    min-width: 44px;
+    width: 48px;
+    min-width: 48px;
     padding: 0;
-    border-radius: calc(var(--radius-md) - 3px);
-  }
-
-  .close-btn {
-    top: -0.15rem;
-    left: 0;
+    border-radius: calc(var(--radius-md) - 2px);
   }
 
   .settings-panel {
-    top: 0.6rem;
+    top: 0.72rem;
     right: 0.6rem;
     left: 0.6rem;
     width: auto;
     max-height: calc(100vh - 1.2rem);
-    padding: 0.72rem 0.74rem 0.78rem;
-    border-radius: var(--radius-lg);
+    padding: 0.94rem 0.9rem 0.98rem;
+    border-radius: calc(var(--panel-radius-sm) + 2px);
   }
 
   #map {
@@ -3218,7 +3283,7 @@ footer h3 {
   }
 
   .more-toggle-btn {
-    padding-inline: 0.58rem 0.66rem;
+    padding-inline: 0.72rem 0.78rem;
   }
 
   .title-home-btn {
@@ -3237,11 +3302,6 @@ footer h3 {
     width: 100%;
     padding-inline: 0.58rem;
     border-radius: 0;
-  }
-
-  .stack-card,
-  .card {
-    border-radius: var(--radius-lg);
   }
 
   .voertuignummer-display {
