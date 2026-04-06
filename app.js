@@ -1798,7 +1798,11 @@ function getWeatherPresentation(weatherCode, isDay = 1) {
   return weatherMap[code] || { icon: "🌤", label: getLabel("weatherUnknown", "Weer") };
 }
 
-function renderWeatherBlock(weatherData) {
+function getWeatherExternalUrl(latitude, longitude) {
+  return `https://www.google.com/search?q=${encodeURIComponent(`weer ${latitude},${longitude}`)}`;
+}
+
+function renderWeatherBlock(weatherData, latitude, longitude) {
   if (!weatherBlockEl || !weatherData?.current) {
     resetWeatherBlock();
     return;
@@ -1807,26 +1811,25 @@ function renderWeatherBlock(weatherData) {
   const current = weatherData.current;
   const presentation = getWeatherPresentation(current.weather_code, current.is_day);
   const temperature = typeof current.temperature_2m === "number" ? `${Math.round(current.temperature_2m)}°C` : "-";
-  const feelsLike = typeof current.apparent_temperature === "number" ? `${Math.round(current.apparent_temperature)}°C` : "-";
-  const wind = typeof current.wind_speed_10m === "number" ? `${Math.round(current.wind_speed_10m)} km/u` : "-";
-  const precipitation = typeof current.precipitation === "number" ? `${current.precipitation.toFixed(1)} mm` : "-";
+  const weatherUrl = Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? getWeatherExternalUrl(latitude, longitude)
+    : "";
+  const wrapperTag = weatherUrl ? "a" : "div";
+  const wrapperAttributes = weatherUrl
+    ? ` class="weather-card weather-card-link" href="${escapeHtml(weatherUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(getLabel("weatherOpenForecast", "Open weersite"))}"`
+    : ` class="weather-card"`;
 
   weatherBlockEl.innerHTML = `
-    <div class="weather-card">
+    <${wrapperTag}${wrapperAttributes}>
       <div class="weather-card-main">
         <span class="weather-icon" aria-hidden="true">${presentation.icon}</span>
         <div class="weather-copy">
           <strong class="weather-title">${escapeHtml(presentation.label)}</strong>
-          <span class="weather-source">${escapeHtml(getLabel("weatherSource", "Weer op deze locatie"))}</span>
+          <span class="weather-source">${escapeHtml(getLabel("weatherSource", "Tik voor meer weerinfo"))}</span>
         </div>
         <span class="weather-temperature">${escapeHtml(temperature)}</span>
       </div>
-      <div class="weather-stats">
-        <span class="weather-stat"><span class="weather-stat-label">${escapeHtml(getLabel("weatherFeelsLike", "Gevoel"))}</span><strong>${escapeHtml(feelsLike)}</strong></span>
-        <span class="weather-stat"><span class="weather-stat-label">${escapeHtml(getLabel("weatherWind", "Wind"))}</span><strong>${escapeHtml(wind)}</strong></span>
-        <span class="weather-stat"><span class="weather-stat-label">${escapeHtml(getLabel("weatherRain", "Neerslag"))}</span><strong>${escapeHtml(precipitation)}</strong></span>
-      </div>
-    </div>
+    </${wrapperTag}>
   `;
   weatherBlockEl.hidden = false;
   weatherBlockEl.setAttribute("aria-hidden", "false");
@@ -1840,7 +1843,7 @@ async function updateWeatherForCoordinates(latitude, longitude) {
 
   const cacheKey = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
   if (cacheKey === lastWeatherCacheKey && lastWeatherData) {
-    renderWeatherBlock(lastWeatherData);
+    renderWeatherBlock(lastWeatherData, latitude, longitude);
     return;
   }
 
@@ -1852,7 +1855,7 @@ async function updateWeatherForCoordinates(latitude, longitude) {
     if (requestToken !== weatherRequestToken) return;
     lastWeatherCacheKey = cacheKey;
     lastWeatherData = weatherData;
-    renderWeatherBlock(weatherData);
+    renderWeatherBlock(weatherData, latitude, longitude);
   } catch (error) {
     if (requestToken !== weatherRequestToken) return;
     console.warn("Weer laden mislukt", error);
