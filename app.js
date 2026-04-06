@@ -92,6 +92,7 @@ const colorOrangeOptEl = document.getElementById("colorOrangeOpt");
 const colorRedOptEl = document.getElementById("colorRedOpt");
 const colorPurpleOptEl = document.getElementById("colorPurpleOpt");
 const themeColorMetaEls = Array.from(document.querySelectorAll('meta[name="theme-color"]'));
+const colorSchemeMetaEl = document.querySelector('meta[name="color-scheme"]');
 const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
 const stalkModeMediaQuery = window.matchMedia("(min-width: 981px)");
 const lastUpdateEl = document.getElementById("lastUpdate");
@@ -746,7 +747,7 @@ function renderComparison() {
 
   const rowsHtml = Array.from(rowMap.values()).map((row) => `
     <tr>
-      <th>${escapeHtml(row.label)}</th>
+      <th scope="row">${escapeHtml(row.label)}</th>
       <td>${renderCellValue(row.left)}</td>
       <td>${renderCellValue(row.right)}</td>
     </tr>
@@ -768,9 +769,9 @@ function renderComparison() {
       <table class="compare-table">
         <thead>
           <tr>
-            <th>Veld</th>
-            <th>${escapeHtml(baseBus.Voertuignummer || currentVehicleId)}</th>
-            <th>${escapeHtml(compareBus.Voertuignummer || compareVehicleId)}</th>
+            <th class="compare-table-corner" aria-hidden="true"></th>
+            <th scope="col">${escapeHtml(baseBus.Voertuignummer || currentVehicleId)}</th>
+            <th scope="col">${escapeHtml(compareBus.Voertuignummer || compareVehicleId)}</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
@@ -1551,6 +1552,12 @@ function applyTheme(theme) {
   updateSystemUiThemeColor();
 }
 
+function getResolvedThemeMode() {
+  if (settings.theme === "dark") return "dark";
+  if (settings.theme === "light") return "light";
+  return prefersDarkScheme.matches ? "dark" : "light";
+}
+
 function normalizeColorTheme(colorTheme) {
   const value = (colorTheme || "").toString().toLowerCase();
   return ALLOWED_COLOR_THEMES.includes(value) ? value : "classic";
@@ -1565,6 +1572,7 @@ function applyColorTheme(colorTheme) {
 
 function updateSystemUiThemeColor() {
   const css = getComputedStyle(document.documentElement);
+  const resolvedTheme = getResolvedThemeMode();
   const nextThemeColor =
     css.getPropertyValue("--bg-gradient-top").trim() ||
     css.getPropertyValue("--bg").trim() ||
@@ -1572,6 +1580,7 @@ function updateSystemUiThemeColor() {
   themeColorMetaEls.forEach((metaEl) => {
     metaEl.setAttribute("content", nextThemeColor);
   });
+  if (colorSchemeMetaEl) colorSchemeMetaEl.setAttribute("content", resolvedTheme);
 }
 
 window.updateSystemUiThemeColor = updateSystemUiThemeColor;
