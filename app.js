@@ -11,7 +11,10 @@ function hideSplash(ms = 260) {
   s.addEventListener("transitionend", cleanup, { once: true });
   setTimeout(cleanup, ms + 120);
 }
-window.addEventListener('load', () => setTimeout(hideSplash, 520));
+window.addEventListener('DOMContentLoaded', () => setTimeout(hideSplash, 900), { once: true });
+window.addEventListener('load', () => setTimeout(hideSplash, 520), { once: true });
+window.addEventListener('pageshow', () => setTimeout(hideSplash, 220), { once: true });
+setTimeout(() => hideSplash(180), 2800);
 splash?.addEventListener('click', () => hideSplash(150));
 document.addEventListener('touchstart', () => hideSplash(150), { once: true });
 
@@ -2323,8 +2326,8 @@ function saveFavorites() {
 function renderFavorites() {
   favoritesListEl.innerHTML = "";
   if (!favorites.length) {
-    const empty = document.createElement("span");
-    empty.className = "loading";
+    const empty = document.createElement("div");
+    empty.className = "favorites-empty-state";
     empty.textContent = t("noFavoritesYet");
     favoritesListEl.appendChild(empty);
     return;
