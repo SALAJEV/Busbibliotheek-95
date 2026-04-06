@@ -1562,16 +1562,6 @@ function getPhotoDescriptionsLookup() {
   return vehiclePhotoDescriptions;
 }
 
-function pickPhotoValue(source = {}, ...keys) {
-  for (const key of keys) {
-    const value = source?.[key];
-    if (value !== undefined && value !== null && `${value}`.trim() !== "") {
-      return value;
-    }
-  }
-  return "";
-}
-
 async function loadVehiclePhotoDescriptions() {
   if (vehiclePhotoDescriptions) return vehiclePhotoDescriptions;
   if (vehiclePhotoDescriptionsPromise) return vehiclePhotoDescriptionsPromise;
@@ -1597,35 +1587,35 @@ async function loadVehiclePhotoDescriptions() {
   return vehiclePhotoDescriptionsPromise;
 }
 
-function normalizePhotoEntry(entry, fallbackVehicleId, index = 0, defaults = {}) {
+function normalizePhotoEntry(entry, fallbackVehicleId, index = 0) {
   if (!entry) return null;
   if (typeof entry === "string") {
     return {
-      src: /^[a-z]+:|^\//i.test(entry) || entry.startsWith("media/") ? entry : `media/${entry}`,
+      src: entry,
       caption: "",
-      meta: [pickPhotoValue(defaults, "by", "maker", "fotograaf", "author"), pickPhotoValue(defaults, "at", "place", "plaats", "location"), formatPhotoMetaDate(pickPhotoValue(defaults, "on", "date", "datum")), pickPhotoValue(defaults, "credit", "credits")].filter(Boolean).join(" • "),
+      meta: "",
       alt: "",
       sortOrder: index
     };
   }
   if (typeof entry !== "object") return null;
-  const rawSrc = pickPhotoValue(entry, "file", "src", "image", "foto", "bestand") || pickPhotoValue(defaults, "file", "src", "image", "foto", "bestand");
+  const rawSrc = (entry.file || entry.src || "").toString().trim();
   if (!rawSrc) return null;
   const src = /^[a-z]+:|^\//i.test(rawSrc) || rawSrc.startsWith("media/")
     ? rawSrc
     : `media/${rawSrc}`;
-  const dateText = formatPhotoMetaDate(pickPhotoValue(entry, "on", "date", "datum") || pickPhotoValue(defaults, "on", "date", "datum"));
-  const makerText = `${pickPhotoValue(entry, "by", "maker", "fotograaf", "author") || pickPhotoValue(defaults, "by", "maker", "fotograaf", "author")}`.trim();
-  const placeText = `${pickPhotoValue(entry, "at", "place", "plaats", "location") || pickPhotoValue(defaults, "at", "place", "plaats", "location")}`.trim();
-  const creditText = `${pickPhotoValue(entry, "credit", "credits") || pickPhotoValue(defaults, "credit", "credits")}`.trim();
-  const descriptionText = `${pickPhotoValue(entry, "text", "description", "caption", "beschrijving", "title") || pickPhotoValue(defaults, "text", "description", "caption", "beschrijving", "title")}`.trim();
+  const dateText = formatPhotoMetaDate(entry.date || entry.datum || "");
+  const makerText = (entry.maker || entry.fotograaf || entry.author || "").toString().trim();
+  const placeText = (entry.place || entry.plaats || entry.location || "").toString().trim();
+  const creditText = (entry.credit || entry.credits || "").toString().trim();
+  const descriptionText = (entry.description || entry.caption || entry.beschrijving || entry.title || "").toString().trim();
   const metaParts = [makerText, placeText, dateText, creditText].filter(Boolean);
   return {
     src,
     caption: descriptionText,
     meta: metaParts.join(" • "),
-    alt: `${pickPhotoValue(entry, "alt") || pickPhotoValue(defaults, "alt")}`.trim(),
-    sortOrder: Number.isFinite(Number(pickPhotoValue(entry, "order"))) ? Number(pickPhotoValue(entry, "order")) : index
+    alt: (entry.alt || "").toString().trim(),
+    sortOrder: Number.isFinite(Number(entry.order)) ? Number(entry.order) : index
   };
 }
 
@@ -1641,36 +1631,12 @@ function getConfiguredPhotoEntries(vehicleId) {
 
   const entries = [];
   aliases.forEach((alias) => {
-    const config = lookup[alias];
-    if (!config) return;
-
-    if (Array.isArray(config)) {
-      config.forEach((entry, index) => {
+    const directEntries = lookup[alias];
+    if (Array.isArray(directEntries)) {
+      directEntries.forEach((entry, index) => {
         const normalizedEntry = normalizePhotoEntry(entry, alias, index);
         if (normalizedEntry) entries.push(normalizedEntry);
       });
-      return;
-    }
-
-    if (typeof config !== "object") return;
-
-    const photoItems = Array.isArray(config.photos)
-      ? config.photos
-      : Array.isArray(config.items)
-        ? config.items
-        : [];
-
-    if (photoItems.length) {
-      photoItems.forEach((entry, index) => {
-        const normalizedEntry = normalizePhotoEntry(entry, alias, index, config.defaults || config);
-        if (normalizedEntry) entries.push(normalizedEntry);
-      });
-      return;
-    }
-
-    const normalizedEntry = normalizePhotoEntry(config, alias, 0, config.defaults || config);
-    if (normalizedEntry) {
-      entries.push(normalizedEntry);
     }
   });
 
@@ -3642,12 +3608,11 @@ function resolveVehicleSearch(query) {
 }
 
 function buildSuggestionLabel(vehicle) {
-  const vehicleNumber = normalize(vehicle.Voertuignummer);
   const vehicleType = normalize(vehicle.Type);
   const plate = normalize(getVehicleField(vehicle, vehiclePlateFieldKey));
   const oldVehicleNumbers = splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true).slice(0, 2);
   const hanseaId = normalize(getVehicleField(vehicle, "Hansea nummer"));
-  const parts = [`${vehicleNumber}`];
+  const parts = [];
   if (vehicleType && vehicleType !== "/") parts.push(vehicleType);
   if (plate && plate !== "/") parts.push(plate);
   if (hanseaId && hanseaId !== "/") parts.push(`Hansea ${hanseaId}`);
@@ -3768,12 +3733,13 @@ function renderSuggestionList(listEl, inputEl, onSelect) {
   }
 
   results.forEach((vehicle) => {
+    const secondaryLabel = buildSuggestionLabel(vehicle);
     const li = document.createElement("li");
     li.className = "vehicle-suggestion-item";
     li.dataset.id = normalize(vehicle.Voertuignummer);
     li.innerHTML = `
       <span class="vehicle-suggestion-primary">${escapeHtml(normalize(vehicle.Voertuignummer))}</span>
-      <span class="vehicle-suggestion-secondary">${escapeHtml(buildSuggestionLabel(vehicle))}</span>
+      ${secondaryLabel ? `<span class="vehicle-suggestion-secondary">${escapeHtml(secondaryLabel)}</span>` : ""}
     `;
     li.addEventListener("mousedown", (event) => {
       event.preventDefault();
