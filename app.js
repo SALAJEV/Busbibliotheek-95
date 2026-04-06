@@ -22,6 +22,7 @@ document.addEventListener('touchstart', () => hideSplash(150), { once: true });
 let deferredPrompt = null;
 const installBtn = document.getElementById('installBtn');
 const dashboardToggleBtn = document.getElementById("dashboardToggleBtn");
+const halteSearchToggleBtn = document.getElementById("halteSearchToggleBtn");
 const iosInstallHintEl = document.getElementById("iosInstallHint");
 const settingsPanelEl = document.getElementById("settingsPanel");
 const settingsBackdropEl = document.getElementById("settingsBackdrop");
@@ -138,6 +139,7 @@ const infoModalBodyEl = document.getElementById("infoModalBody");
 const infoModalSummaryEl = document.getElementById("infoModalSummary");
 const infoModalCloseBtn = document.getElementById("infoModalCloseBtn");
 const infoModalOkBtn = document.getElementById("infoModalOkBtn");
+const resetSiteDataBtn = document.getElementById("resetSiteDataBtn");
 const reviewModalEl = document.getElementById("reviewModal");
 const reviewModalTitleEl = document.getElementById("reviewModalTitle");
 const reviewModalSummaryEl = document.getElementById("reviewModalSummary");
@@ -211,6 +213,9 @@ const dashboardSetupConfirmBtn = document.getElementById("dashboardSetupConfirmB
 const morePanelTitleEl = document.getElementById("morePanelTitle");
 const haltModuleTitleEl = document.getElementById("haltModuleTitle");
 const haltModuleDescriptionEl = document.getElementById("haltModuleDescription");
+const haltSearchHelpEl = document.getElementById("haltSearchHelp");
+const halteSearchModalEl = document.getElementById("halteSearchModal");
+const halteSearchCloseBtn = document.getElementById("halteSearchCloseBtn");
 const haltecodeInputEl = document.getElementById("haltecodeInput");
 const haltecodeSearchBtn = document.getElementById("haltecodeSearchBtn");
 const haltecodeErrorEl = document.getElementById("haltecodeError");
@@ -289,6 +294,8 @@ let lastWeatherCacheKey = "";
 let lastWeatherData = null;
 let lastWeatherCoordinates = null;
 let activeVehicleSuggestionInput = null;
+let favoriteDragState = null;
+let favoriteDragSuppressUntil = 0;
 let settings = {
   intervalMs: 10000,
   theme: "auto",
@@ -590,6 +597,21 @@ function hideInfoModal() {
   document.body.classList.remove("pdf-modal-open");
 }
 
+function showHalteSearchModal() {
+  if (!halteSearchModalEl) return;
+  setFavoritesPanel(false);
+  halteSearchModalEl.hidden = false;
+  document.body.classList.add("pdf-modal-open");
+  renderLastHaltes();
+  window.setTimeout(() => haltecodeInputEl?.focus(), 20);
+}
+
+function hideHalteSearchModal() {
+  if (!halteSearchModalEl) return;
+  halteSearchModalEl.hidden = true;
+  document.body.classList.remove("pdf-modal-open");
+}
+
 function showReviewModal() {
   if (!reviewModalEl) return;
   reviewModalEl.hidden = false;
@@ -848,12 +870,14 @@ function clearComparison() {
 }
 
 function shouldHideComparisonField(fieldKey = "") {
-  const normalizedKey = normalizeFieldKey(fieldKey);
-  return normalizedKey === "hansea nummer" ||
-    normalizedKey === "intern nummer" ||
+  const normalizedKey = normalizeFieldKey(fieldKey).replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+  return normalizedKey.includes("hansea nummer") ||
+    normalizedKey.includes("intern nummer") ||
     normalizedKey === "vin" ||
-    normalizedKey === "oude voertuignummers" ||
-    normalizedKey === "oude nummerplaten";
+    normalizedKey.includes("oude voertuignummers") ||
+    normalizedKey.includes("oude voertuignummer") ||
+    normalizedKey.includes("oude nummerplaten") ||
+    normalizedKey.includes("oude nummerplaat");
 }
 
 function collectComparisonRows(bus) {
@@ -945,6 +969,7 @@ function renderComparison() {
   if (compareCardSummaryEl) {
     compareCardSummaryEl.textContent = "";
     compareCardSummaryEl.hidden = true;
+    compareCardSummaryEl.removeAttribute("data-active-summary");
   }
   compareCardEl.hidden = false;
   compareCardEl.setAttribute("aria-hidden", "false");
@@ -1617,12 +1642,21 @@ function getFallbackPhotoEntries(vehicleId) {
     normalize(bus?.Voertuignummer)
   ]);
   splitLegacyValues(getVehicleField(bus, oldVehicleNumbersFieldKey), true).forEach((alias) => aliases.add(normalize(alias)));
-  const extensions = ["jpeg", "jpg", "png", "webp"];
+  const extensions = ["jpeg", "jpg", "png"];
+  const suffixes = ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)];
   const fallbackEntries = [];
   aliases.forEach((alias) => {
     if (!alias) return;
-    extensions.forEach((extension) => {
-      fallbackEntries.push({ src: `media/${encodeURIComponent(alias)}.${extension}`, caption: "", meta: "", alt: "", sortOrder: fallbackEntries.length });
+    suffixes.forEach((suffix) => {
+      extensions.forEach((extension) => {
+        fallbackEntries.push({
+          src: `media/${encodeURIComponent(`${alias}${suffix}`)}.${extension}`,
+          caption: "",
+          meta: "",
+          alt: "",
+          sortOrder: fallbackEntries.length
+        });
+      });
     });
   });
   return fallbackEntries;
@@ -1653,10 +1687,9 @@ async function resolveVehiclePhotoEntries(vehicleId) {
 
 function buildVehiclePhotoCopy(entry, vehicleId) {
   const altTemplate = translateTemplate("photoAlt", "Foto van voertuig {id}");
-  const captionTemplate = translateTemplate("photoCaption", "Voertuig {id}");
   return {
     alt: entry?.alt || fillTemplate(altTemplate, vehicleId),
-    caption: entry?.caption || fillTemplate(captionTemplate, vehicleId),
+    caption: entry?.caption || "",
     meta: entry?.meta || ""
   };
 }
@@ -1696,6 +1729,7 @@ function renderActiveVehiclePhoto() {
   vehiclePhotoImgEl.src = activeEntry.src;
   vehiclePhotoImgEl.alt = copy.alt;
   vehiclePhotoCaptionEl.textContent = copy.caption;
+  vehiclePhotoCaptionEl.hidden = !copy.caption;
   if (vehiclePhotoMetaEl) {
     vehiclePhotoMetaEl.textContent = copy.meta;
     vehiclePhotoMetaEl.hidden = !copy.meta;
@@ -1775,6 +1809,7 @@ function hideVehiclePhotoCard() {
   vehiclePhotoImgEl.removeAttribute("src");
   vehiclePhotoImgEl.alt = "";
   vehiclePhotoCaptionEl.textContent = "";
+  vehiclePhotoCaptionEl.hidden = true;
   if (vehiclePhotoMetaEl) {
     vehiclePhotoMetaEl.hidden = true;
     vehiclePhotoMetaEl.textContent = "";
@@ -1802,6 +1837,7 @@ async function updateVehiclePhotoCard(vehicleId) {
   vehiclePhotoImgEl.removeAttribute("src");
   vehiclePhotoImgEl.alt = "";
   vehiclePhotoCaptionEl.textContent = "";
+  vehiclePhotoCaptionEl.hidden = true;
   vehiclePhotoImgEl.onload = null;
   vehiclePhotoImgEl.onerror = null;
 
@@ -2164,10 +2200,12 @@ function applyTranslations() {
   if (menuToggleTextEl) menuToggleTextEl.textContent = menuLabel;
   if (morePanelTitleEl) morePanelTitleEl.textContent = moreLabel;
   if (morePanelSubtitleEl) morePanelSubtitleEl.textContent = getLabel("moreSubtitle", "Snelle functies en extra tools.");
-  if (moreFunctionsTitleEl) moreFunctionsTitleEl.textContent = getLabel("functions", "Functies");
-  settingsToggleBtn.title = t("settings");
-  settingsToggleBtn.setAttribute("aria-label", t("settings"));
-  settingsToggleBtn.textContent = t("settings");
+  if (moreFunctionsTitleEl) moreFunctionsTitleEl.textContent = getLabel("moreFunctions", "Extra functies");
+  if (settingsToggleBtn) {
+    settingsToggleBtn.title = t("settings");
+    settingsToggleBtn.setAttribute("aria-label", t("settings"));
+    settingsToggleBtn.textContent = t("settings");
+  }
   iosInstallHintEl.textContent = t("iosHint");
   searchBtn.title = t("search");
   searchBtn.setAttribute("aria-label", t("search"));
@@ -2195,6 +2233,11 @@ function applyTranslations() {
   if (dashboardTitleEl) dashboardTitleEl.textContent = getLabel("dashboard", "Stalk modus");
   dashboardToggleBtn.textContent = getLabel("dashboard", "Stalk modus");
   dashboardToggleBtn.title = getLabel("dashboardButtonTitle", "Stalk modus");
+  if (halteSearchToggleBtn) {
+    halteSearchToggleBtn.textContent = getLabel("haltSearch", "Halte zoeken");
+    halteSearchToggleBtn.title = getLabel("haltSearch", "Halte zoeken");
+    halteSearchToggleBtn.setAttribute("aria-label", getLabel("haltSearch", "Halte zoeken"));
+  }
   if (dashboardEditBtn) dashboardEditBtn.textContent = getLabel("dashboardEdit", "Aanpassen");
   if (dashboardCloseBtn) dashboardCloseBtn.setAttribute("aria-label", getLabel("dashboardClose", "Stalk modus sluiten"));
   if (dashboardMapEl) dashboardMapEl.setAttribute("aria-label", getLabel("dashboardMapAria", "Kaart met live voertuigen"));
@@ -2210,6 +2253,7 @@ function applyTranslations() {
   if (haltModuleDescriptionEl) haltModuleDescriptionEl.textContent = getLabel("haltSearchDescription", "Voer een haltecode of haltenaam in om een halte van De Lijn te zoeken.");
   if (haltecodeInputEl) haltecodeInputEl.placeholder = getLabel("haltCodePlaceholder", "Haltecode of naam");
   if (haltecodeSearchBtn) haltecodeSearchBtn.textContent = getLabel("haltSearchOpen", "Zoek halte");
+  if (haltSearchHelpEl) haltSearchHelpEl.textContent = getLabel("haltSearchHelp", "Als je op zoeken drukt, kom je op de site van De Lijn terecht.");
   if (haltSearchResultsTitleEl) haltSearchResultsTitleEl.textContent = getLabel("haltSearchResultsTitle", "Gevonden haltes");
   if (lastCodesTitleEl) lastCodesTitleEl.textContent = getLabel("haltSearchRecent", "Laatste haltecodes");
   if (!haltecodeErrorEl?.hidden) {
@@ -2225,8 +2269,10 @@ function applyTranslations() {
   closeBtnEl.title = getLabel("back", "Terug");
   closeBtnEl.setAttribute("aria-label", getLabel("back", "Terug"));
   if (closeBtnTextEl) closeBtnTextEl.textContent = getLabel("back", "Terug");
-  settingsCloseBtn.setAttribute("title", getLabel("settingsClose", "Sluit instellingen"));
-  settingsCloseBtn.setAttribute("aria-label", getLabel("settingsClose", "Sluit instellingen"));
+  if (settingsCloseBtn) {
+    settingsCloseBtn.setAttribute("title", getLabel("settingsClose", "Sluit instellingen"));
+    settingsCloseBtn.setAttribute("aria-label", getLabel("settingsClose", "Sluit instellingen"));
+  }
   if (offlinePillEl) offlinePillEl.textContent = getLabel("offlinePill", "Offline");
   if (offlineTitleEl) offlineTitleEl.textContent = getLabel("offlineTitle", "Geen internetverbinding");
   if (offlineTextPrimaryEl) offlineTextPrimaryEl.textContent = getLabel("offlineTextPrimary", "Busbibliotheek kon geen werkende internetverbinding bevestigen.");
@@ -2258,6 +2304,8 @@ function applyTranslations() {
   if (infoModalSummaryEl) infoModalSummaryEl.textContent = getLabel("infoSummary", "Versie en laatste updates van de databronnen.");
   infoModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
   infoModalOkBtn.textContent = getLabel("close", "Sluiten");
+  if (resetSiteDataBtn) resetSiteDataBtn.textContent = getLabel("resetSiteData", "Reset website");
+  if (halteSearchCloseBtn) halteSearchCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
   if (reviewModalTitleEl) reviewModalTitleEl.textContent = getLabel("footerReview", "Review afleggen");
   if (reviewModalSummaryEl) reviewModalSummaryEl.textContent = getLabel("reviewSummary", "Laat weten wat beter kan of wat je goed vindt aan Busbibliotheek.");
   if (reviewModalCloseBtn) reviewModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
@@ -2375,6 +2423,16 @@ function getHalteRealtimeLink(codes = []) {
   return `https://www.delijn.be/realtime/${normalizedCodes.join("+")}/20`;
 }
 
+function getProvinceForHalteCode(code = "") {
+  const firstDigit = String(code || "").trim().charAt(0);
+  if (firstDigit === "1") return "Antwerpen";
+  if (firstDigit === "2") return "Oost-Vlaanderen";
+  if (firstDigit === "3") return "Vlaams-Brabant";
+  if (firstDigit === "4") return "Limburg";
+  if (firstDigit === "5") return "West-Vlaanderen";
+  return "";
+}
+
 function renderHalteSearchResults(haltes = []) {
   if (!haltSearchResultsContainerEl || !haltSearchResultsListEl) return;
   haltSearchResultsListEl.innerHTML = "";
@@ -2390,13 +2448,13 @@ function renderHalteSearchResults(haltes = []) {
 
     const primaryCode = validCodes[0];
     const omschrijving = String(halte?.omschrijvingLang || halte?.omschrijving || primaryCode).trim();
-    const gemeente = String(halte?.omschrijvingGemeente || "").trim();
+    const provincie = getProvinceForHalteCode(primaryCode);
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "chip";
     chip.innerHTML = `
       <span class="chip-title">${escapeHtml(omschrijving)}</span>
-      <span class="chip-subtitle">${escapeHtml(gemeente ? `${gemeente} · ${validCodes.join(" + ")}` : validCodes.join(" + "))}</span>
+      <span class="chip-subtitle">${escapeHtml(provincie || getLabel("unknownProvince", "Onbekende provincie"))}</span>
     `;
     chip.addEventListener("click", () => {
       if (haltecodeInputEl) haltecodeInputEl.value = omschrijving;
@@ -2533,6 +2591,7 @@ function openHalteRealtime(codeOverride = "") {
   lastHaltes.unshift(primaryCode);
   saveLastHaltes(lastHaltes.slice(0, 5));
   renderLastHaltes();
+  hideHalteSearchModal();
   window.open(getHalteRealtimeLink(validCodes), "_blank", "noopener,noreferrer");
   return true;
 }
@@ -2620,6 +2679,11 @@ async function loadFeedStatus() {
 }
 
 function setSettingsPanel(open) {
+  if (!settingsPanelEl || !settingsToggleBtn) {
+    settingsOpen = false;
+    document.body.classList.remove("settings-open");
+    return;
+  }
   if (open) setFavoritesPanel(false);
   settingsOpen = !!open;
   document.body.classList.toggle("settings-open", settingsOpen);
@@ -2675,6 +2739,48 @@ function startApkDownload() {
   window.alert(getLabel("apkDownloadStarted", "De download van Busbibliotheek.apk is gestart."));
 }
 
+async function resetSiteData() {
+  if (!window.confirm(getLabel("resetSiteDataConfirm", "Alles van Busbibliotheek op dit toestel resetten?"))) return;
+
+  try {
+    localStorage.removeItem(FAVORITES_KEY);
+    localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem(LAST_HALTES_KEY);
+  } catch (_) {
+    // Storage is optional.
+  }
+
+  favorites = [];
+  dashboardVehicleIds = [];
+  settings = {
+    intervalMs: 10000,
+    theme: "auto",
+    colorTheme: "classic",
+    language: "nl"
+  };
+  window.settings = settings;
+
+  try {
+    if ("caches" in window) {
+      const cacheKeys = await caches.keys();
+      await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+    }
+  } catch (_) {
+    // Cache cleanup is best effort.
+  }
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+  } catch (_) {
+    // Service worker cleanup is best effort.
+  }
+
+  window.location.replace(window.location.pathname);
+}
+
 function loadFavorites() {
   try {
     if (!window.localStorage) {
@@ -2713,18 +2819,26 @@ function renderFavorites() {
     const item = document.createElement("div");
     item.className = "favorite-item";
     item.dataset.id = id;
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
     item.innerHTML = `
-      <button class="chip favorite-chip" type="button">
+      <div class="favorite-chip">
         <span class="chip-title">${escapeHtml(id)}</span>
         ${vehicleType ? `<span class="chip-subtitle">${escapeHtml(vehicleType)}</span>` : ""}
-      </button>
-      <div class="favorite-item-actions">
-        <button class="favorite-action-btn" type="button" data-action="up" aria-label="${escapeHtml(getLabel("favoriteMoveUp", "Favoriet omhoog"))}">&#8593;</button>
-        <button class="favorite-action-btn" type="button" data-action="down" aria-label="${escapeHtml(getLabel("favoriteMoveDown", "Favoriet omlaag"))}">&#8595;</button>
-        <button class="favorite-action-btn favorite-action-btn--danger" type="button" data-action="remove" aria-label="${escapeHtml(t("favoriteRemove"))}">&times;</button>
       </div>
+      <button class="favorite-action-btn favorite-action-btn--remove" type="button" data-action="remove" aria-label="${escapeHtml(t("favoriteRemove"))}">&times;</button>
     `;
-    item.querySelector(".favorite-chip")?.addEventListener("click", () => {
+    item.addEventListener("click", (event) => {
+      if (Date.now() < favoriteDragSuppressUntil) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest(".favorite-action-btn")) return;
+      voertuigInput.value = id;
+      setFavoritesPanel(false);
+      zoekAlles();
+    });
+    item.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
       voertuigInput.value = id;
       setFavoritesPanel(false);
       zoekAlles();
@@ -2765,17 +2879,62 @@ function toggleFavorite(explicitId = "") {
   updateFavoriteButtonState();
 }
 
-function moveFavorite(id, direction) {
-  const index = favorites.indexOf(id);
-  if (index < 0) return;
-  const nextIndex = direction === "up" ? index - 1 : index + 1;
-  if (nextIndex < 0 || nextIndex >= favorites.length) return;
-  const nextFavorites = [...favorites];
-  [nextFavorites[index], nextFavorites[nextIndex]] = [nextFavorites[nextIndex], nextFavorites[index]];
+function saveFavoriteOrderFromDom() {
+  if (!favoritesListEl) return;
+  const nextFavorites = Array.from(favoritesListEl.querySelectorAll(".favorite-item"))
+    .map((item) => item.getAttribute("data-id") || "")
+    .filter(Boolean);
+  if (!nextFavorites.length) return;
   favorites = nextFavorites;
   saveFavorites();
-  renderFavorites();
   updateFavoriteButtonState();
+}
+
+function beginFavoriteDrag(pointerEvent, item) {
+  if (!(pointerEvent instanceof PointerEvent) || !item || !favoritesListEl) return;
+  if (pointerEvent.button !== 0) return;
+  if (pointerEvent.target instanceof Element && pointerEvent.target.closest(".favorite-action-btn")) return;
+  favoriteDragState = {
+    pointerId: pointerEvent.pointerId,
+    item,
+    started: false,
+    startX: pointerEvent.clientX,
+    startY: pointerEvent.clientY
+  };
+}
+
+function updateFavoriteDrag(pointerEvent) {
+  if (!favoriteDragState || !(pointerEvent instanceof PointerEvent) || !favoritesListEl) return;
+  if (pointerEvent.pointerId !== favoriteDragState.pointerId) return;
+
+  const moveDistance = Math.hypot(pointerEvent.clientX - favoriteDragState.startX, pointerEvent.clientY - favoriteDragState.startY);
+  if (!favoriteDragState.started && moveDistance < 8) return;
+
+  favoriteDragState.started = true;
+  favoriteDragState.item.classList.add("is-dragging");
+  const hoveredItem = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest(".favorite-item");
+  if (!(hoveredItem instanceof HTMLElement) || hoveredItem === favoriteDragState.item || hoveredItem.parentElement !== favoritesListEl) return;
+
+  const bounds = hoveredItem.getBoundingClientRect();
+  const insertAfter = pointerEvent.clientY > bounds.top + bounds.height / 2;
+  favoritesListEl.insertBefore(
+    favoriteDragState.item,
+    insertAfter ? hoveredItem.nextElementSibling : hoveredItem
+  );
+}
+
+function endFavoriteDrag(pointerEvent) {
+  if (!favoriteDragState || (pointerEvent instanceof PointerEvent && pointerEvent.pointerId !== favoriteDragState.pointerId)) return;
+  const dragState = favoriteDragState;
+  favoriteDragState = null;
+  dragState.item.classList.remove("is-dragging");
+  if (dragState.started) {
+    favoriteDragSuppressUntil = Date.now() + 250;
+    saveFavoriteOrderFromDom();
+    window.setTimeout(() => {
+      dragState.item.classList.remove("is-dragging");
+    }, 0);
+  }
 }
 
 function removeFavorite(id) {
@@ -2923,10 +3082,23 @@ favoritesListEl?.addEventListener("click", (event) => {
   const favoriteItem = actionBtn.closest(".favorite-item");
   const id = favoriteItem?.getAttribute("data-id") || "";
   const action = actionBtn.getAttribute("data-action");
-  if (action === "up") moveFavorite(id, "up");
-  if (action === "down") moveFavorite(id, "down");
   if (action === "remove") removeFavorite(id);
 });
+favoritesListEl?.addEventListener("pointerdown", (event) => {
+  const item = event.target instanceof Element ? event.target.closest(".favorite-item") : null;
+  if (!(item instanceof HTMLElement)) return;
+  beginFavoriteDrag(event, item);
+});
+document.addEventListener("pointermove", (event) => {
+  updateFavoriteDrag(event);
+});
+document.addEventListener("pointerup", (event) => {
+  endFavoriteDrag(event);
+});
+document.addEventListener("pointercancel", (event) => {
+  endFavoriteDrag(event);
+});
+halteSearchToggleBtn?.addEventListener("click", showHalteSearchModal);
 haltecodeSearchBtn?.addEventListener("click", () => searchHaltes());
 haltecodeInputEl?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -3128,23 +3300,33 @@ compareContentEl?.addEventListener("click", (event) => {
 });
 infoModalCloseBtn?.addEventListener("click", hideInfoModal);
 infoModalOkBtn?.addEventListener("click", hideInfoModal);
+resetSiteDataBtn?.addEventListener("click", () => {
+  void resetSiteData();
+});
 infoModalEl?.addEventListener("click", (event) => {
   if (event.target === infoModalEl) hideInfoModal();
+});
+halteSearchCloseBtn?.addEventListener("click", hideHalteSearchModal);
+halteSearchModalEl?.addEventListener("click", (event) => {
+  if (event.target === halteSearchModalEl) hideHalteSearchModal();
 });
 offlineRetryBtn?.addEventListener("click", () => {
   verifyInternetConnection(true).catch(() => {});
 });
-settingsToggleBtn.addEventListener("click", () => {
+settingsToggleBtn?.addEventListener("click", () => {
   setFavoritesPanel(false);
   setSettingsPanel(!settingsOpen);
 });
 settingsInfoBtn?.addEventListener("click", () => {
-  setSettingsPanel(false);
   showInfoModal();
 });
-settingsCloseBtn.addEventListener("click", () => setSettingsPanel(false));
-settingsBackdropEl.addEventListener("click", () => setSettingsPanel(false));
+settingsCloseBtn?.addEventListener("click", () => setSettingsPanel(false));
+settingsBackdropEl?.addEventListener("click", () => setSettingsPanel(false));
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !halteSearchModalEl?.hidden) {
+    hideHalteSearchModal();
+    return;
+  }
   if (event.key === "Escape" && !dashboardSetupModalEl?.hidden) {
     hideDashboardSetupModal();
     return;

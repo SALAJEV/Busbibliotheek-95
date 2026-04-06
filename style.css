@@ -820,6 +820,7 @@ body.platform-android-webview.settings-open .settings-panel {
   min-height: 34px;
   justify-content: flex-start;
   align-items: stretch;
+  flex-direction: column;
 }
 
 .favorites-panel .chip {
@@ -843,36 +844,53 @@ body.platform-android-webview.settings-open .settings-panel {
 .favorite-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.55rem;
+  gap: 0.35rem;
   align-items: stretch;
+  width: 100%;
+  padding: 0.42rem 0.44rem 0.42rem 0.82rem;
+  border-radius: var(--panel-radius-sm);
+  border: 1px solid var(--button-secondary-border);
+  background: var(--button-secondary-bg);
+  box-shadow: var(--button-secondary-shadow);
+  cursor: grab;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+}
+
+.favorite-item:hover {
+  background: var(--button-secondary-bg-hover);
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--button-secondary-border));
+}
+
+.favorite-item.is-dragging {
+  opacity: 0.72;
+  transform: scale(0.985);
+  cursor: grabbing;
 }
 
 .favorite-chip {
   min-width: 0;
-}
-
-.favorite-item-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  display: grid;
+  gap: 0.12rem;
+  align-content: center;
 }
 
 .favorite-action-btn {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
   padding: 0;
-  border-radius: 12px;
-  border: 1px solid var(--button-secondary-border);
-  background: var(--button-secondary-bg);
-  color: var(--text);
-  font-size: 0.95rem;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(in srgb, var(--danger) 92%, white 8%);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
   box-shadow: none;
 }
 
-.favorite-action-btn--danger {
-  color: var(--danger);
+.favorite-action-btn--remove:hover {
+  background: color-mix(in srgb, var(--danger) 84%, black 16%);
 }
 
 .more-panel {
@@ -940,6 +958,13 @@ body.platform-android-webview.settings-open .settings-panel {
   margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.halte-module-help {
+  margin: -0.12rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
   line-height: 1.45;
 }
 
@@ -1496,6 +1521,9 @@ body.funny-open {
   background: var(--overlay-bg);
   backdrop-filter: blur(var(--overlay-blur));
   -webkit-backdrop-filter: blur(var(--overlay-blur));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .pdf-modal[hidden] {
@@ -1504,12 +1532,16 @@ body.funny-open {
 
 .pdf-modal-card {
   width: min(560px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
   border-radius: var(--panel-radius);
   border: 1px solid var(--stroke-strong);
   background: var(--surface-strong);
   box-shadow: var(--shadow-card);
   padding: 0.9rem 0.92rem 0.96rem;
   animation: panelDropIn 0.16s ease both;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .pdf-modal-header {
@@ -1535,6 +1567,11 @@ body.funny-open {
 .pdf-modal-body {
   display: grid;
   gap: 0.7rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-right: 0.1rem;
 }
 
 .pdf-theme-field {
@@ -1770,6 +1807,10 @@ body.dashboard-open {
 
 .info-modal-body {
   gap: 0.52rem;
+}
+
+.halte-search-modal-card {
+  width: min(640px, calc(100vw - 2rem));
 }
 
 .info-list {
@@ -2110,8 +2151,8 @@ body.dashboard-open {
 
 .compare-vehicle-pill {
   display: grid;
-  gap: 0.16rem;
-  padding: 0.9rem 0.95rem;
+  gap: 0.22rem;
+  padding: 0.88rem 0.95rem;
   border-radius: var(--panel-radius-sm);
   border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--stroke));
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 98%, transparent), color-mix(in srgb, var(--surface) 94%, transparent));
@@ -2144,7 +2185,7 @@ body.dashboard-open {
 
 .compare-vehicle-pill span {
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 600;
 }
 

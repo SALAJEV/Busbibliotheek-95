@@ -59,26 +59,63 @@
           </section>
           <section class="more-panel-section">
             <div class="more-panel-section-head">
-              <h4 id="moreFunctionsTitle">Functies</h4>
+              <h4 id="moreFunctionsTitle">Extra functies</h4>
             </div>
             <div class="more-action-grid">
               <button id="dashboardToggleBtn" class="btn" type="button" title="Stalk modus">Stalk modus</button>
-              <button id="settingsToggleBtn" class="btn more-secondary-btn" type="button" title="Instellingen" aria-label="Instellingen" aria-controls="settingsPanel" aria-expanded="false">Instellingen</button>
+              <button id="halteSearchToggleBtn" class="btn more-secondary-btn" type="button" title="Halte zoeken" aria-label="Halte zoeken">Halte zoeken</button>
             </div>
           </section>
-          <section class="more-panel-section halte-module">
+          <section class="more-panel-section">
             <div class="more-panel-section-head">
-              <h4 id="haltModuleTitle">Halte zoeken</h4>
+              <h4 id="settingsTitle">Instellingen</h4>
             </div>
-            <p id="haltModuleDescription" class="halte-module-description">Voer een haltecode of haltenaam in om een halte van De Lijn te zoeken.</p>
-            <div class="halte-module-form">
-              <input type="text" id="haltecodeInput" inputmode="search" autocomplete="off" placeholder="Haltecode of naam">
-              <button id="haltecodeSearchBtn" class="btn" type="button">Zoek halte</button>
+            <div class="settings-grid">
+              <div>
+                <label for="intervalSelect" id="intervalLabel">Update-interval</label>
+                <select id="intervalSelect">
+                  <option value="10000" selected id="intervalOpt10">10 seconden</option>
+                  <option value="15000" id="intervalOpt15">15 seconden</option>
+                  <option value="30000" id="intervalOpt30">30 seconden</option>
+                </select>
+              </div>
+              <div>
+                <label for="themeSelect" id="themeLabel">Thema</label>
+                <select id="themeSelect">
+                  <option value="auto" id="themeAutoOpt">Automatisch</option>
+                  <option value="light" id="themeLightOpt">Licht</option>
+                  <option value="dark" id="themeDarkOpt">Donker</option>
+                </select>
+              </div>
+              <div>
+                <label for="colorThemeSelect" id="colorThemeLabel">Kleurthema</label>
+                <select id="colorThemeSelect">
+                  <option value="classic" id="colorClassicOpt" selected>Klassiek (zwart-wit)</option>
+                  <option value="yellow" id="colorYellowOpt">Geel</option>
+                  <option value="green" id="colorGreenOpt">Groen</option>
+                  <option value="blue" id="colorBlueOpt">Blauw</option>
+                  <option value="orange" id="colorOrangeOpt">Oranje</option>
+                  <option value="red" id="colorRedOpt">Rood</option>
+                  <option value="purple" id="colorPurpleOpt">Paars</option>
+                </select>
+              </div>
+              <div>
+                <label for="languageSelect" id="languageLabel">Taal</label>
+                <select id="languageSelect">
+                  <option value="nl">Nederlands</option>
+                  <option value="fr">Fran&ccedil;ais</option>
+                  <option value="en">English</option>
+                  <option value="de">Deutsch</option>
+                  <option value="pl">Polski</option>
+                  <option value="es">Espa&ntilde;ol</option>
+                  <option value="ru">&#1056;&#1091;&#1089;&#1089;&#1082;&#1080;&#1081;</option>
+                </select>
+              </div>
             </div>
-            <p id="haltecodeError" class="halte-module-error" hidden>Voer een haltecode of haltenaam in.</p>
-            <div id="haltSearchResultsContainer" class="halte-history" hidden>
-              <div id="haltSearchResultsList" class="chip-row"></div>
+            <div class="settings-actions">
+              <button id="settingsInfoBtn" class="btn more-secondary-btn" type="button">Info</button>
             </div>
+            <p id="feedStatus" class="settings-feed-status" hidden></p>
           </section>
         </div>
       </div>
@@ -204,60 +241,6 @@
   </div>
 </div>
 
-<div id="settingsBackdrop" class="settings-backdrop panel-backdrop"></div>
-<aside id="settingsPanel" class="settings-panel floating-panel" aria-hidden="true" inert>
-  <div class="settings-panel-header">
-    <h3 id="settingsTitle">Instellingen</h3>
-    <button id="settingsCloseBtn" class="settings-close-btn" type="button" title="Sluit instellingen" aria-label="Sluit instellingen">&times;</button>
-  </div>
-  <div class="settings-grid">
-    <div>
-      <label for="intervalSelect" id="intervalLabel">Update-interval</label>
-      <select id="intervalSelect">
-        <option value="10000" selected id="intervalOpt10">10 seconden</option>
-        <option value="15000" id="intervalOpt15">15 seconden</option>
-        <option value="30000" id="intervalOpt30">30 seconden</option>
-      </select>
-    </div>
-    <div>
-      <label for="themeSelect" id="themeLabel">Thema</label>
-      <select id="themeSelect">
-        <option value="auto" id="themeAutoOpt">Automatisch</option>
-        <option value="light" id="themeLightOpt">Licht</option>
-        <option value="dark" id="themeDarkOpt">Donker</option>
-      </select>
-    </div>
-    <div>
-      <label for="colorThemeSelect" id="colorThemeLabel">Kleurthema</label>
-      <select id="colorThemeSelect">
-        <option value="classic" id="colorClassicOpt" selected>Klassiek (zwart-wit)</option>
-        <option value="yellow" id="colorYellowOpt">Geel</option>
-        <option value="green" id="colorGreenOpt">Groen</option>
-        <option value="blue" id="colorBlueOpt">Blauw</option>
-        <option value="orange" id="colorOrangeOpt">Oranje</option>
-        <option value="red" id="colorRedOpt">Rood</option>
-        <option value="purple" id="colorPurpleOpt">Paars</option>
-      </select>
-    </div>
-    <div>
-      <label for="languageSelect" id="languageLabel">Taal</label>
-      <select id="languageSelect">
-        <option value="nl">Nederlands</option>
-        <option value="fr">Fran&ccedil;ais</option>
-        <option value="en">English</option>
-        <option value="de">Deutsch</option>
-        <option value="pl">Polski</option>
-        <option value="es">Espa&ntilde;ol</option>
-        <option value="ru">&#1056;&#1091;&#1089;&#1089;&#1082;&#1080;&#1081;</option>
-      </select>
-    </div>
-  </div>
-  <div class="settings-actions">
-    <button id="settingsInfoBtn" class="btn more-secondary-btn" type="button">Info</button>
-  </div>
-  <p id="feedStatus" class="settings-feed-status" hidden></p>
-</aside>
-
 <div id="funnyModal" class="funny-modal" hidden role="dialog" aria-modal="true" aria-labelledby="funnyModalTitle">
   <div class="funny-modal-card">
     <h3 id="funnyModalTitle">Buswijsheid</h3>
@@ -340,7 +323,36 @@
     </div>
     <div id="infoModalBody" class="pdf-modal-body info-modal-body"></div>
     <div class="pdf-modal-actions">
+      <button id="resetSiteDataBtn" class="more-secondary-btn" type="button">Reset website</button>
       <button id="infoModalOkBtn" class="btn" type="button">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<div id="halteSearchModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="haltModuleTitle">
+  <div class="pdf-modal-card halte-search-modal-card">
+    <div class="pdf-modal-header">
+      <div>
+        <h3 id="haltModuleTitle">Halte zoeken</h3>
+        <p id="haltModuleDescription" class="pdf-modal-summary">Voer een haltecode of haltenaam in om een halte van De Lijn te zoeken.</p>
+      </div>
+      <button id="halteSearchCloseBtn" class="settings-close-btn" type="button" aria-label="Sluiten">&times;</button>
+    </div>
+    <div class="pdf-modal-body halte-module">
+      <div class="halte-module-form">
+        <input type="text" id="haltecodeInput" inputmode="search" autocomplete="off" placeholder="Haltecode of naam">
+        <button id="haltecodeSearchBtn" class="btn" type="button">Zoek halte</button>
+      </div>
+      <p id="haltSearchHelp" class="halte-module-help">Als je op zoeken drukt, kom je op de site van De Lijn terecht.</p>
+      <p id="haltecodeError" class="halte-module-error" hidden>Voer een haltecode of haltenaam in.</p>
+      <div id="haltSearchResultsContainer" class="halte-history" hidden>
+        <h5 id="haltSearchResultsTitle">Gevonden haltes</h5>
+        <div id="haltSearchResultsList" class="chip-row"></div>
+      </div>
+      <div id="lastCodesContainer" class="halte-history" hidden>
+        <h5 id="lastCodesTitle">Laatste haltecodes</h5>
+        <div id="lastCodesList" class="chip-row"></div>
+      </div>
     </div>
   </div>
 </div>
