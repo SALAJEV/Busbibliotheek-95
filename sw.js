@@ -1,9 +1,9 @@
-const CACHE_NAME = 'busbibliotheek-v26';
+const CACHE_NAME = 'busbibliotheek-v27';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/app.js',
-  '/app.js?v=20260406-2',
+  '/app.js?v=20260406-3',
   '/manifest.json',
   '/style.css',
   '/style.css?v=20260406-2',
@@ -17,8 +17,7 @@ const CORE_ASSETS = [
 ];
 const OPTIONAL_ASSETS = [
   'https://unpkg.com/leaflet/dist/leaflet.css',
-  'https://unpkg.com/leaflet/dist/leaflet.js',
-  'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap'
+  'https://unpkg.com/leaflet/dist/leaflet.js'
 ];
 
 // Install event: cache essential files

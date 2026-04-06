@@ -1134,7 +1134,7 @@ function closeDashboardPanel() {
   dashboardPanelEl.hidden = true;
   dashboardPanelEl.setAttribute("aria-hidden", "true");
   document.body.classList.remove("dashboard-open");
-  renderDashboardMap([]);
+  void renderDashboardMap([]);
 }
 
 function setDashboardLoading(active) {
@@ -1227,7 +1227,7 @@ async function refreshDashboardPanel() {
     const hasInternet = await verifyInternetConnection();
     if (requestToken !== dashboardRequestToken) return;
     if (!hasInternet) {
-      renderDashboardMap([]);
+      await renderDashboardMap([]);
       dashboardGridEl.innerHTML = `<div class="dashboard-empty">${escapeHtml(getLabel("dashboardNoInternet", "Geen internetverbinding voor live dashboard."))}</div>`;
       return;
     }
@@ -1299,7 +1299,7 @@ async function refreshDashboardPanel() {
       `;
     }).join("");
 
-    renderDashboardMap(snapshots);
+    await renderDashboardMap(snapshots);
     dashboardGridEl.innerHTML = cardsHtml;
     const liveCount = snapshots.filter((snapshot) => snapshot.status === "live").length;
     dashboardSummaryEl.textContent = getLabel("dashboardLiveSummary", "{live} van {total} voertuigen live op kaart")
@@ -3827,6 +3827,15 @@ function bindVehicleSuggestions(inputEl, onSelect) {
   if (!listEl) return;
 
   const render = () => {
+    if (!voertuigen.length) {
+      void laadVoertuigen()
+        .then(() => {
+          if (activeVehicleSuggestionInput === inputEl || document.activeElement === inputEl) {
+            renderSuggestionList(listEl, inputEl, onSelect);
+          }
+        })
+        .catch((error) => console.warn("Voertuigsuggesties laden mislukt", error));
+    }
     activeVehicleSuggestionInput = inputEl;
     renderSuggestionList(listEl, inputEl, onSelect);
   };
@@ -3973,9 +3982,18 @@ async function laadStops() {
 }
 
 initAppPreferences();
-void laadVoertuigen()
-  .then(() => applyDeepLinkIfNeeded())
-  .catch((e) => console.warn("Warm-up voertuigen mislukt", e));
+
+function warmUpVehiclesAndDeepLinks() {
+  void laadVoertuigen()
+    .then(() => applyDeepLinkIfNeeded())
+    .catch((e) => console.warn("Warm-up voertuigen mislukt", e));
+}
+
+if (window.location.search.includes("bus=")) {
+  warmUpVehiclesAndDeepLinks();
+} else {
+  scheduleNonCriticalTask(warmUpVehiclesAndDeepLinks, 1400);
+}
 
 function toonSuggesties() {
   renderSuggestionList(suggestieLijst, voertuigInput, () => {
@@ -4186,7 +4204,8 @@ function toonVasteData(id){
   updateFavoriteButtonState();
 }
 
-function initMap(lat,lon){
+async function initMap(lat,lon){
+  const L = await ensureLeafletLoaded();
   if(!map){
     map=L.map("map").setView([lat,lon],14);
 
@@ -4488,7 +4507,9 @@ async function updateRealtime(id){
     lastUpdateEl.textContent = `${t("lastUpdate")}: ${new Date().toLocaleTimeString(localeForLanguage(settings.language))}`;
     lastUpdateEl.hidden = false;
 
-    initMap(v.position.latitude,v.position.longitude);
+    await initMap(v.position.latitude,v.position.longitude);
+    if (requestToken !== realtimeRequestToken || id !== currentVehicleId || !map) return;
+    const L = window.L;
     routeTrail.push([v.position.latitude, v.position.longitude]);
     if (routeTrail.length > 35) routeTrail.shift();
     if (routeTrail.length >= 2) {
@@ -4512,7 +4533,7 @@ async function updateRealtime(id){
         if(img) img.style.transform = `rotate(${bearing}deg)`;
       }
     } else {
-      marker = L.marker([v.position.latitude,v.position.longitude], { icon: busIcon })
+      marker = L.marker([v.position.latitude,v.position.longitude], { icon: getBusIcon() })
         .addTo(map);
       // set initial rotation
       const el = marker.getElement && marker.getElement();
