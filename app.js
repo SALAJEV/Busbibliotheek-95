@@ -582,7 +582,7 @@ function updateUrlState() {
 function updateDocumentTitle(vehicleId = "") {
   const normalizedVehicleId = normalize(vehicleId || currentVehicleId);
   document.title = normalizedVehicleId
-    ? `Voertuig ${normalizedVehicleId} – Busbibliotheek`
+    ? `${getLabel("vehicleTitlePrefix", "Voertuig")} ${normalizedVehicleId}`
     : "Busbibliotheek";
 }
 
