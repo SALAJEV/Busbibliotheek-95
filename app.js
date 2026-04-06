@@ -222,12 +222,7 @@ const halteSearchCloseBtn = document.getElementById("halteSearchCloseBtn");
 const haltecodeInputEl = document.getElementById("haltecodeInput");
 const haltecodeSearchBtn = document.getElementById("haltecodeSearchBtn");
 const haltecodeErrorEl = document.getElementById("haltecodeError");
-const haltSearchResultsContainerEl = document.getElementById("haltSearchResultsContainer");
-const haltSearchResultsTitleEl = document.getElementById("haltSearchResultsTitle");
 const haltSearchResultsListEl = document.getElementById("haltSearchResultsList");
-const lastCodesContainerEl = document.getElementById("lastCodesContainer");
-const lastCodesTitleEl = document.getElementById("lastCodesTitle");
-const lastCodesListEl = document.getElementById("lastCodesList");
 
 let voertuigen = [];
 let trips = [];
@@ -317,7 +312,6 @@ let settings = {
 const platformUserAgent = window.navigator.userAgent || "";
 const isAndroidPlatform = /Android/i.test(platformUserAgent);
 const isAndroidWebView = isAndroidPlatform && /\bwv\b|Version\/[\d.]+/i.test(platformUserAgent);
-const LAST_HALTES_KEY = "lastHaltes";
 const HALTE_CODE_REGEX = /^[1-5]\d{5}$/;
 const HALTE_SEARCH_LIMIT = 8;
 let halteSearchRequestToken = 0;
@@ -615,7 +609,6 @@ function showHalteSearchModal() {
   window.requestAnimationFrame(() => {
     halteSearchModalEl.hidden = false;
     document.body.classList.add("pdf-modal-open");
-    renderLastHaltes();
     window.setTimeout(() => haltecodeInputEl?.focus(), 20);
   });
 }
@@ -2271,8 +2264,6 @@ function applyTranslations() {
   if (haltecodeInputEl) haltecodeInputEl.placeholder = getLabel("haltCodePlaceholder", "Haltecode of naam");
   if (haltecodeSearchBtn) haltecodeSearchBtn.textContent = getLabel("haltSearchOpen", "Zoek halte");
   if (haltSearchHelpEl) haltSearchHelpEl.textContent = getLabel("haltSearchHelp", "Als je op zoeken drukt, kom je op de site van De Lijn terecht.");
-  if (haltSearchResultsTitleEl) haltSearchResultsTitleEl.textContent = getLabel("haltSearchResultsTitle", "Gevonden haltes");
-  if (lastCodesTitleEl) lastCodesTitleEl.textContent = getLabel("haltSearchRecent", "Laatste haltecodes");
   if (!haltecodeErrorEl?.hidden) {
     haltecodeErrorEl.textContent = getLabel("haltSearchInvalid", "Voer een haltecode of haltenaam in.");
   }
@@ -2371,44 +2362,6 @@ function applyTranslations() {
   }
 }
 
-function loadLastHaltes() {
-  try {
-    const raw = localStorage.getItem(LAST_HALTES_KEY);
-    const parsed = JSON.parse(raw || "[]");
-    return Array.isArray(parsed) ? parsed.filter((code) => /^\d+$/.test(String(code))) : [];
-  } catch (_) {
-    return [];
-  }
-}
-
-function saveLastHaltes(codes) {
-  try {
-    localStorage.setItem(LAST_HALTES_KEY, JSON.stringify(codes));
-  } catch (_) {
-    // Local storage is optional here.
-  }
-}
-
-function renderLastHaltes() {
-  if (!lastCodesContainerEl || !lastCodesListEl) return;
-  const lastHaltes = loadLastHaltes();
-  lastCodesListEl.innerHTML = "";
-  lastCodesContainerEl.hidden = lastHaltes.length === 0;
-  if (!lastHaltes.length) return;
-
-  lastHaltes.forEach((code) => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "chip";
-    chip.textContent = code;
-    chip.addEventListener("click", () => {
-      if (haltecodeInputEl) haltecodeInputEl.value = code;
-      openHalteRealtime(code);
-    });
-    lastCodesListEl.appendChild(chip);
-  });
-}
-
 function setHalteStatus(message = "") {
   if (!haltecodeErrorEl) return;
   haltecodeErrorEl.hidden = !message;
@@ -2416,9 +2369,9 @@ function setHalteStatus(message = "") {
 }
 
 function clearHalteSearchResults() {
-  if (!haltSearchResultsContainerEl || !haltSearchResultsListEl) return;
+  if (!haltSearchResultsListEl) return;
   haltSearchResultsListEl.innerHTML = "";
-  haltSearchResultsContainerEl.hidden = true;
+  haltSearchResultsListEl.hidden = true;
 }
 
 function getGroupedHalteBaseName(rawName = "") {
@@ -2451,9 +2404,9 @@ function getProvinceForHalteCode(code = "") {
 }
 
 function renderHalteSearchResults(haltes = []) {
-  if (!haltSearchResultsContainerEl || !haltSearchResultsListEl) return;
+  if (!haltSearchResultsListEl) return;
   haltSearchResultsListEl.innerHTML = "";
-  haltSearchResultsContainerEl.hidden = haltes.length === 0;
+  haltSearchResultsListEl.hidden = haltes.length === 0;
   if (!haltes.length) return;
 
   haltes.forEach((halte) => {
@@ -2466,21 +2419,23 @@ function renderHalteSearchResults(haltes = []) {
     const primaryCode = validCodes[0];
     const omschrijving = String(halte?.omschrijvingLang || halte?.omschrijving || primaryCode).trim();
     const provincie = getProvinceForHalteCode(primaryCode);
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "chip";
-    chip.innerHTML = `
-      <span class="chip-title">${escapeHtml(omschrijving)}</span>
-      <span class="chip-subtitle">${escapeHtml(provincie || getLabel("unknownProvince", "Onbekende provincie"))}</span>
+    const item = document.createElement("li");
+    item.className = "vehicle-suggestion-item halte-suggestion-item";
+    item.innerHTML = `
+      <span class="vehicle-suggestion-primary">${escapeHtml(omschrijving)}</span>
+      <span class="vehicle-suggestion-secondary">${escapeHtml(provincie || getLabel("unknownProvince", "Onbekende provincie"))}</span>
     `;
-    chip.addEventListener("click", () => {
+    item.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+    item.addEventListener("click", () => {
       if (haltecodeInputEl) haltecodeInputEl.value = omschrijving;
       openHalteRealtime(validCodes);
     });
-    haltSearchResultsListEl.appendChild(chip);
+    haltSearchResultsListEl.appendChild(item);
   });
 
-  haltSearchResultsContainerEl.hidden = haltSearchResultsListEl.childElementCount === 0;
+  haltSearchResultsListEl.hidden = haltSearchResultsListEl.childElementCount === 0;
 }
 
 async function updateHalteSuggestions() {
@@ -2603,11 +2558,6 @@ function openHalteRealtime(codeOverride = "") {
   halteSearchRequestToken += 1;
   setHalteStatus("");
   clearHalteSearchResults();
-  const primaryCode = validCodes[0];
-  const lastHaltes = loadLastHaltes().filter((code) => code !== primaryCode);
-  lastHaltes.unshift(primaryCode);
-  saveLastHaltes(lastHaltes.slice(0, 5));
-  renderLastHaltes();
   hideHalteSearchModal();
   window.open(getHalteRealtimeLink(validCodes), "_blank", "noopener,noreferrer");
   return true;
@@ -2762,7 +2712,6 @@ async function resetSiteData() {
   try {
     localStorage.removeItem(FAVORITES_KEY);
     localStorage.removeItem(SETTINGS_KEY);
-    localStorage.removeItem(LAST_HALTES_KEY);
   } catch (_) {
     // Storage is optional.
   }
@@ -3034,7 +2983,6 @@ function initAppPreferences() {
   setFavoritesPanel(false);
   hideVehiclePhotoCard();
   renderFavorites();
-  renderLastHaltes();
   loadFeedStatus();
   updateFavoriteButtonState();
   resultsWrapEl.classList.remove("show");
