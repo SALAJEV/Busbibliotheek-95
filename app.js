@@ -1844,36 +1844,59 @@ function getWeatherPresentation(weatherCode, isDay = 1) {
   const code = Number(weatherCode);
   const daytime = Number(isDay) === 1;
   const weatherMap = {
-    0: { icon: daytime ? "☀" : "☾", label: getLabel("weatherClear", "Helder") },
-    1: { icon: daytime ? "⛅" : "☁", label: getLabel("weatherMainlyClear", "Licht bewolkt") },
-    2: { icon: "⛅", label: getLabel("weatherPartlyCloudy", "Half bewolkt") },
-    3: { icon: "☁", label: getLabel("weatherCloudy", "Bewolkt") },
-    45: { icon: "🌫", label: getLabel("weatherFog", "Mist") },
-    48: { icon: "🌫", label: getLabel("weatherFog", "Mist") },
-    51: { icon: "🌦", label: getLabel("weatherDrizzle", "Motregen") },
-    53: { icon: "🌦", label: getLabel("weatherDrizzle", "Motregen") },
-    55: { icon: "🌧", label: getLabel("weatherDrizzleHeavy", "Stevige motregen") },
-    56: { icon: "🌨", label: getLabel("weatherFreezingDrizzle", "Aanhoudende ijzel") },
-    57: { icon: "🌨", label: getLabel("weatherFreezingDrizzle", "Aanhoudende ijzel") },
-    61: { icon: "🌧", label: getLabel("weatherRain", "Regen") },
-    63: { icon: "🌧", label: getLabel("weatherRain", "Regen") },
-    65: { icon: "🌧", label: getLabel("weatherHeavyRain", "Stevige regen") },
-    66: { icon: "🌨", label: getLabel("weatherFreezingRain", "IJzel") },
-    67: { icon: "🌨", label: getLabel("weatherFreezingRain", "IJzel") },
-    71: { icon: "🌨", label: getLabel("weatherSnow", "Sneeuw") },
-    73: { icon: "🌨", label: getLabel("weatherSnow", "Sneeuw") },
-    75: { icon: "❄", label: getLabel("weatherHeavySnow", "Stevige sneeuw") },
-    77: { icon: "❄", label: getLabel("weatherSnowGrains", "Sneeuwkorrels") },
-    80: { icon: "🌦", label: getLabel("weatherShowers", "Buien") },
-    81: { icon: "🌧", label: getLabel("weatherShowers", "Buien") },
-    82: { icon: "🌧", label: getLabel("weatherHeavyShowers", "Zware buien") },
-    85: { icon: "🌨", label: getLabel("weatherSnowShowers", "Sneeuwbuien") },
-    86: { icon: "🌨", label: getLabel("weatherSnowShowers", "Sneeuwbuien") },
-    95: { icon: "⛈", label: getLabel("weatherThunder", "Onweer") },
-    96: { icon: "⛈", label: getLabel("weatherThunderHail", "Onweer met hagel") },
-    99: { icon: "⛈", label: getLabel("weatherThunderHail", "Onweer met hagel") }
+    0: { iconKey: daytime ? "sun" : "moon", label: getLabel("weatherClear", "Helder") },
+    1: { iconKey: daytime ? "partly" : "cloud", label: getLabel("weatherMainlyClear", "Licht bewolkt") },
+    2: { iconKey: "partly", label: getLabel("weatherPartlyCloudy", "Half bewolkt") },
+    3: { iconKey: "cloud", label: getLabel("weatherCloudy", "Bewolkt") },
+    45: { iconKey: "fog", label: getLabel("weatherFog", "Mist") },
+    48: { iconKey: "fog", label: getLabel("weatherFog", "Mist") },
+    51: { iconKey: "drizzle", label: getLabel("weatherDrizzle", "Motregen") },
+    53: { iconKey: "drizzle", label: getLabel("weatherDrizzle", "Motregen") },
+    55: { iconKey: "rain", label: getLabel("weatherDrizzleHeavy", "Stevige motregen") },
+    56: { iconKey: "snow", label: getLabel("weatherFreezingDrizzle", "Aanhoudende ijzel") },
+    57: { iconKey: "snow", label: getLabel("weatherFreezingDrizzle", "Aanhoudende ijzel") },
+    61: { iconKey: "rain", label: getLabel("weatherRain", "Regen") },
+    63: { iconKey: "rain", label: getLabel("weatherRain", "Regen") },
+    65: { iconKey: "rain", label: getLabel("weatherHeavyRain", "Stevige regen") },
+    66: { iconKey: "snow", label: getLabel("weatherFreezingRain", "IJzel") },
+    67: { iconKey: "snow", label: getLabel("weatherFreezingRain", "IJzel") },
+    71: { iconKey: "snow", label: getLabel("weatherSnow", "Sneeuw") },
+    73: { iconKey: "snow", label: getLabel("weatherSnow", "Sneeuw") },
+    75: { iconKey: "snow", label: getLabel("weatherHeavySnow", "Stevige sneeuw") },
+    77: { iconKey: "snow", label: getLabel("weatherSnowGrains", "Sneeuwkorrels") },
+    80: { iconKey: "drizzle", label: getLabel("weatherShowers", "Buien") },
+    81: { iconKey: "rain", label: getLabel("weatherShowers", "Buien") },
+    82: { iconKey: "rain", label: getLabel("weatherHeavyShowers", "Zware buien") },
+    85: { iconKey: "snow", label: getLabel("weatherSnowShowers", "Sneeuwbuien") },
+    86: { iconKey: "snow", label: getLabel("weatherSnowShowers", "Sneeuwbuien") },
+    95: { iconKey: "storm", label: getLabel("weatherThunder", "Onweer") },
+    96: { iconKey: "storm", label: getLabel("weatherThunderHail", "Onweer met hagel") },
+    99: { iconKey: "storm", label: getLabel("weatherThunderHail", "Onweer met hagel") }
   };
-  return weatherMap[code] || { icon: "🌤", label: getLabel("weatherUnknown", "Weer") };
+  return weatherMap[code] || { iconKey: "partly", label: getLabel("weatherUnknown", "Weer") };
+}
+
+function getWeatherIconMarkup(iconKey, extraClass = "") {
+  const className = ["weather-svg", extraClass].filter(Boolean).join(" ");
+  const icons = {
+    sun: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"></circle><path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6M18.7 18.7l-1.6-1.6M6.9 6.9 5.3 5.3"></path></svg>`,
+    moon: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.2a8.8 8.8 0 1 0 5.3 15.6A9.7 9.7 0 0 1 15.5 3.2Z"></path></svg>`,
+    cloud: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 18.5h9.3a4 4 0 0 0 .4-8 5.9 5.9 0 0 0-11.4-1.3 3.7 3.7 0 0 0 1.7 9.3Z"></path></svg>`,
+    partly: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.3 6.1A4.1 4.1 0 0 1 15 3.4"></path><path d="M10.8 3.1v1.5M6.6 4.9l1.1 1.1M15 7.2h-1.5"></path><path d="M7.2 18.5h9.3a4 4 0 0 0 .4-8 5.9 5.9 0 0 0-11.4-1.3 3.7 3.7 0 0 0 1.7 9.3Z"></path></svg>`,
+    fog: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.8 10.4h9.5a3.4 3.4 0 0 0 .2-6.8A5 5 0 0 0 7 5.2a3.2 3.2 0 0 0-.2 5.2Z"></path><path d="M4 14.5h16M6 17.5h12M4.5 20.5h10"></path></svg>`,
+    drizzle: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 14h9.3a4 4 0 0 0 .4-8 5.9 5.9 0 0 0-11.4-1.3A3.7 3.7 0 0 0 7.2 14Z"></path><path d="M9 17.2v.2M12 18v.2M15 17.2v.2"></path></svg>`,
+    rain: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 13.6h9.3a4 4 0 0 0 .4-8 5.9 5.9 0 0 0-11.4-1.3 3.7 3.7 0 0 0 1.7 9.3Z"></path><path d="M9 16.5l-1 3M12.5 16.5l-1 3M16 16.5l-1 3"></path></svg>`,
+    snow: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 13.6h9.3a4 4 0 0 0 .4-8 5.9 5.9 0 0 0-11.4-1.3 3.7 3.7 0 0 0 1.7 9.3Z"></path><path d="M9 17.5h.01M12 19h.01M15 17.5h.01"></path></svg>`,
+    storm: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 13.6h9.3a4 4 0 0 0 .4-8 5.9 5.9 0 0 0-11.4-1.3 3.7 3.7 0 0 0 1.7 9.3Z"></path><path d="m11 14.8-1.2 3.1h2l-.8 3.1 3-4.1h-2l1-2.1"></path></svg>`,
+    status: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><path d="M12 8.8v3.7l2.2 1.3"></path></svg>`,
+    thermometer: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5.5a2 2 0 1 1 4 0v7a4 4 0 1 1-4 0Z"></path><path d="M12 10.2v6"></path></svg>`,
+    feels: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-6.5-3.9-6.5-9.2A3.8 3.8 0 0 1 12 8.3a3.8 3.8 0 0 1 6.5 2.5C18.5 16.1 12 20 12 20Z"></path></svg>`,
+    wind: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5h10.5a2.5 2.5 0 1 0-2.5-2.5"></path><path d="M3 14h13.5a2.5 2.5 0 1 1-2.5 2.5"></path><path d="M3 18.5h7.5a2.5 2.5 0 1 0-2.5 2.5"></path></svg>`,
+    umbrella: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0Z"></path><path d="M12 12v5.2a2.3 2.3 0 0 1-4.6 0"></path></svg>`,
+    pin: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s6-5.8 6-10a6 6 0 1 0-12 0c0 4.2 6 10 6 10Z"></path><circle cx="12" cy="10" r="2.2"></circle></svg>`,
+    arrow: `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h11"></path><path d="m12 5 7 7-7 7"></path></svg>`
+  };
+  return icons[iconKey] || icons.cloud;
 }
 
 function formatWeatherMetric(value, suffix, digits = 0) {
@@ -1891,29 +1914,28 @@ function renderWeatherModal(weatherData, latitude, longitude) {
   const current = weatherData.current;
   const presentation = getWeatherPresentation(current.weather_code, current.is_day);
   const rows = [
-    ["◌", getLabel("weatherNow", "Toestand"), presentation.label],
-    ["🌡", getLabel("weatherTemperature", "Temperatuur"), formatWeatherMetric(current.temperature_2m, "°C")],
-    ["🤍", getLabel("weatherFeelsLike", "Gevoelstemperatuur"), formatWeatherMetric(current.apparent_temperature, "°C")],
-    ["🌀", getLabel("weatherWind", "Wind"), formatWeatherMetric(current.wind_speed_10m, " km/u")],
-    ["☔", getLabel("weatherRain", "Neerslag"), formatWeatherMetric(current.precipitation, " mm", 1)],
-    ["◎", getLabel("weatherCoordinates", "Coördinaten"), `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`]
+    ["status", getLabel("weatherNow", "Toestand"), presentation.label],
+    ["thermometer", getLabel("weatherTemperature", "Temperatuur"), formatWeatherMetric(current.temperature_2m, "°C")],
+    ["feels", getLabel("weatherFeelsLike", "Gevoelstemperatuur"), formatWeatherMetric(current.apparent_temperature, "°C")],
+    ["wind", getLabel("weatherWind", "Wind"), formatWeatherMetric(current.wind_speed_10m, " km/u")],
+    ["umbrella", getLabel("weatherRain", "Neerslag"), formatWeatherMetric(current.precipitation, " mm", 1)]
   ];
   weatherModalBodyEl.innerHTML = `
     <div class="weather-modal-hero">
-      <span class="weather-icon weather-modal-icon" aria-hidden="true">${presentation.icon}</span>
+      <span class="weather-icon weather-modal-icon" aria-hidden="true">${getWeatherIconMarkup(presentation.iconKey, "weather-svg--hero")}</span>
       <div class="weather-modal-hero-copy">
         <strong>${escapeHtml(presentation.label)}</strong>
-        <span>${escapeHtml(getLabel("weatherModalLive", "Live op deze locatie"))}</span>
+        <span>${escapeHtml(getLabel("weatherModalSubtitle", "Huidige weersituatie"))}</span>
       </div>
       <div class="weather-modal-temp">
         <strong>${escapeHtml(formatWeatherMetric(current.temperature_2m, "°C"))}</strong>
-        <span>${escapeHtml(getLabel("weatherModalTapHint", "Zelfde databron als op de kaart"))}</span>
+        <span>${escapeHtml(getLabel("weatherTemperature", "Temperatuur"))}</span>
       </div>
     </div>
     <div class="weather-detail-grid">
       ${rows.map(([icon, label, value]) => `
         <div class="weather-detail-card">
-          <span class="weather-detail-icon" aria-hidden="true">${icon}</span>
+          <span class="weather-detail-icon" aria-hidden="true">${getWeatherIconMarkup(icon, "weather-svg--detail")}</span>
           <span class="weather-detail-label">${escapeHtml(label)}</span>
           <strong class="weather-detail-value">${escapeHtml(value)}</strong>
         </div>
@@ -1949,13 +1971,16 @@ function renderWeatherBlock(weatherData, latitude, longitude) {
   weatherBlockEl.innerHTML = `
     <button class="weather-card weather-card-link" type="button" aria-label="${escapeHtml(getLabel("weatherOpenForecast", "Open weerdetails"))}">
       <div class="weather-card-main">
-        <span class="weather-icon" aria-hidden="true">${presentation.icon}</span>
+        <span class="weather-icon" aria-hidden="true">${getWeatherIconMarkup(presentation.iconKey)}</span>
         <div class="weather-copy">
-          <strong class="weather-title">${escapeHtml(presentation.label)}</strong>
+          <div class="weather-headline-row">
+            <strong class="weather-title">${escapeHtml(presentation.label)}</strong>
+            <span class="weather-temperature weather-temperature--inline">${escapeHtml(temperature)}</span>
+          </div>
           <span class="weather-source">${escapeHtml(getLabel("weatherSource", "Tik voor meer weerinfo"))}</span>
           <span class="weather-source weather-source-meta">${escapeHtml(getWeatherSourceText())}</span>
         </div>
-        <span class="weather-temperature">${escapeHtml(temperature)}</span>
+        <span class="weather-card-chevron" aria-hidden="true">${getWeatherIconMarkup("arrow", "weather-svg--arrow")}</span>
       </div>
     </button>
   `;
@@ -2324,6 +2349,35 @@ function renderHalteSearchResults(haltes = []) {
   });
 
   haltSearchResultsContainerEl.hidden = haltSearchResultsListEl.childElementCount === 0;
+}
+
+async function updateHalteSuggestions() {
+  const zoekTerm = (haltecodeInputEl?.value || "").trim();
+  const requestToken = ++halteSearchRequestToken;
+
+  if (!zoekTerm) {
+    setHalteStatus("");
+    clearHalteSearchResults();
+    return;
+  }
+
+  if (HALTE_CODE_REGEX.test(zoekTerm)) {
+    setHalteStatus("");
+    clearHalteSearchResults();
+    return;
+  }
+
+  try {
+    const haltes = await searchHaltesLocal(zoekTerm);
+    if (requestToken !== halteSearchRequestToken) return;
+    renderHalteSearchResults(haltes);
+    setHalteStatus(haltes.length ? "" : getLabel("haltSearchNoResults", "Geen haltes gevonden."));
+  } catch (error) {
+    if (requestToken !== halteSearchRequestToken) return;
+    console.error("Haltesuggesties laden mislukt", error);
+    clearHalteSearchResults();
+    setHalteStatus("");
+  }
 }
 
 function scoreLocalHalteMatch(stop, normalizedQuery) {
@@ -2773,8 +2827,11 @@ appTitleBtnEl?.addEventListener("click", () => {
   hidePdfModal();
   hideCompareModal();
   hideInfoModal();
+  hideWeatherModal();
+  hideReviewModal();
+  hideTermsModal();
   hideFunnyModal();
-  terug();
+  window.location.reload();
 });
 bindVehicleSuggestions(voertuigInput, () => {
   voertuigInput.blur();
@@ -2821,7 +2878,7 @@ haltecodeInputEl?.addEventListener("keydown", (event) => {
   }
 });
 haltecodeInputEl?.addEventListener("input", () => {
-  setHalteStatus("");
+  void updateHalteSuggestions();
 });
 favoritesBackdropEl?.addEventListener("click", () => setFavoritesPanel(false));
 vasteDataEl.addEventListener("click", (event) => {
