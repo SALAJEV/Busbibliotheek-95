@@ -1,4 +1,4 @@
-const CACHE_NAME = 'busbibliotheek-v25';
+const CACHE_NAME = 'busbibliotheek-v26';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -59,6 +59,11 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
+  const offlineTextResponse = new Response('Offline', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'text/plain; charset=UTF-8' }
+  });
 
   if (url.searchParams.has('network-check')) {
     event.respondWith(
@@ -84,11 +89,7 @@ self.addEventListener('fetch', event => {
         })
         .catch(async () => {
           const cachedIndex = await caches.match('/index.html', { ignoreSearch: true });
-          return cachedIndex || new Response('Offline', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: { 'Content-Type': 'text/plain; charset=UTF-8' }
-          });
+          return cachedIndex || offlineTextResponse;
         })
     );
     return;
@@ -121,7 +122,7 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => {
           // Fall back to cache if network fails
-          return caches.match(request);
+          return caches.match(request).then(cached => cached || offlineTextResponse);
         })
     );
   } else { // Static assets: stale-while-revalidate
@@ -135,7 +136,7 @@ self.addEventListener('fetch', event => {
             }
             return response;
           })
-          .catch(() => cached);
+          .catch(() => cached || offlineTextResponse);
 
         return cached || networkFetch;
       })

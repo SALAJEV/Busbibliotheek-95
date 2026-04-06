@@ -60,6 +60,8 @@ const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
 const API_URL = "https://busbibliotheek95.pages.dev/api";
 const PYTHON_MAIN_DOWNLOAD_URL = "https://busbibliotheek95.pages.dev/python/script.py";
 const APK_DOWNLOAD_URL = `${window.location.origin}/android/app/release/app-release.apk`;
+const LEAFLET_CSS_URL = "https://unpkg.com/leaflet/dist/leaflet.css";
+const LEAFLET_JS_URL = "https://unpkg.com/leaflet/dist/leaflet.js";
 const NETWORK_CHECK_URL = `${window.location.origin}/manifest.json?network-check=1`;
 const NETWORK_CHECK_TIMEOUT_MS = 5000;
 const NETWORK_CHECK_INTERVAL_MS = 15000;
@@ -190,6 +192,7 @@ const compareModalEl = document.getElementById("compareModal");
 const compareModalTitleEl = document.getElementById("compareModalTitle");
 const compareModalSummaryEl = document.getElementById("compareModalSummary");
 const compareFieldLabelEl = document.getElementById("compareFieldLabel");
+const compareModalNoteEl = document.getElementById("compareModalNote");
 const compareVehicleInputEl = document.getElementById("compareVehicleInput");
 const compareModalCloseBtn = document.getElementById("compareModalCloseBtn");
 const compareModalCancelBtn = document.getElementById("compareModalCancelBtn");
@@ -230,12 +233,19 @@ let voertuigen = [];
 let trips = [];
 let routes = [];
 let stops = [];
+let voertuigenLoadPromise = null;
 const stopsById = new Map();
 const tripsById = new Map();
 const tripsByRouteId = new Map();
 const tripsByRouteKey = new Map();
 const routesById = new Map();
 const routesByKey = new Map();
+const vehicleLookupById = new Map();
+const vehicleLookupByPlate = new Map();
+const vehicleLookupByHansea = new Map();
+const vehicleLookupByLegacyId = new Map();
+const vehicleLookupByLegacyPlate = new Map();
+let vehicleSuggestionIndex = [];
 let map, marker, refresh;
 let trailLine = null;
 let routeTrail = [];
@@ -296,6 +306,8 @@ let lastWeatherCoordinates = null;
 let activeVehicleSuggestionInput = null;
 let favoriteDragState = null;
 let favoriteDragSuppressUntil = 0;
+let leafletLoadPromise = null;
+let busIcon = null;
 let settings = {
   intervalMs: 10000,
   theme: "auto",
@@ -600,10 +612,12 @@ function hideInfoModal() {
 function showHalteSearchModal() {
   if (!halteSearchModalEl) return;
   setFavoritesPanel(false);
-  halteSearchModalEl.hidden = false;
-  document.body.classList.add("pdf-modal-open");
-  renderLastHaltes();
-  window.setTimeout(() => haltecodeInputEl?.focus(), 20);
+  window.requestAnimationFrame(() => {
+    halteSearchModalEl.hidden = false;
+    document.body.classList.add("pdf-modal-open");
+    renderLastHaltes();
+    window.setTimeout(() => haltecodeInputEl?.focus(), 20);
+  });
 }
 
 function hideHalteSearchModal() {
@@ -1046,8 +1060,9 @@ function stopDashboardRefresh() {
   dashboardRequestToken += 1;
 }
 
-function initDashboardMap() {
+async function initDashboardMap() {
   if (!dashboardMapEl || dashboardMap) return;
+  const L = await ensureLeafletLoaded();
   dashboardMap = L.map("dashboardMap", { zoomControl: true, preferCanvas: true }).setView([51.0, 4.4], 9);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors &amp; <a href="https://carto.com/">CARTO</a>'
@@ -1065,7 +1080,7 @@ function buildDashboardMapTooltip(snapshot) {
   `;
 }
 
-function renderDashboardMap(snapshots) {
+async function renderDashboardMap(snapshots) {
   if (!dashboardMapWrapEl) return;
   const liveSnapshots = snapshots.filter((snapshot) =>
     snapshot.status === "live" &&
@@ -1080,12 +1095,14 @@ function renderDashboardMap(snapshots) {
   }
 
   dashboardMapWrapEl.classList.remove("hidden");
-  initDashboardMap();
+  await initDashboardMap();
+  if (!dashboardMapMarkers) return;
   dashboardMapMarkers.clearLayers();
+  const L = window.L;
 
   const bounds = [];
   liveSnapshots.forEach((snapshot) => {
-    const markerInstance = L.marker([snapshot.latitude, snapshot.longitude], { icon: busIcon }).addTo(dashboardMapMarkers);
+    const markerInstance = L.marker([snapshot.latitude, snapshot.longitude], { icon: getBusIcon() }).addTo(dashboardMapMarkers);
     const markerEl = markerInstance.getElement && markerInstance.getElement();
     if (markerEl) {
       const img = markerEl.querySelector("img");
@@ -1304,7 +1321,7 @@ async function openDashboardPanel() {
   dashboardPanelEl.hidden = false;
   dashboardPanelEl.setAttribute("aria-hidden", "false");
   document.body.classList.add("dashboard-open");
-  initDashboardMap();
+  await initDashboardMap();
   await refreshDashboardPanel();
   stopDashboardRefresh();
   dashboardRefreshHandle = window.setInterval(() => {
@@ -3098,7 +3115,11 @@ document.addEventListener("pointerup", (event) => {
 document.addEventListener("pointercancel", (event) => {
   endFavoriteDrag(event);
 });
-halteSearchToggleBtn?.addEventListener("click", showHalteSearchModal);
+halteSearchToggleBtn?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  showHalteSearchModal();
+});
 haltecodeSearchBtn?.addEventListener("click", () => searchHaltes());
 haltecodeInputEl?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -3535,6 +3556,88 @@ function splitLegacyValues(rawValue, splitOnSpaces = false) {
   return value.split(pattern).map((part) => part.trim()).filter((part) => part && part !== "/");
 }
 
+function buildVehicleSearchEntry(vehicle) {
+  const primaryId = normalize(vehicle.Voertuignummer);
+  const prefixes = [];
+  const exactIds = [];
+  const exactPlates = [];
+
+  const pushPrefix = (value) => {
+    const normalizedValue = normalizeLookup(value);
+    if (normalizedValue) prefixes.push(normalizedValue);
+  };
+  const pushExactId = (value) => {
+    const normalizedValue = normalizeLookup(value);
+    if (normalizedValue) exactIds.push(normalizedValue);
+  };
+  const pushExactPlate = (value) => {
+    const normalizedValue = normalizePlateLookup(value);
+    if (normalizedValue) exactPlates.push(normalizedValue);
+  };
+
+  pushPrefix(vehicle.Voertuignummer);
+  pushExactId(vehicle.Voertuignummer);
+  pushPrefix(getVehicleField(vehicle, "Hansea nummer"));
+  pushExactId(getVehicleField(vehicle, "Hansea nummer"));
+
+  const plateValue = getVehicleField(vehicle, vehiclePlateFieldKey);
+  if (plateValue) {
+    pushPrefix(plateValue);
+    pushExactPlate(plateValue);
+  }
+
+  splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true).forEach((value) => {
+    pushPrefix(value);
+    pushExactId(value);
+  });
+
+  splitLegacyValues(getVehicleField(vehicle, oldLicensePlatesFieldKey), false).forEach((value) => {
+    pushPrefix(value);
+    pushExactPlate(value);
+  });
+
+  return {
+    vehicle,
+    primaryId,
+    prefixes: [...new Set(prefixes)],
+    exactIds: [...new Set(exactIds)],
+    exactPlates: [...new Set(exactPlates)]
+  };
+}
+
+function rebuildVehicleIndexes() {
+  vehicleLookupById.clear();
+  vehicleLookupByPlate.clear();
+  vehicleLookupByHansea.clear();
+  vehicleLookupByLegacyId.clear();
+  vehicleLookupByLegacyPlate.clear();
+  vehicleSuggestionIndex = [];
+
+  voertuigen.forEach((vehicle) => {
+    const entry = buildVehicleSearchEntry(vehicle);
+    const [primaryId = ""] = entry.exactIds;
+    if (primaryId) vehicleLookupById.set(primaryId, vehicle);
+
+    const hanseaId = normalizeLookup(getVehicleField(vehicle, "Hansea nummer"));
+    if (hanseaId) vehicleLookupByHansea.set(hanseaId, vehicle);
+
+    const plate = normalizePlateLookup(getVehicleField(vehicle, vehiclePlateFieldKey));
+    if (plate) vehicleLookupByPlate.set(plate, vehicle);
+
+    splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true).forEach((value) => {
+      const normalizedValue = normalizeLookup(value);
+      if (normalizedValue) vehicleLookupByLegacyId.set(normalizedValue, vehicle);
+    });
+
+    splitLegacyValues(getVehicleField(vehicle, oldLicensePlatesFieldKey), false).forEach((value) => {
+      const normalizedValue = normalizePlateLookup(value);
+      if (normalizedValue) vehicleLookupByLegacyPlate.set(normalizedValue, vehicle);
+    });
+
+    vehicleSuggestionIndex.push(entry);
+  });
+}
+
 function resolveVehicleSearch(query) {
   const normalizedQuery = normalizeLookup(query);
   const normalizedPlateQuery = normalizePlateLookup(query);
@@ -3542,48 +3645,18 @@ function resolveVehicleSearch(query) {
     return { bus: null, vehicleId: "" };
   }
 
-  const bus = voertuigen.find((vehicle) => {
-    const vehicleNumber = normalizeLookup(vehicle.Voertuignummer);
-    if (vehicleNumber && vehicleNumber === normalizedQuery) return true;
-
-    const plate = normalizePlateLookup(getVehicleField(vehicle, vehiclePlateFieldKey));
-    if (normalizedPlateQuery && plate && plate === normalizedPlateQuery) return true;
-
-    const hanseaId = normalizeLookup(getVehicleField(vehicle, "Hansea nummer"));
-    if (hanseaId && hanseaId === normalizedQuery) return true;
-
-    const oldVehicleNumbers = splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true);
-    if (oldVehicleNumbers.some((value) => normalizeLookup(value) === normalizedQuery)) return true;
-
-    const oldPlates = splitLegacyValues(getVehicleField(vehicle, oldLicensePlatesFieldKey), false);
-    if (normalizedPlateQuery && oldPlates.some((value) => normalizePlateLookup(value) === normalizedPlateQuery)) return true;
-
-    return false;
-  });
+  const bus =
+    vehicleLookupById.get(normalizedQuery) ||
+    vehicleLookupByHansea.get(normalizedQuery) ||
+    vehicleLookupByLegacyId.get(normalizedQuery) ||
+    vehicleLookupByPlate.get(normalizedPlateQuery) ||
+    vehicleLookupByLegacyPlate.get(normalizedPlateQuery) ||
+    null;
 
   return {
     bus: bus || null,
     vehicleId: bus ? normalize(bus.Voertuignummer) : ""
   };
-}
-
-function matchesSuggestionQuery(vehicle, normalizedQuery, normalizedPlateQuery) {
-  const vehicleNumber = normalizeLookup(vehicle.Voertuignummer);
-  if (normalizedQuery && vehicleNumber.startsWith(normalizedQuery)) return true;
-
-  const plate = normalizePlateLookup(getVehicleField(vehicle, vehiclePlateFieldKey));
-  if (normalizedPlateQuery && plate && plate.startsWith(normalizedPlateQuery)) return true;
-
-  const hanseaId = normalizeLookup(getVehicleField(vehicle, "Hansea nummer"));
-  if (normalizedQuery && hanseaId && hanseaId.startsWith(normalizedQuery)) return true;
-
-  const oldVehicleNumbers = splitLegacyValues(getVehicleField(vehicle, oldVehicleNumbersFieldKey), true);
-  if (normalizedQuery && oldVehicleNumbers.some((value) => normalizeLookup(value).startsWith(normalizedQuery))) return true;
-
-  const oldPlates = splitLegacyValues(getVehicleField(vehicle, oldLicensePlatesFieldKey), false);
-  if (normalizedPlateQuery && oldPlates.some((value) => normalizePlateLookup(value).startsWith(normalizedPlateQuery))) return true;
-
-  return false;
 }
 
 function buildSuggestionLabel(vehicle) {
@@ -3611,15 +3684,95 @@ function getSuggestionResults(query = "", limit = 8) {
       .slice(0, limit);
   }
 
-  return voertuigen
-    .filter((vehicle) => matchesSuggestionQuery(vehicle, normalizedQuery, normalizedPlateQuery))
-    .slice(0, limit);
+  const matches = [];
+  for (const entry of vehicleSuggestionIndex) {
+    const hasMatch = entry.prefixes.some((value) => {
+      if (normalizedQuery && value.startsWith(normalizedQuery)) return true;
+      if (normalizedPlateQuery && value.startsWith(normalizedPlateQuery)) return true;
+      return false;
+    });
+    if (!hasMatch) continue;
+    matches.push(entry.vehicle);
+    if (matches.length >= limit) break;
+  }
+  return matches;
 }
 
 function hideSuggestionList(listEl) {
   if (!listEl) return;
   listEl.innerHTML = "";
   listEl.hidden = true;
+}
+
+function scheduleNonCriticalTask(callback, timeout = 800) {
+  if (typeof window.requestIdleCallback === "function") {
+    return window.requestIdleCallback(callback, { timeout });
+  }
+  return window.setTimeout(() => callback(), Math.min(timeout, 350));
+}
+
+function loadStylesheetOnce(href) {
+  if (document.querySelector(`link[rel="stylesheet"][href="${href}"]`)) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.onload = () => resolve();
+    link.onerror = () => reject(new Error(`Stylesheet kon niet geladen worden: ${href}`));
+    document.head.appendChild(link);
+  });
+}
+
+function loadScriptOnce(src) {
+  const existing = document.querySelector(`script[src="${src}"]`);
+  if (existing && existing.dataset.loaded === "1") return Promise.resolve();
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`Script kon niet geladen worden: ${src}`)), { once: true });
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = () => {
+      script.dataset.loaded = "1";
+      resolve();
+    };
+    script.onerror = () => reject(new Error(`Script kon niet geladen worden: ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureLeafletLoaded() {
+  if (window.L) return window.L;
+  if (!leafletLoadPromise) {
+    leafletLoadPromise = Promise.all([
+      loadStylesheetOnce(LEAFLET_CSS_URL),
+      loadScriptOnce(LEAFLET_JS_URL)
+    ]).then(() => {
+      if (!window.L) throw new Error("Leaflet niet beschikbaar na laden");
+      return window.L;
+    }).finally(() => {
+      if (!window.L) leafletLoadPromise = null;
+    });
+  }
+  return leafletLoadPromise;
+}
+
+function getBusIcon() {
+  if (busIcon || !window.L) return busIcon;
+  busIcon = window.L.divIcon({
+    className: "bus-div-icon",
+    html: '<img class="bus-div-icon__img" src="media/navicon.png" alt="Bus"/>',
+    iconSize: [36, 36],
+    iconAnchor: [18, 36]
+  });
+  return busIcon;
 }
 
 function renderSuggestionList(listEl, inputEl, onSelect) {
@@ -3688,32 +3841,34 @@ function bindVehicleSuggestions(inputEl, onSelect) {
   });
 }
 
-// Custom bus pin as DivIcon so we can rotate the image based on bearing
-const busIcon = L.divIcon({
-  className: 'bus-div-icon',
-  html: '<img class="bus-div-icon__img" src="media/navicon.png" alt="Bus"/>',
-  iconSize: [36,36],
-  iconAnchor: [18,36]
-});
-
 async function laadVoertuigen() {
-  const res = await fetchWithTimeout(`${BASE_URL}/vehicles.txt`, { cache: "no-store" });
-  const text = await res.text();
-  const regels = text
-    .split(/\r?\n/)
-    .map((regel) => regel.trim())
-    .filter((regel) => regel && !regel.startsWith("#"));
-  const headers = parseCSVLine(regels[0], ";").map((header) => header.trim());
-  vehiclePlateFieldKey = "Nummerplaat";
-  oldVehicleNumbersFieldKey = "Oude voertuignummers";
-  oldLicensePlatesFieldKey = "Oude nummerplaten";
-  vehicleHideVinFieldKey = "hide-vin";
+  if (voertuigen.length) return;
+  if (voertuigenLoadPromise) return voertuigenLoadPromise;
+  voertuigenLoadPromise = (async () => {
+    const res = await fetchWithTimeout(`${BASE_URL}/vehicles.txt`, { cache: "no-store" });
+    const text = await res.text();
+    const regels = text
+      .split(/\r?\n/)
+      .map((regel) => regel.trim())
+      .filter((regel) => regel && !regel.startsWith("#"));
+    const headers = parseCSVLine(regels[0], ";").map((header) => header.trim());
+    vehiclePlateFieldKey = "Nummerplaat";
+    oldVehicleNumbersFieldKey = "Oude voertuignummers";
+    oldLicensePlatesFieldKey = "Oude nummerplaten";
+    vehicleHideVinFieldKey = "hide-vin";
 
-  voertuigen = regels.slice(1)
-    .filter((regel) => regel.trim())
-    .map((regel) => mapVehicleRecord(headers, parseCSVLine(regel, ";")));
-  dataLoadTimestamps.vehicles = Date.now();
-  renderFavorites();
+    voertuigen = regels.slice(1)
+      .filter((regel) => regel.trim())
+      .map((regel) => mapVehicleRecord(headers, parseCSVLine(regel, ";")));
+    rebuildVehicleIndexes();
+    dataLoadTimestamps.vehicles = Date.now();
+    renderFavorites();
+  })();
+  try {
+    await voertuigenLoadPromise;
+  } finally {
+    voertuigenLoadPromise = null;
+  }
 }
 
 async function laadTrips() {

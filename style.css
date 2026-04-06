@@ -1514,7 +1514,7 @@ body.funny-open {
 .pdf-modal {
   position: fixed;
   inset: 0;
-  z-index: 1450;
+  z-index: 1800;
   display: grid;
   place-items: center;
   padding: 1rem;
