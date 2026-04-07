@@ -3,6 +3,7 @@ package be.salajev.busbibliotheek95
 import android.Manifest
 import android.app.Activity
 import android.app.DownloadManager
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -61,6 +62,7 @@ import androidx.webkit.WebViewFeature
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -137,7 +139,11 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         else -> {
-                            Box(modifier = Modifier.padding(innerPadding)) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding)
+                            ) {
                                 WebViewScreen(
                                     url = startUrl,
                                     modifier = Modifier.fillMaxSize(),
@@ -248,9 +254,9 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class UpdateStatus {
-    object None : UpdateStatus()
-    object Available : UpdateStatus()
-    object Critical : UpdateStatus()
+    data object None : UpdateStatus()
+    data object Available : UpdateStatus()
+    data object Critical : UpdateStatus()
 }
 
 @Composable

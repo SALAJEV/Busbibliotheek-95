@@ -64,8 +64,8 @@ const LEAFLET_CSS_URL = "https://unpkg.com/leaflet/dist/leaflet.css";
 const LEAFLET_JS_URL = "https://unpkg.com/leaflet/dist/leaflet.js";
 const NETWORK_CHECK_URL = `${window.location.origin}/manifest.json?network-check=1`;
 const NETWORK_CHECK_TIMEOUT_MS = 5000;
-const NETWORK_CHECK_INTERVAL_MS = 15000;
-const NETWORK_CHECK_CACHE_MS = 10000;
+const NETWORK_CHECK_INTERVAL_MS = 30000;
+const NETWORK_CHECK_CACHE_MS = 20000;
 const WEATHER_CACHE_MS = 5 * 60 * 1000;
 const FAVORITES_KEY = "bb_favorites_v1";
 const SETTINGS_KEY = "bb_settings_v1";
@@ -352,7 +352,7 @@ const INACTIVITY_CHECK_MS = 15000;
 let lastUserInteractionAt = Date.now();
 let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
-const APP_VERSION = "2026.04.07-11";
+const APP_VERSION = "2026.04.07-12";
 const dataLoadTimestamps = {
   realtime: 0
 };
@@ -1732,7 +1732,7 @@ async function loadVehiclePhotoDescriptions() {
   if (vehiclePhotoDescriptions) return vehiclePhotoDescriptions;
   if (vehiclePhotoDescriptionsPromise) return vehiclePhotoDescriptionsPromise;
 
-  vehiclePhotoDescriptionsPromise = fetch(`photo-descriptions.json?v=${APP_VERSION}`, { cache: "no-store" })
+  vehiclePhotoDescriptionsPromise = fetch(`photo-descriptions.json?v=${APP_VERSION}`, { cache: "default" })
     .then((response) => {
       if (!response.ok) throw new Error(`photo-descriptions ${response.status}`);
       return response.json();
@@ -1860,7 +1860,7 @@ function probePhotoEntry(entry) {
 function buildVehiclePhotoRequestUrl(src) {
   if (!src) return "";
   const separator = src.includes("?") ? "&" : "?";
-  return `${src}${separator}v=${encodeURIComponent(APP_VERSION)}&t=${Date.now()}`;
+  return `${src}${separator}v=${encodeURIComponent(APP_VERSION)}`;
 }
 
 async function resolveVehiclePhotoEntries(vehicleId) {
