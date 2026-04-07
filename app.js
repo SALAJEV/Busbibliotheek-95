@@ -728,6 +728,16 @@ function hideHalteSearchModal() {
 
 function showReviewModal() {
   if (!reviewModalEl) return;
+  const shouldOpenExternally =
+    isAndroidPlatform ||
+    isTouchPlatform() ||
+    (window.matchMedia?.("(max-width: 700px)")?.matches ?? false);
+
+  if (shouldOpenExternally && reviewMobileLinkEl?.href) {
+    window.open(reviewMobileLinkEl.href, "_blank", "noopener,noreferrer");
+    return;
+  }
+
   reviewModalEl.hidden = false;
   document.body.classList.add("pdf-modal-open");
 }
