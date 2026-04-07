@@ -352,7 +352,7 @@ const INACTIVITY_CHECK_MS = 15000;
 let lastUserInteractionAt = Date.now();
 let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
-const APP_VERSION = "2026.04.07-16";
+const APP_VERSION = "2026.04.07-17";
 const dataLoadTimestamps = {
   realtime: 0
 };
