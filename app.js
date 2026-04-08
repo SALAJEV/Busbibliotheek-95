@@ -29,6 +29,9 @@ const favoritesBackdropEl = document.getElementById("favoritesBackdrop");
 const favoritesToggleBtn = document.getElementById("favoritesToggleBtn");
 const favoritesPanelEl = document.getElementById("favoritesPanel");
 const favoritesPanelCloseBtn = document.getElementById("favoritesPanelCloseBtn");
+const favoritesTopEl = document.querySelector(".favorites-top");
+const headerActionsEl = document.querySelector(".header-actions");
+const headerSearchRowEl = document.querySelector(".search-row");
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -60,6 +63,16 @@ window.addEventListener('appinstalled', () => {
   syncPlatformBodyClasses();
   syncInstallButtonVisibility();
 });
+
+function syncHeaderActionPlacement() {
+  if (!favoritesTopEl || !headerActionsEl || !headerSearchRowEl || !window.matchMedia) return;
+  const shouldInlineMenu = window.matchMedia("(max-width: 980px)").matches;
+  const targetParent = shouldInlineMenu ? headerSearchRowEl : headerActionsEl;
+  if (favoritesTopEl.parentElement !== targetParent) {
+    targetParent.appendChild(favoritesTopEl);
+  }
+  document.body.classList.toggle("menu-inline-search", shouldInlineMenu);
+}
 
 // Constants
 const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
