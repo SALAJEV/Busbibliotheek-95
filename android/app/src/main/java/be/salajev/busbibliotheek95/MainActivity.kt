@@ -366,6 +366,38 @@ fun WebViewScreen(url: String, modifier: Modifier = Modifier, siteColor: Color, 
                     }
                     
                     addJavascriptInterface(object {
+                        private fun enqueueDirectDownload(
+                            url: String,
+                            fileName: String,
+                            mimeType: String?,
+                            userAgent: String? = null
+                        ) {
+                            try {
+                                val request = DownloadManager.Request(url.toUri())
+                                if (!mimeType.isNullOrBlank()) request.setMimeType(mimeType)
+                                if (!userAgent.isNullOrBlank()) request.addRequestHeader("User-Agent", userAgent)
+                                request.addRequestHeader("cookie", CookieManager.getInstance().getCookie(url) ?: "")
+                                request.setTitle(fileName.ifBlank { URLUtil.guessFileName(url, null, mimeType) })
+                                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                request.setDestinationInExternalPublicDir(
+                                    Environment.DIRECTORY_DOWNLOADS,
+                                    fileName.ifBlank { URLUtil.guessFileName(url, null, mimeType) }
+                                )
+                                ContextCompat.getSystemService(context, DownloadManager::class.java)?.enqueue(request)
+                                (context as Activity).runOnUiThread {
+                                    Toast.makeText(context, context.getString(R.string.download_started), Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                (context as Activity).runOnUiThread {
+                                    try {
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                    } catch (_: Exception) {
+                                        Toast.makeText(context, context.getString(R.string.download_failed), Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }
+
                         @Suppress("unused")
                         @JavascriptInterface
                         fun processDownload(base64Data: String, contentType: String) {
@@ -405,6 +437,12 @@ fun WebViewScreen(url: String, modifier: Modifier = Modifier, siteColor: Color, 
                                     Toast.makeText(context, context.getString(R.string.download_failed), Toast.LENGTH_SHORT).show()
                                 }
                             }
+                        }
+
+                        @Suppress("unused")
+                        @JavascriptInterface
+                        fun downloadFile(url: String, fileName: String, contentType: String) {
+                            enqueueDirectDownload(url, fileName, contentType, settings.userAgentString)
                         }
                     }, "Android")
 
@@ -451,7 +489,7 @@ fun WebViewScreen(url: String, modifier: Modifier = Modifier, siteColor: Color, 
                                     "var xhr = new XMLHttpRequest();" +
                                     "xhr.open('GET', '$downloadUrl', true);" +
                                     "xhr.responseType = 'blob';" +
-                                    "xhr.onload = function(e) {" +
+                                    "xhr.onload = function() {" +
                                     "  if (this.status == 200) {" +
                                     "    var reader = new FileReader();" +
                                     "    reader.readAsDataURL(this.response);" +

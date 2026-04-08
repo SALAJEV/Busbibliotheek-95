@@ -35,7 +35,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
   syncInstallButtonVisibility();
 });
 installBtn.addEventListener('click', async () => {
-  if (deferredPrompt) {
+  if (isAndroid6OrNewer) {
+    confirmAndStartDownload({
+      downloadType: "apk",
+      fileLabel: "Busbibliotheek.apk",
+      onConfirm: () => startApkDownload()
+    });
+  } else if (deferredPrompt) {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     console.log(`Gebruiker antwoord: ${outcome}`);
@@ -117,6 +123,14 @@ function isTouchPlatform() {
   return Boolean(touchPointerMediaQuery?.matches || window.navigator.maxTouchPoints > 0);
 }
 
+function isAndroidHostApp() {
+  try {
+    return /BusbibliotheekApp\//i.test(platformUserAgent) || typeof window.Android?.downloadFile === "function";
+  } catch (_) {
+    return /BusbibliotheekApp\//i.test(platformUserAgent);
+  }
+}
+
 function supportsEnhancedDialogs() {
   try {
     if (isAndroidWebView) return false;
@@ -145,7 +159,7 @@ function syncInstallButtonVisibility() {
     !isStandaloneDisplayMode() &&
     !isAndroidWebView &&
     !isAndroidTvPlatform &&
-    (Boolean(deferredPrompt) || isIosInstallable());
+    (isAndroid6OrNewer || Boolean(deferredPrompt) || isIosInstallable());
   installBtn.classList.toggle("show", shouldShow);
   installBtn.hidden = !shouldShow;
 }
@@ -593,6 +607,9 @@ const platformUserAgent = window.navigator.userAgent || "";
 const isAndroidPlatform = /Android/i.test(platformUserAgent);
 const isAndroidWebView = isAndroidPlatform && /\bwv\b|Version\/[\d.]+/i.test(platformUserAgent);
 const isAndroidTvPlatform = isAndroidPlatform && /(TV|AFT|BRAVIA|GoogleTV|SmartTV|HbbTV)/i.test(platformUserAgent);
+const androidVersionMatch = platformUserAgent.match(/Android\s+(\d+(?:\.\d+)?)/i);
+const androidVersion = androidVersionMatch ? Number(androidVersionMatch[1]) : NaN;
+const isAndroid6OrNewer = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion >= 6;
 let androidHostThemeMode = (document.documentElement.dataset.androidTheme || "").toLowerCase();
 const touchPointerMediaQuery = window.matchMedia ? window.matchMedia("(hover: none), (pointer: coarse)") : null;
 touchPointerMediaQuery?.addEventListener?.("change", syncPlatformBodyClasses);
@@ -3390,6 +3407,20 @@ function hideFunnyModal() {
 }
 
 function triggerDirectDownload(url, fileName) {
+  if (isAndroidHostApp() && typeof window.Android?.downloadFile === "function") {
+    const lowerName = (fileName || "").toLowerCase();
+    const mimeType = lowerName.endsWith(".apk")
+      ? "application/vnd.android.package-archive"
+      : lowerName.endsWith(".py")
+        ? "text/x-python"
+        : "application/octet-stream";
+    try {
+      window.Android.downloadFile(url, fileName || "", mimeType);
+      return;
+    } catch (error) {
+      console.warn("Native Android-download mislukt, browserdownload wordt gebruikt", error);
+    }
+  }
   const downloadLink = document.createElement("a");
   downloadLink.href = url;
   downloadLink.download = fileName;
@@ -3398,6 +3429,24 @@ function triggerDirectDownload(url, fileName) {
   document.body.appendChild(downloadLink);
   downloadLink.click();
   downloadLink.remove();
+}
+
+function confirmAndStartDownload(options = {}) {
+  const {
+    downloadType = "bestand",
+    fileLabel = "",
+    onConfirm = null
+  } = options;
+  const readableLabel = fileLabel || downloadType;
+  const confirmed = window.confirm(
+    getLabel(
+      `confirm${downloadType.charAt(0).toUpperCase()}${downloadType.slice(1)}Download`,
+      `Download ${readableLabel} nu naar dit toestel?`
+    )
+  );
+  if (!confirmed) return false;
+  if (typeof onConfirm === "function") onConfirm();
+  return true;
 }
 
 function startPythonDownload() {
@@ -5001,13 +5050,21 @@ async function zoekAlles(options = {}) {
   setFavoritesPanel(false);
   if (query.toLowerCase() === "python") {
     hideSuggestionList(suggestieLijst);
-    startPythonDownload();
+    confirmAndStartDownload({
+      downloadType: "python",
+      fileLabel: "script.py",
+      onConfirm: () => startPythonDownload()
+    });
     setPageLoading(false);
     return;
   }
   if (query.toLowerCase() === "android" || query.toLowerCase() === "apk") {
     hideSuggestionList(suggestieLijst);
-    startApkDownload();
+    confirmAndStartDownload({
+      downloadType: "apk",
+      fileLabel: "Busbibliotheek.apk",
+      onConfirm: () => startApkDownload()
+    });
     setPageLoading(false);
     return;
   }
