@@ -181,8 +181,9 @@
   --bg-gradient-bottom: #edf1f6;
   --bg-pattern:
     linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0)),
-    repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.055) 0, rgba(148, 163, 184, 0.055) 2px, transparent 2px, transparent 16px);
-  --bg-pattern-size: 100% 100%, 180px 180px;
+    radial-gradient(circle at 20% 18%, rgba(148, 163, 184, 0.12), transparent 18%),
+    repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.05) 0, rgba(148, 163, 184, 0.05) 2px, transparent 2px, transparent 18px);
+  --bg-pattern-size: 100% 100%, auto, 180px 180px;
   --bg-pattern-opacity: 0.4;
   --accent: #435266;
   --accent-2: #64748b;
@@ -204,9 +205,11 @@
   --accent-2: #0ea5e9;
   --accent-soft: rgba(14, 165, 233, 0.16);
   --bg-pattern:
-    radial-gradient(circle at 16% 18%, rgba(96, 165, 250, 0.15), transparent 22%),
-    repeating-linear-gradient(135deg, rgba(59, 130, 246, 0.055) 0, rgba(59, 130, 246, 0.055) 2px, transparent 2px, transparent 16px);
-  --bg-pattern-size: auto, 170px 170px;
+    radial-gradient(circle at 18% 18%, rgba(96, 165, 250, 0.15), transparent 20%),
+    radial-gradient(circle at 82% 28%, rgba(14, 165, 233, 0.12), transparent 18%),
+    linear-gradient(135deg, rgba(255,255,255,0.2), transparent 48%),
+    repeating-linear-gradient(45deg, rgba(59, 130, 246, 0.05) 0, rgba(59, 130, 246, 0.05) 2px, transparent 2px, transparent 20px);
+  --bg-pattern-size: auto, auto, 100% 100%, 180px 180px;
   --bg-pattern-opacity: 0.46;
   --button-border: #1d4ed8;
   --button-bg: #1d4ed8;
@@ -225,9 +228,10 @@
   --accent-2: #16a34a;
   --accent-soft: rgba(22, 163, 74, 0.16);
   --bg-pattern:
-    radial-gradient(circle at 18% 16%, rgba(74, 222, 128, 0.15), transparent 22%),
-    repeating-linear-gradient(135deg, rgba(34, 197, 94, 0.055) 0, rgba(34, 197, 94, 0.055) 2px, transparent 2px, transparent 16px);
-  --bg-pattern-size: auto, 170px 170px;
+    radial-gradient(circle at 18% 16%, rgba(74, 222, 128, 0.15), transparent 20%),
+    linear-gradient(120deg, rgba(255,255,255,0.18), transparent 38%),
+    repeating-linear-gradient(0deg, rgba(34, 197, 94, 0.05) 0, rgba(34, 197, 94, 0.05) 2px, transparent 2px, transparent 18px);
+  --bg-pattern-size: auto, 100% 100%, 170px 170px;
   --bg-pattern-opacity: 0.44;
   --button-border: #15803d;
   --button-bg: #15803d;
@@ -247,8 +251,9 @@
   --accent-soft: rgba(217, 119, 6, 0.18);
   --bg-pattern:
     radial-gradient(circle at 18% 18%, rgba(251, 191, 36, 0.16), transparent 22%),
-    repeating-linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0, rgba(245, 158, 11, 0.06) 2px, transparent 2px, transparent 16px);
-  --bg-pattern-size: auto, 168px 168px;
+    radial-gradient(circle at 78% 22%, rgba(245, 158, 11, 0.11), transparent 16%),
+    repeating-linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0, rgba(245, 158, 11, 0.05) 2px, transparent 2px, transparent 18px);
+  --bg-pattern-size: auto, auto, 168px 168px;
   --bg-pattern-opacity: 0.46;
   --button-border: #b45309;
   --button-bg: #b45309;
@@ -268,8 +273,9 @@
   --accent-soft: rgba(234, 88, 12, 0.18);
   --bg-pattern:
     radial-gradient(circle at 18% 18%, rgba(251, 146, 60, 0.16), transparent 22%),
-    repeating-linear-gradient(135deg, rgba(249, 115, 22, 0.055) 0, rgba(249, 115, 22, 0.055) 2px, transparent 2px, transparent 16px);
-  --bg-pattern-size: auto, 168px 168px;
+    linear-gradient(135deg, rgba(255,255,255,0.18), transparent 42%),
+    repeating-linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0, rgba(249, 115, 22, 0.05) 2px, transparent 2px, transparent 18px);
+  --bg-pattern-size: auto, 100% 100%, 168px 168px;
   --bg-pattern-opacity: 0.45;
   --button-border: #c2410c;
   --button-bg: #c2410c;
@@ -289,8 +295,9 @@
   --accent-soft: rgba(168, 85, 247, 0.18);
   --bg-pattern:
     radial-gradient(circle at 18% 18%, rgba(192, 132, 252, 0.16), transparent 22%),
-    repeating-linear-gradient(135deg, rgba(168, 85, 247, 0.055) 0, rgba(168, 85, 247, 0.055) 2px, transparent 2px, transparent 16px);
-  --bg-pattern-size: auto, 168px 168px;
+    radial-gradient(circle at 84% 16%, rgba(236, 72, 153, 0.12), transparent 15%),
+    repeating-linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0, rgba(168, 85, 247, 0.05) 2px, transparent 2px, transparent 18px);
+  --bg-pattern-size: auto, auto, 168px 168px;
   --bg-pattern-opacity: 0.46;
   --button-border: #7c3aed;
   --button-bg: #7c3aed;
@@ -310,8 +317,9 @@
   --accent-soft: rgba(220, 38, 38, 0.16);
   --bg-pattern:
     radial-gradient(circle at 18% 18%, rgba(248, 113, 113, 0.15), transparent 22%),
-    repeating-linear-gradient(135deg, rgba(239, 68, 68, 0.055) 0, rgba(239, 68, 68, 0.055) 2px, transparent 2px, transparent 16px);
-  --bg-pattern-size: auto, 168px 168px;
+    linear-gradient(90deg, rgba(255,255,255,0.16), transparent 36%),
+    repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.05) 0, rgba(239, 68, 68, 0.05) 2px, transparent 2px, transparent 18px);
+  --bg-pattern-size: auto, 100% 100%, 168px 168px;
   --bg-pattern-opacity: 0.46;
   --button-border: #b91c1c;
   --button-bg: #b91c1c;
@@ -762,6 +770,24 @@ p {
   box-shadow: var(--button-secondary-shadow);
 }
 
+.btn::before,
+.icon-btn::before,
+.settings-close-btn::before,
+#installBtn::before {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
 .icon-btn:hover {
   border-color: color-mix(in srgb, var(--accent) 54%, var(--button-secondary-border));
   background: var(--button-secondary-bg-hover);
@@ -839,8 +865,12 @@ p {
 }
 
 .more-toggle-icon {
-  font-size: 1.2rem;
-  line-height: 1;
+  display: none;
+}
+
+.more-toggle-btn::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='5' r='2' fill='black'/%3E%3Ccircle cx='12' cy='12' r='2' fill='black'/%3E%3Ccircle cx='12' cy='19' r='2' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='5' r='2' fill='black'/%3E%3Ccircle cx='12' cy='12' r='2' fill='black'/%3E%3Ccircle cx='12' cy='19' r='2' fill='black'/%3E%3C/svg%3E");
 }
 
 .more-toggle-btn.active {
@@ -1237,6 +1267,10 @@ button,
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
+.btn::before {
+  opacity: 0.96;
+}
+
 button:hover,
 .btn:hover {
   background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg-hover) 90%, white 10%), color-mix(in srgb, var(--accent-2) 88%, var(--button-bg-hover) 12%));
@@ -1275,7 +1309,8 @@ button:disabled,
 }
 
 #installBtn::before {
-  content: "\2193 ";
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 3v10.2l3.4-3.4 1.4 1.4L12 18 7.2 11.2l1.4-1.4 3.4 3.4V3h2Zm-7 15h14v2H5v-2Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 3v10.2l3.4-3.4 1.4 1.4L12 18 7.2 11.2l1.4-1.4 3.4 3.4V3h2Zm-7 15h14v2H5v-2Z'/%3E%3C/svg%3E");
 }
 
 #installBtn.show {
@@ -1302,7 +1337,7 @@ button:disabled,
 .search-shell {
   position: relative;
   z-index: 8;
-  width: min(100%, 620px);
+  width: 100%;
   margin-top: 0.7rem;
 }
 
@@ -1329,6 +1364,10 @@ button:disabled,
   box-shadow: var(--button-shadow);
   flex: 0 0 auto;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+#searchBtn::before {
+  content: none;
 }
 
 .header-intro .search-row {
@@ -1601,9 +1640,12 @@ button:disabled,
   border: 1px solid var(--button-secondary-border);
   background: var(--button-secondary-bg);
   color: var(--text);
-  font-size: 1.24rem;
-  line-height: 1;
   box-shadow: var(--button-secondary-shadow);
+}
+
+.settings-close-btn::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z'/%3E%3C/svg%3E");
 }
 
 body.platform-android .favorites-panel {
@@ -1840,9 +1882,7 @@ body.dashboard-open {
 }
 
 .dashboard-close-btn {
-  min-width: 0;
-  width: auto;
-  padding-inline: 0.95rem;
+  padding: 0;
 }
 
 .dashboard-loading-state {
@@ -2128,6 +2168,10 @@ body.platform-android-tv .dashboard-setup-card .pdf-modal-actions {
 body.platform-android-tv .dashboard-panel-header {
   align-items: center;
   margin-bottom: 0;
+}
+
+body.platform-android-tv #dashboardCloseBtn {
+  display: none !important;
 }
 
 body.platform-android-tv .dashboard-panel-header h2 {
@@ -3372,6 +3416,27 @@ body.offline-active {
   font-weight: 700;
   letter-spacing: 0.01em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+#dashboardEditBtn::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M3 17.3V21h3.7L18 9.7l-3.7-3.7L3 17.3Zm17.7-10.2a1 1 0 0 0 0-1.4l-2.4-2.4a1 1 0 0 0-1.4 0l-1.9 1.9 3.7 3.7 2-1.8Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M3 17.3V21h3.7L18 9.7l-3.7-3.7L3 17.3Zm17.7-10.2a1 1 0 0 0 0-1.4l-2.4-2.4a1 1 0 0 0-1.4 0l-1.9 1.9 3.7 3.7 2-1.8Z'/%3E%3C/svg%3E");
+}
+
+#dashboardToggleBtn::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 5h16v4H4V5Zm0 5h10v4H4v-4Zm0 5h16v4H4v-4Zm12-5h4v4h-4v-4Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 5h16v4H4V5Zm0 5h10v4H4v-4Zm0 5h16v4H4v-4Zm12-5h4v4h-4v-4Z'/%3E%3C/svg%3E");
+}
+
+#halteSearchToggleBtn::before,
+#haltecodeSearchBtn::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Zm5.7 10.3 3.8 3.8-1.4 1.4-3.8-3.8 1.4-1.4Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Zm5.7 10.3 3.8 3.8-1.4 1.4-3.8-3.8 1.4-1.4Z'/%3E%3C/svg%3E");
+}
+
+#settingsInfoBtn::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm0 4.2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm-1.1 4.1v1.8h.9v3.7h2.2v-5.5h-3.1Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm0 4.2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm-1.1 4.1v1.8h.9v3.7h2.2v-5.5h-3.1Z'/%3E%3C/svg%3E");
 }
 
 .destination-text {
