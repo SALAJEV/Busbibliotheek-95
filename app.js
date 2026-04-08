@@ -353,6 +353,8 @@ const INACTIVITY_CHECK_MS = 15000;
 let lastUserInteractionAt = Date.now();
 let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
+let routeNavigationLocked = false;
+let injectedInitialHomeHistoryState = false;
 const APP_VERSION = "2026.04.07-18";
 const dataLoadTimestamps = {
   realtime: 0
@@ -442,6 +444,107 @@ function closeOverlayModal(modalEl, options = {}) {
   syncOverlayModalBodyState();
   if (typeof onAfterClose === "function") onAfterClose();
 }
+
+function isDashboardPanelOpen() {
+  return !!dashboardPanelEl && !dashboardPanelEl.hidden;
+}
+
+function closeTransientOverlays() {
+  setFavoritesPanel(false);
+  hideDashboardSetupModal();
+  hidePdfModal();
+  hideCompareModal();
+  hideInfoModal();
+  hideWeatherModal();
+  hideReviewModal();
+  hideTermsModal();
+  hideFunnyModal();
+  hideHalteSearchModal();
+}
+
+function getRouteStateFromLocation() {
+  const params = new URLSearchParams(window.location.search);
+  const bus = normalize(params.get("bus") || "");
+  const compare = normalize(params.get("compare") || "");
+  const view = params.get("view") === "stalk" ? "stalk" : (bus ? "vehicle" : "home");
+  return {
+    view,
+    bus,
+    compare: bus ? compare : ""
+  };
+}
+
+function getCurrentRouteState() {
+  return {
+    view: isDashboardPanelOpen() ? "stalk" : (currentVehicleId ? "vehicle" : "home"),
+    bus: currentVehicleId || "",
+    compare: currentVehicleId ? (compareVehicleId || "") : ""
+  };
+}
+
+function buildUrlForRouteState(routeState = {}) {
+  const normalizedState = {
+    view: routeState.view === "stalk" ? "stalk" : routeState.bus ? "vehicle" : "home",
+    bus: normalize(routeState.bus || ""),
+    compare: normalize(routeState.compare || "")
+  };
+  const url = new URL(window.location.href);
+
+  if (normalizedState.bus) url.searchParams.set("bus", normalizedState.bus);
+  else url.searchParams.delete("bus");
+
+  if (normalizedState.bus && normalizedState.compare) url.searchParams.set("compare", normalizedState.compare);
+  else url.searchParams.delete("compare");
+
+  if (normalizedState.view === "stalk") url.searchParams.set("view", "stalk");
+  else url.searchParams.delete("view");
+
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function routeStatesEqual(a, b) {
+  return (
+    (a?.view || "home") === (b?.view || "home") &&
+    normalize(a?.bus || "") === normalize(b?.bus || "") &&
+    normalize(a?.compare || "") === normalize(b?.compare || "")
+  );
+}
+
+function updateUrlState(mode = "replace") {
+  if (routeNavigationLocked) return;
+  const currentState = getCurrentRouteState();
+  const locationState = getRouteStateFromLocation();
+  const nextUrl = buildUrlForRouteState(currentState);
+  const historyState = {
+    bbRoute: true,
+    view: currentState.view,
+    bus: currentState.bus,
+    compare: currentState.compare
+  };
+  const shouldPush = mode === "push" && !routeStatesEqual(currentState, locationState);
+  window.history[shouldPush ? "pushState" : "replaceState"](historyState, "", nextUrl);
+}
+
+function initializeRouteHistory() {
+  if (injectedInitialHomeHistoryState) return;
+  injectedInitialHomeHistoryState = true;
+  const routeState = getRouteStateFromLocation();
+  if (routeState.view === "home") {
+    updateUrlState("replace");
+    return;
+  }
+
+  const currentUrl = buildUrlForRouteState(routeState);
+  const homeState = { bbRoute: true, view: "home", bus: "", compare: "" };
+  window.history.replaceState(homeState, "", buildUrlForRouteState(homeState));
+  window.history.pushState({
+    bbRoute: true,
+    view: routeState.view,
+    bus: routeState.bus,
+    compare: routeState.compare
+  }, "", currentUrl);
+}
+
 let dashboardSetupValidation = [];
 let dashboardSetupDraftValues = [];
 let dashboardSetupDraftResolvedIds = [];
@@ -477,7 +580,7 @@ const delayLexicon = translationsConfig.delayLexicon || {};
 
 const DEFAULT_LANG = "nl";
 const FALLBACK_LANG = "en";
-const ALLOWED_COLOR_THEMES = ["classic", "yellow", "green", "blue", "orange", "red", "purple"];
+const ALLOWED_COLOR_THEMES = ["classic", "blue", "green", "yellow", "orange", "red", "purple"];
 const ALLOWED_UPDATE_INTERVALS = [10000, 15000, 30000];
 const REQUEST_TIMEOUT_MS = 12000;
 const PDF_EXPORT_THEMES = {
@@ -489,13 +592,13 @@ const PDF_EXPORT_THEMES = {
     accentSoft: "#e5e7eb",
     cardLine: "#e5e7eb"
   },
-  geel: {
-    pageBg: "#fff8db",
-    badgeBg: "linear-gradient(135deg, #fde68a, #fef3c7)",
-    badgeFg: "#92400e",
-    accent: "#f4d67a",
-    accentSoft: "#f3e2a5",
-    cardLine: "#f8edbf"
+  blauw: {
+    pageBg: "#eff6ff",
+    badgeBg: "linear-gradient(135deg, #93c5fd, #dbeafe)",
+    badgeFg: "#1d4ed8",
+    accent: "#93c5fd",
+    accentSoft: "#bfdbfe",
+    cardLine: "#dbeafe"
   },
   groen: {
     pageBg: "#eefbf2",
@@ -505,13 +608,13 @@ const PDF_EXPORT_THEMES = {
     accentSoft: "#bbf7d0",
     cardLine: "#d9fbe4"
   },
-  blauw: {
-    pageBg: "#eff6ff",
-    badgeBg: "linear-gradient(135deg, #93c5fd, #dbeafe)",
-    badgeFg: "#1d4ed8",
-    accent: "#93c5fd",
-    accentSoft: "#bfdbfe",
-    cardLine: "#dbeafe"
+  geel: {
+    pageBg: "#fff8db",
+    badgeBg: "linear-gradient(135deg, #fde68a, #fef3c7)",
+    badgeFg: "#92400e",
+    accent: "#f4d67a",
+    accentSoft: "#f3e2a5",
+    cardLine: "#f8edbf"
   },
   oranje: {
     pageBg: "#fff3e8",
@@ -844,18 +947,6 @@ function hideTermsModal() {
   closeOverlayModal(termsModalEl);
 }
 
-function updateUrlState() {
-  const url = new URL(window.location.href);
-  if (currentVehicleId) url.searchParams.set("bus", currentVehicleId);
-  else url.searchParams.delete("bus");
-
-  if (compareVehicleId) url.searchParams.set("compare", compareVehicleId);
-  else url.searchParams.delete("compare");
-
-  const nextUrl = `${url.pathname}${url.search}${url.hash}`;
-  window.history.replaceState({}, "", nextUrl);
-}
-
 function updateDocumentTitle(vehicleId = "") {
   const normalizedVehicleId = getVehicleDisplayId(vehicleId || currentVehicleId);
   document.title = normalizedVehicleId
@@ -1150,22 +1241,58 @@ function renderComparison() {
 async function applyDeepLinkIfNeeded() {
   if (deeplinkHandled) return;
   deeplinkHandled = true;
+  await applyRouteStateFromLocation();
+}
 
-  const params = new URLSearchParams(window.location.search);
-  const busParam = params.get("bus") || "";
-  const compareParam = params.get("compare") || "";
-  if (!busParam) return;
+async function applyRouteStateFromLocation() {
+  const routeState = getRouteStateFromLocation();
+  routeNavigationLocked = true;
+  closeTransientOverlays();
 
-  voertuigInput.value = busParam;
-  await zoekAlles();
-
-  if (compareParam) {
-    const resolvedCompare = resolveVehicleSearch(compareParam);
-    const compareId = resolvedCompare.vehicleId || normalize(compareParam);
-    if (compareId && compareId !== currentVehicleId && resolvedCompare.bus) {
-      compareVehicleId = compareId;
-      renderComparison();
+  try {
+    if (routeState.bus) {
+      const shouldLoadVehicle =
+        currentVehicleId !== routeState.bus ||
+        !resultsWrapEl.classList.contains("show");
+      if (shouldLoadVehicle) {
+        voertuigInput.value = routeState.bus;
+        setVehicleInputResolvedId(voertuigInput, routeState.bus);
+        await zoekAlles({
+          queryOverride: routeState.bus,
+          historyMode: "replace"
+        });
+      } else {
+        updateDocumentTitle(routeState.bus);
+      }
+    } else if (currentVehicleId || resultsWrapEl.classList.contains("show")) {
+      terug({ historyMode: "replace", scrollBehavior: "auto" });
+    } else {
+      compareVehicleId = "";
+      updateDocumentTitle("");
     }
+
+    if (routeState.bus) {
+      const resolvedCompare = routeState.compare ? resolveVehicleSearch(routeState.compare) : null;
+      compareVehicleId =
+        resolvedCompare?.bus &&
+        routeState.compare &&
+        routeState.compare !== routeState.bus
+          ? (resolvedCompare.vehicleId || routeState.compare)
+          : "";
+      renderComparison();
+    } else {
+      compareVehicleId = "";
+      clearComparison();
+    }
+
+    if (routeState.view === "stalk") {
+      await openDashboardPanel({ historyMode: "replace" });
+    } else {
+      closeDashboardPanel({ historyMode: "replace" });
+    }
+  } finally {
+    routeNavigationLocked = false;
+    updateUrlState("replace");
   }
 }
 
@@ -1377,7 +1504,8 @@ async function renderDashboardMap(snapshots) {
   }, 0);
 }
 
-function closeDashboardPanel() {
+function closeDashboardPanel(options = {}) {
+  const { historyMode = "replace" } = options;
   stopDashboardRefresh();
   if (!dashboardPanelEl) return;
   setDashboardLoading(false);
@@ -1385,6 +1513,7 @@ function closeDashboardPanel() {
   dashboardPanelEl.setAttribute("aria-hidden", "true");
   document.body.classList.remove("dashboard-open");
   void renderDashboardMap([]);
+  updateUrlState(historyMode);
 }
 
 function setDashboardLoading(active) {
@@ -1575,7 +1704,8 @@ async function refreshDashboardPanel(options = {}) {
   }
 }
 
-async function openDashboardPanel() {
+async function openDashboardPanel(options = {}) {
+  const { historyMode = "push" } = options;
   if (!isStalkModeAvailable()) return;
   if (!dashboardVehicleIds.length) {
     showDashboardSetupModal();
@@ -1593,6 +1723,7 @@ async function openDashboardPanel() {
   dashboardRefreshHandle = window.setInterval(() => {
     refreshDashboardPanel({ showLoading: false }).catch((error) => console.warn("Dashboard refresh mislukt", error));
   }, updateIntervalMs);
+  updateUrlState(historyMode);
 }
 
 
@@ -3384,6 +3515,7 @@ function initInactivityMonitor() {
 function initAppPreferences() {
   loadSettings();
   window.settings = settings;
+  initializeRouteHistory();
   syncPlatformBodyClasses();
   initAndroidViewportSupport();
   loadFavorites();
@@ -3419,19 +3551,22 @@ function initAppPreferences() {
 }
 
 searchBtn.addEventListener("click", zoekAlles);
-closeBtnEl?.addEventListener("click", terug);
+closeBtnEl?.addEventListener("click", () => {
+  if (getCurrentRouteState().view !== "home") {
+    window.history.back();
+    return;
+  }
+  terug({ historyMode: "replace" });
+});
 appTitleBtnEl?.addEventListener("click", () => {
-  setFavoritesPanel(false);
-  hideDashboardSetupModal();
-  closeDashboardPanel();
-  hidePdfModal();
-  hideCompareModal();
-  hideInfoModal();
-  hideWeatherModal();
-  hideReviewModal();
-  hideTermsModal();
-  hideFunnyModal();
-  window.location.reload();
+  const routeState = getCurrentRouteState();
+  closeTransientOverlays();
+  if (routeState.view === "home") {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  closeDashboardPanel({ historyMode: "replace" });
+  terug({ historyMode: "push" });
 });
 bindVehicleSuggestions(voertuigInput, () => {
   voertuigInput.blur();
@@ -3449,7 +3584,13 @@ dashboardToggleBtn?.addEventListener("click", () => {
   showDashboardSetupModal();
 });
 dashboardEditBtn?.addEventListener("click", showDashboardSetupModal);
-dashboardCloseBtn?.addEventListener("click", closeDashboardPanel);
+dashboardCloseBtn?.addEventListener("click", () => {
+  if (getCurrentRouteState().view === "stalk") {
+    window.history.back();
+    return;
+  }
+  closeDashboardPanel({ historyMode: "replace" });
+});
 voertuigInput.addEventListener("input", updateFavoriteButtonState);
 favoritesToggleBtn.addEventListener("click", (event) => {
   event.stopPropagation();
@@ -3772,6 +3913,9 @@ window.addEventListener("offline", () => {
   lastVerifiedInternetAt = Date.now();
   lastVerifiedInternetState = false;
   setOfflineOverlayVisible(true);
+});
+window.addEventListener("popstate", () => {
+  void applyRouteStateFromLocation();
 });
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
@@ -4641,10 +4785,14 @@ if (window.location.search.includes("bus=") || isAndroidTvPlatform) {
   scheduleNonCriticalTask(warmUpVehiclesAndDeepLinks, 1400);
 }
 
-async function zoekAlles() {
+async function zoekAlles(options = {}) {
+  const {
+    queryOverride = "",
+    historyMode = routeNavigationLocked ? "replace" : "push"
+  } = options;
   const searchToken = ++latestSearchToken;
   markUserInteraction();
-  const query = voertuigInput.value.trim();
+  const query = (queryOverride || voertuigInput.value || "").trim();
   if(!query) return;
   const hasInternet = await verifyInternetConnection();
   if (searchToken !== latestSearchToken) return;
@@ -4702,7 +4850,7 @@ async function zoekAlles() {
   resultsWrapEl.classList.add("show");
   resultsGridEl.classList.add("show");
   closeBtnEl.style.display = "inline-flex";
-  updateUrlState();
+  updateUrlState(historyMode);
   updateDocumentTitle(activeVehicleId);
 
   toonVasteData(activeVehicleId);
@@ -4743,7 +4891,11 @@ async function zoekAlles() {
   restartRealtimeRefresh();
 }
 
-function terug() {
+function terug(options = {}) {
+  const {
+    historyMode = routeNavigationLocked ? "replace" : "replace",
+    scrollBehavior = "smooth"
+  } = options;
   resultsGridEl.classList.remove("show");
   resultsWrapEl.classList.remove("show");
   closeBtnEl.style.display = "none";
@@ -4771,10 +4923,10 @@ function terug() {
   if(marker){ map.removeLayer(marker); marker=null; }
   clearComparison();
   updateFavoriteButtonState();
-  updateUrlState();
+  updateUrlState(historyMode);
   updateDocumentTitle("");
   hideSuggestionList(suggestieLijst);
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: scrollBehavior });
 }
 
 function findBusById(id) {
