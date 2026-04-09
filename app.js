@@ -410,7 +410,7 @@ let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
 let routeNavigationLocked = false;
 let injectedInitialHomeHistoryState = false;
-const APP_VERSION = "2026.04.09-3";
+const APP_VERSION = "2026.04.09-4";
 const dataLoadTimestamps = {
   realtime: 0
 };
@@ -2207,10 +2207,12 @@ function buildVehiclePhotoFolderPath(folderName, fileName) {
   return `media/bus/${folderName}/${fileName}`;
 }
 
-function getFallbackPhotoEntries(vehicleId) {
+function getFallbackPhotoEntries(vehicleId, suffixesOverride = null) {
   const aliases = getVehiclePhotoAliases(vehicleId);
   const extensions = ["jpeg", "jpg", "JPG", "png", "webp"];
-  const suffixes = ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)];
+  const suffixes = Array.isArray(suffixesOverride) && suffixesOverride.length
+    ? suffixesOverride
+    : ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)];
   const fallbackEntries = [];
   const seen = new Set();
   aliases.forEach((alias) => {
@@ -2234,6 +2236,35 @@ function getFallbackPhotoEntries(vehicleId) {
   return fallbackEntries;
 }
 
+async function enrichResolvedPhotoEntry(entry) {
+  const exifMetadata = await getPhotoExifMetadata(entry.src);
+  const hasExifGps =
+    Number.isFinite(exifMetadata?.latitude) &&
+    Number.isFinite(exifMetadata?.longitude);
+  const nextMetaFields = {
+    ...(entry.metaFields || {})
+  };
+  if (!cleanText(nextMetaFields.date) && cleanText(exifMetadata?.date)) {
+    nextMetaFields.date = exifMetadata.date;
+  }
+  if (hasExifGps) {
+    if (!cleanText(nextMetaFields.place)) {
+      nextMetaFields.place = formatPhotoGpsCoordinate(exifMetadata.latitude, exifMetadata.longitude);
+    }
+    if (!cleanText(nextMetaFields.placeLink)) {
+      nextMetaFields.placeLink = buildPhotoGpsMapLink(exifMetadata.latitude, exifMetadata.longitude);
+    }
+  }
+  entry.metaFields = nextMetaFields;
+  entry.meta = [
+    entry.metaFields.maker,
+    entry.metaFields.place,
+    entry.metaFields.date,
+    entry.metaFields.credit
+  ].filter((value) => cleanText(value)).join(" • ");
+  return entry;
+}
+
 function probePhotoEntry(entry) {
   return new Promise((resolve) => {
     const probe = new Image();
@@ -2251,39 +2282,30 @@ function buildVehiclePhotoRequestUrl(src) {
   return `${src}${separator}v=${encodeURIComponent(APP_VERSION)}`;
 }
 
+async function resolvePhotoEntriesFromCandidates(candidates) {
+  if (!Array.isArray(candidates) || !candidates.length) return [];
+  const probedEntries = await Promise.all(candidates.map((entry) => probePhotoEntry(entry)));
+  const matchedEntries = probedEntries.filter(Boolean);
+  if (!matchedEntries.length) return [];
+  const enrichedEntries = await Promise.all(matchedEntries.map((entry) => enrichResolvedPhotoEntry(entry)));
+  return enrichedEntries.filter(Boolean);
+}
+
 async function resolveVehiclePhotoEntries(vehicleId) {
-  const candidates = getFallbackPhotoEntries(vehicleId);
+  const suffixes = ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)];
   const resolvedEntries = [];
-  for (const entry of candidates) {
-    const resolved = await probePhotoEntry(entry);
-    if (!resolved) continue;
-    const exifMetadata = await getPhotoExifMetadata(resolved.src);
-    const hasExifGps =
-      Number.isFinite(exifMetadata?.latitude) &&
-      Number.isFinite(exifMetadata?.longitude);
-    const nextMetaFields = {
-      ...(resolved.metaFields || {})
-    };
-    if (!cleanText(nextMetaFields.date) && cleanText(exifMetadata?.date)) {
-      nextMetaFields.date = exifMetadata.date;
+  let foundAnyPhotos = false;
+
+  for (const suffix of suffixes) {
+    const nextEntries = await resolvePhotoEntriesFromCandidates(getFallbackPhotoEntries(vehicleId, [suffix]));
+    if (nextEntries.length) {
+      resolvedEntries.push(...nextEntries);
+      foundAnyPhotos = true;
+      continue;
     }
-    if (hasExifGps) {
-      if (!cleanText(nextMetaFields.place)) {
-        nextMetaFields.place = formatPhotoGpsCoordinate(exifMetadata.latitude, exifMetadata.longitude);
-      }
-      if (!cleanText(nextMetaFields.placeLink)) {
-        nextMetaFields.placeLink = buildPhotoGpsMapLink(exifMetadata.latitude, exifMetadata.longitude);
-      }
-    }
-    resolved.metaFields = nextMetaFields;
-    resolved.meta = [
-      resolved.metaFields.maker,
-      resolved.metaFields.place,
-      resolved.metaFields.date,
-      resolved.metaFields.credit
-    ].filter((value) => cleanText(value)).join(" • ");
-    resolvedEntries.push(resolved);
+    if (foundAnyPhotos) break;
   }
+
   return resolvedEntries;
 }
 

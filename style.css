@@ -4976,15 +4976,14 @@ footer h3 {
 ================================ */
 
 :root,
-:root[data-theme="dark"],
 :root[data-theme="light"],
-:root[data-color-theme="classic"],
-:root[data-color-theme="blue"],
-:root[data-color-theme="green"],
-:root[data-color-theme="yellow"],
-:root[data-color-theme="orange"],
-:root[data-color-theme="purple"],
-:root[data-color-theme="red"] {
+:root:not([data-theme="dark"])[data-color-theme="classic"],
+:root:not([data-theme="dark"])[data-color-theme="blue"],
+:root:not([data-theme="dark"])[data-color-theme="green"],
+:root:not([data-theme="dark"])[data-color-theme="yellow"],
+:root:not([data-theme="dark"])[data-color-theme="orange"],
+:root:not([data-theme="dark"])[data-color-theme="purple"],
+:root:not([data-theme="dark"])[data-color-theme="red"] {
   --bg: #f5f5f7;
   --bg-gradient-top: #fafafc;
   --bg-gradient-bottom: #eef1f5;
@@ -5038,45 +5037,92 @@ footer h3 {
   --button-secondary-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --bg-gradient-top: #161a22;
+  --bg-gradient-bottom: #0d1016;
+  --surface: #151922;
+  --surface-strong: #151922;
+  --surface-alt: #1a1f29;
+  --surface-elevated: #151922;
+  --panel-bg: #151922;
+  --panel-bg-alt: #151922;
+  --panel-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+  --stroke: #252c36;
+  --stroke-strong: #323b47;
+  --stroke-soft: #1d2430;
+  --text: #f3f4f6;
+  --muted: #9aa4b2;
+  --accent: #4ea1ff;
+  --accent-2: #4ea1ff;
+  --accent-soft: rgba(78, 161, 255, 0.14);
+  --overlay-bg: rgba(2, 6, 23, 0.56);
+  --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 18px 36px rgba(0, 0, 0, 0.24);
+  --shadow-strong: 0 22px 40px rgba(0, 0, 0, 0.32);
+  --button-border: #f3f4f6;
+  --button-bg: #f3f4f6;
+  --button-bg-hover: #ffffff;
+  --button-bg-active: #e5e7eb;
+  --button-text: #111827;
+  --button-secondary-border: #2a3340;
+  --button-secondary-bg: #1a202c;
+  --button-secondary-bg-hover: #202734;
+  --button-secondary-bg-active: #252d3b;
+  --button-secondary-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #f5f5f7;
-    --bg-gradient-top: #fafafc;
-    --bg-gradient-bottom: #eef1f5;
-    --surface: #ffffff;
-    --surface-strong: #ffffff;
-    --surface-alt: #f8f9fb;
-    --surface-elevated: #ffffff;
-    --panel-bg: #ffffff;
-    --panel-bg-alt: #ffffff;
-    --stroke: #e5e7eb;
-    --stroke-strong: #d9dee5;
-    --stroke-soft: #edf1f5;
-    --text: #111827;
-    --muted: #6b7280;
-    --accent: #0a84ff;
-    --accent-2: #0a84ff;
-    --accent-soft: rgba(10, 132, 255, 0.08);
-    --button-border: #111827;
-    --button-bg: #111827;
-    --button-bg-hover: #0b1220;
-    --button-bg-active: #030712;
-    --button-text: #ffffff;
-    --button-secondary-border: #e5e7eb;
-    --button-secondary-bg: #ffffff;
-    --button-secondary-bg-hover: #f7f8fa;
-    --button-secondary-bg-active: #f0f2f5;
+    --bg: #0f1115;
+    --bg-gradient-top: #161a22;
+    --bg-gradient-bottom: #0d1016;
+    --surface: #151922;
+    --surface-strong: #151922;
+    --surface-alt: #1a1f29;
+    --surface-elevated: #151922;
+    --panel-bg: #151922;
+    --panel-bg-alt: #151922;
+    --stroke: #252c36;
+    --stroke-strong: #323b47;
+    --stroke-soft: #1d2430;
+    --text: #f3f4f6;
+    --muted: #9aa4b2;
+    --accent: #4ea1ff;
+    --accent-2: #4ea1ff;
+    --accent-soft: rgba(78, 161, 255, 0.14);
+    --button-border: #f3f4f6;
+    --button-bg: #f3f4f6;
+    --button-bg-hover: #ffffff;
+    --button-bg-active: #e5e7eb;
+    --button-text: #111827;
+    --button-secondary-border: #2a3340;
+    --button-secondary-bg: #1a202c;
+    --button-secondary-bg-hover: #202734;
+    --button-secondary-bg-active: #252d3b;
   }
 }
 
-body,
-:root[data-theme="dark"] body,
-:root:not([data-theme="light"]) body {
+body {
   background:
     radial-gradient(circle at top center, rgba(255, 255, 255, 0.92), transparent 30%),
     linear-gradient(180deg, #fafafc 0%, #f5f5f7 52%, #eef1f5 100%) !important;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at top center, rgba(58, 74, 99, 0.18), transparent 30%),
+    linear-gradient(180deg, #161a22 0%, #10141b 52%, #0d1016 100%) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body {
+    background:
+      radial-gradient(circle at top center, rgba(58, 74, 99, 0.18), transparent 30%),
+      linear-gradient(180deg, #161a22 0%, #10141b 52%, #0d1016 100%) !important;
+  }
 }
 
 body::before,
@@ -5336,6 +5382,200 @@ footer {
   margin-top: auto;
   padding-top: 1.25rem;
   color: #7b8794;
+}
+
+.title-home-btn,
+.title-home-btn:hover,
+.title-home-btn:focus-visible {
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+
+.title-home-btn::before {
+  content: none !important;
+}
+
+.footer-link-btn,
+.footer-link-btn:hover,
+.footer-link-btn:focus-visible {
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--accent) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 0.18em !important;
+}
+
+:root[data-theme="dark"] .header-bar,
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .dashboard-panel,
+:root[data-theme="dark"] .menu-sheet,
+:root[data-theme="dark"] .stack-card,
+:root[data-theme="dark"] .favorites-panel,
+:root[data-theme="dark"] .pdf-modal-content,
+:root[data-theme="dark"] .compare-modal-content,
+:root[data-theme="dark"] .weather-modal-content,
+:root[data-theme="dark"] .halte-search-modal-content,
+:root[data-theme="dark"] .review-modal-content,
+:root[data-theme="dark"] .terms-modal-content,
+:root[data-theme="dark"] .funny-modal-content,
+:root[data-theme="dark"] .search-row,
+:root[data-theme="dark"] #suggestielijst,
+:root[data-theme="dark"] .inline-suggestion-list,
+:root[data-theme="dark"] .weather-card,
+:root[data-theme="dark"] .weather-card-link,
+:root[data-theme="dark"] .vehicle-photo-frame,
+:root[data-theme="dark"] .vehicle-photo-meta-card,
+:root[data-theme="dark"] .more-panel-section,
+:root[data-theme="dark"] .favorite-item,
+:root[data-theme="dark"] #map,
+:root[data-theme="dark"] #dashboardMap {
+  background: #151922 !important;
+  border-color: #252c36 !important;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24) !important;
+}
+
+:root[data-theme="dark"] .search-row input,
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  background: #0f141b !important;
+  border-color: #2a3340 !important;
+  color: #f3f4f6 !important;
+}
+
+:root[data-theme="dark"] button:not(.title-home-btn):not(.footer-link-btn),
+:root[data-theme="dark"] .btn,
+:root[data-theme="dark"] #searchBtn {
+  background: #f3f4f6 !important;
+  border-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+:root[data-theme="dark"] button:not(.title-home-btn):not(.footer-link-btn):hover,
+:root[data-theme="dark"] .btn:hover,
+:root[data-theme="dark"] #searchBtn:hover {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #111827 !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+}
+
+:root[data-theme="dark"] .icon-btn,
+:root[data-theme="dark"] .settings-close-btn,
+:root[data-theme="dark"] .close-btn,
+:root[data-theme="dark"] .chip,
+:root[data-theme="dark"] .more-secondary-btn {
+  background: #1a202c !important;
+  border-color: #2a3340 !important;
+  color: #f3f4f6 !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+:root[data-theme="dark"] #appSubtitle {
+  color: #c0c7d2;
+}
+
+:root[data-theme="dark"] .app-context-line,
+:root[data-theme="dark"] footer {
+  color: #9aa4b2;
+}
+
+:root[data-theme="dark"] .weather-icon,
+:root[data-theme="dark"] .vehicle-photo-meta-icon {
+  background: rgba(78, 161, 255, 0.12) !important;
+  color: #4ea1ff !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .header-bar,
+  :root:not([data-theme="light"]) .card,
+  :root:not([data-theme="light"]) .dashboard-panel,
+  :root:not([data-theme="light"]) .menu-sheet,
+  :root:not([data-theme="light"]) .stack-card,
+  :root:not([data-theme="light"]) .favorites-panel,
+  :root:not([data-theme="light"]) .pdf-modal-content,
+  :root:not([data-theme="light"]) .compare-modal-content,
+  :root:not([data-theme="light"]) .weather-modal-content,
+  :root:not([data-theme="light"]) .halte-search-modal-content,
+  :root:not([data-theme="light"]) .review-modal-content,
+  :root:not([data-theme="light"]) .terms-modal-content,
+  :root:not([data-theme="light"]) .funny-modal-content,
+  :root:not([data-theme="light"]) .search-row,
+  :root:not([data-theme="light"]) #suggestielijst,
+  :root:not([data-theme="light"]) .inline-suggestion-list,
+  :root:not([data-theme="light"]) .weather-card,
+  :root:not([data-theme="light"]) .weather-card-link,
+  :root:not([data-theme="light"]) .vehicle-photo-frame,
+  :root:not([data-theme="light"]) .vehicle-photo-meta-card,
+  :root:not([data-theme="light"]) .more-panel-section,
+  :root:not([data-theme="light"]) .favorite-item,
+  :root:not([data-theme="light"]) #map,
+  :root:not([data-theme="light"]) #dashboardMap {
+    background: #151922 !important;
+    border-color: #252c36 !important;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24) !important;
+  }
+
+  :root:not([data-theme="light"]) .search-row input,
+  :root:not([data-theme="light"]) input,
+  :root:not([data-theme="light"]) select,
+  :root:not([data-theme="light"]) textarea {
+    background: #0f141b !important;
+    border-color: #2a3340 !important;
+    color: #f3f4f6 !important;
+  }
+
+  :root:not([data-theme="light"]) button:not(.title-home-btn):not(.footer-link-btn),
+  :root:not([data-theme="light"]) .btn,
+  :root:not([data-theme="light"]) #searchBtn {
+    background: #f3f4f6 !important;
+    border-color: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+
+  :root:not([data-theme="light"]) button:not(.title-home-btn):not(.footer-link-btn):hover,
+  :root:not([data-theme="light"]) .btn:hover,
+  :root:not([data-theme="light"]) #searchBtn:hover {
+    background: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  :root:not([data-theme="light"]) .icon-btn,
+  :root:not([data-theme="light"]) .settings-close-btn,
+  :root:not([data-theme="light"]) .close-btn,
+  :root:not([data-theme="light"]) .chip,
+  :root:not([data-theme="light"]) .more-secondary-btn {
+    background: #1a202c !important;
+    border-color: #2a3340 !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  :root:not([data-theme="light"]) #appSubtitle {
+    color: #c0c7d2;
+  }
+
+  :root:not([data-theme="light"]) .app-context-line,
+  :root:not([data-theme="light"]) footer {
+    color: #9aa4b2;
+  }
+
+  :root:not([data-theme="light"]) .weather-icon,
+  :root:not([data-theme="light"]) .vehicle-photo-meta-icon {
+    background: rgba(78, 161, 255, 0.12) !important;
+    color: #4ea1ff !important;
+  }
 }
 
 @media (max-width: 980px) {
