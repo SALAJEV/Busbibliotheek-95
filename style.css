@@ -5333,8 +5333,8 @@ button:hover,
 }
 
 footer {
-  margin-top: 1.15rem;
-  padding-top: 0.18rem;
+  margin-top: auto;
+  padding-top: 1.25rem;
   color: #7b8794;
 }
 

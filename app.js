@@ -410,7 +410,7 @@ let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
 let routeNavigationLocked = false;
 let injectedInitialHomeHistoryState = false;
-const APP_VERSION = "2026.04.09-2";
+const APP_VERSION = "2026.04.09-3";
 const dataLoadTimestamps = {
   realtime: 0
 };
@@ -3740,12 +3740,18 @@ appTitleBtnEl?.addEventListener("click", () => {
   terug({ historyMode: "push" });
 });
 bindVehicleSuggestions(voertuigInput, () => {
-  voertuigInput.blur();
+  dismissPrimaryVehicleSearchInput({ closeKeyboard: true });
   zoekAlles();
 });
 voertuigInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
+    const hasActiveSuggestion =
+      !!suggestieLijst &&
+      !suggestieLijst.hidden &&
+      Number(suggestieLijst.dataset.activeIndex || -1) >= 0;
+    if (hasActiveSuggestion) return;
     event.preventDefault();
+    dismissPrimaryVehicleSearchInput({ closeKeyboard: true });
     zoekAlles();
   }
 });
@@ -4557,6 +4563,26 @@ function hideSuggestionList(listEl) {
     listEl.style.removeProperty("top");
     listEl.style.removeProperty("left");
     listEl.style.removeProperty("width");
+  }
+}
+
+function dismissPrimaryVehicleSearchInput(options = {}) {
+  const { closeKeyboard = false } = options;
+  activeVehicleSuggestionInput = null;
+  hideSuggestionList(suggestieLijst);
+  if (!voertuigInput || !closeKeyboard) return;
+
+  const shouldForceKeyboardDismiss = isTouchPlatform() || isAndroidPlatform;
+  if (shouldForceKeyboardDismiss && !voertuigInput.readOnly) {
+    voertuigInput.readOnly = true;
+    window.setTimeout(() => {
+      voertuigInput.readOnly = false;
+    }, 140);
+  }
+
+  voertuigInput.blur();
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
   }
 }
 
