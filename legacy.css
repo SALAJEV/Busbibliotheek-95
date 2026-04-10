@@ -22,6 +22,10 @@ html.legacy-browser .legacy-only {
   display: block;
 }
 
+html.legacy-android6 .legacy-btn-secondary {
+  display: none;
+}
+
 .legacy-experience {
   min-height: 100vh;
   padding: 24px 16px;

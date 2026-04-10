@@ -20,6 +20,10 @@
   (function () {
     var root = document.documentElement;
     root.className += (root.className ? " " : "") + "preload";
+    var userAgent = window.navigator.userAgent || "";
+    var androidMatch = userAgent.match(/Android\s+(\d+(?:\.\d+)?)/i);
+    var androidVersion = androidMatch ? Number(androidMatch[1]) : NaN;
+    var forceLegacyAndroid = /Android/i.test(userAgent) && Number.isFinite(androidVersion) && androidVersion <= 6;
     var supportsModernApp = false;
     try {
       supportsModernApp =
@@ -39,12 +43,23 @@
     } catch (error) {
       supportsModernApp = false;
     }
+    if (forceLegacyAndroid) supportsModernApp = false;
     root.className += (root.className ? " " : "") + (supportsModernApp ? "modern-browser" : "legacy-browser");
+    if (forceLegacyAndroid) root.className += " legacy-android6";
     window.__BB_SUPPORTS_MODERN_APP__ = supportsModernApp;
+    window.__BB_FORCE_LEGACY_ANDROID__ = forceLegacyAndroid;
   })();
 </script>
-<link rel="stylesheet" href="legacy.css?v=20260408-1">
-<link rel="stylesheet" href="style.css?v=20260409-4">
+<style>
+  .legacy-only { display: none; }
+  .app-shell { visibility: hidden; }
+  html.modern-browser:not(.preload) .app-shell { visibility: visible; }
+  html.legacy-browser .app-shell { display: none !important; }
+  html.legacy-browser .legacy-only { display: block !important; }
+  html.legacy-android6 .legacy-btn-secondary { display: none !important; }
+</style>
+<link rel="stylesheet" href="legacy.css?v=20260410-1">
+<link rel="stylesheet" href="style.css?v=20260410-3">
 <noscript>
   <style>
     .app-shell { visibility: visible !important; }
@@ -62,7 +77,7 @@
     <p>Voor realtime zoeken, kaart en dialoogvensters werkt Busbibliotheek het best in een recentere browser of in de Android-app.</p>
     <div class="legacy-actions">
       <a class="legacy-btn" href="./">Startpagina herladen</a>
-      <a class="legacy-btn legacy-btn-secondary" href="android/app/release/app-release.apk">Android-app downloaden</a>
+      <a id="legacyApkDownloadBtn" class="legacy-btn legacy-btn-secondary" href="android/app/release/app-release.apk">Android-app downloaden</a>
     </div>
   </div>
 </div>
@@ -485,13 +500,21 @@
 </div>
 
 <script>
+  if (window.__BB_FORCE_LEGACY_ANDROID__) {
+    var legacyApkDownloadBtn = document.getElementById("legacyApkDownloadBtn");
+    if (legacyApkDownloadBtn) {
+      legacyApkDownloadBtn.removeAttribute("href");
+      legacyApkDownloadBtn.hidden = true;
+      legacyApkDownloadBtn.setAttribute("aria-hidden", "true");
+    }
+  }
   if (window.__BB_SUPPORTS_MODERN_APP__) {
     document.documentElement.className = document.documentElement.className.replace(/\bpreload\b/g, "").trim();
     var translationsScript = document.createElement("script");
     translationsScript.src = "translations.js?v=20260218-1";
     translationsScript.onload = function () {
       var appScript = document.createElement("script");
-      appScript.src = "app.js?v=20260409-4";
+      appScript.src = "app.js?v=20260410-4";
       appScript.defer = true;
       document.body.appendChild(appScript);
     };

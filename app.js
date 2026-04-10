@@ -38,7 +38,11 @@ window.addEventListener('beforeinstallprompt', (e) => {
   syncInstallButtonVisibility();
 });
 installBtn.addEventListener('click', async () => {
-  if (isAndroid6OrNewer) {
+  if (isAndroid6OrLower) {
+    syncInstallButtonVisibility();
+    return;
+  }
+  if (isAndroidAbove6) {
     confirmAndStartDownload({
       downloadType: "apk",
       fileLabel: "Busbibliotheek.apk",
@@ -172,7 +176,7 @@ function syncInstallButtonVisibility() {
     !isStandaloneDisplayMode() &&
     !isAndroidWebView &&
     !isAndroidTvPlatform &&
-    (isAndroid6OrNewer || Boolean(deferredPrompt) || isIosInstallable());
+    (isAndroidAbove6 || Boolean(deferredPrompt) || isIosInstallable());
   installBtn.classList.toggle("show", shouldShow);
   installBtn.hidden = !shouldShow;
 }
@@ -399,6 +403,12 @@ let vehiclesSourceUpdatedAt = "";
 let vehiclePhotoLookupToken = 0;
 const photoCaptureDateCache = new Map();
 const photoExifMetadataCache = new Map();
+const photoReverseGeocodeCache = new Map();
+const PHOTO_REVERSE_GEOCODE_URL = "https://nominatim.openstreetmap.org/reverse";
+const PHOTO_REVERSE_GEOCODE_TIMEOUT_MS = 5000;
+const PHOTO_REVERSE_GEOCODE_MIN_INTERVAL_MS = 1100;
+let photoReverseGeocodeQueue = Promise.resolve();
+let photoReverseGeocodeLastRequestAt = 0;
 let vehiclePlateFieldKey = "";
 let oldVehicleNumbersFieldKey = "";
 let oldLicensePlatesFieldKey = "";
@@ -410,7 +420,7 @@ let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
 let routeNavigationLocked = false;
 let injectedInitialHomeHistoryState = false;
-const APP_VERSION = "2026.04.09-4";
+const APP_VERSION = "2026.04.10-4";
 const dataLoadTimestamps = {
   realtime: 0
 };
@@ -447,6 +457,285 @@ const KNOWN_PHOTOGRAPHER_FOLDERS = [
   "@spotter_ov",
   "Arno Janssens"
 ];
+// Generated from the current contents of media/bus on 2026-04-10.
+const PHOTO_LIBRARY_INDEX = {
+  "2015": [
+    "Robin Van de Ven/2015.jpeg",
+  ],
+  "2017": [
+    "Robin Van de Ven/2017.jpeg",
+  ],
+  "2032": [
+    "@delijn_spotter_mori/2032.jpeg",
+  ],
+  "2039": [
+    "@delijn_spotter_mori/2039.jpeg",
+  ],
+  "2085": [
+    "Robin Van de Ven/2085.jpeg",
+  ],
+  "2193": [
+    "Robin Van de Ven/2193.jpeg",
+  ],
+  "2228": [
+    "Robin Van de Ven/2228.jpeg",
+  ],
+  "2357": [
+    "Robin Van de Ven/2357.jpeg",
+  ],
+  "2362": [
+    "Robin Van de Ven/2362.jpeg",
+  ],
+  "2520": [
+    "Robin Van de Ven/2520.jpeg",
+  ],
+  "2591": [
+    "Robin Van de Ven/2591.jpeg",
+  ],
+  "2647": [
+    "@delijn_spotter_mori/2647.jpeg",
+  ],
+  "2889": [
+    "Busspotter 95/2889.jpeg",
+  ],
+  "2890": [
+    "Busspotter 95/2890.jpeg",
+  ],
+  "2894": [
+    "Busspotter 95/2894.jpeg",
+  ],
+  "2916": [
+    "@delijn_spotter_mori/2916.jpeg",
+  ],
+  "2917": [
+    "@delijn_spotter_mori/2917.jpeg",
+  ],
+  "2953": [
+    "Robin Van de Ven/2953.jpeg",
+  ],
+  "2956": [
+    "Robin Van de Ven/2956.jpeg",
+  ],
+  "2979": [
+    "Robin Van de Ven/2979.jpeg",
+  ],
+  "2982": [
+    "Robin Van de Ven/2982.jpeg",
+  ],
+  "3015": [
+    "Robin Van de Ven/3015.jpeg",
+  ],
+  "3025": [
+    "Robin Van de Ven/3025.jpeg",
+  ],
+  "3087": [
+    "@delijn_spotter_mori/3087.jpeg",
+  ],
+  "3091": [
+    "Robin Van de Ven/3091.jpeg",
+  ],
+  "3120": [
+    "Robin Van de Ven/3120.jpeg",
+  ],
+  "441315": [
+    "Robin Van de Ven/441315.jpeg",
+  ],
+  "4457": [
+    "Robin Van de Ven/4457.jpeg",
+  ],
+  "4534": [
+    "@delijn_spotter_mori/4534.jpeg",
+  ],
+  "4575": [
+    "Robin Van de Ven/4575.jpeg",
+  ],
+  "4588": [
+    "@delijn_spotter_mori/4588.jpeg",
+  ],
+  "4660": [
+    "Robin Van de Ven/4660.jpeg",
+  ],
+  "4686": [
+    "@delijn_spotter_mori/4686.jpeg",
+  ],
+  "4804": [
+    "@delijn_spotter_mori/4804.jpeg",
+  ],
+  "4864": [
+    "Robin Van de Ven/4864.jpeg",
+  ],
+  "4952": [
+    "Robin Van de Ven/4952.jpeg",
+  ],
+  "4977": [
+    "Robin Van de Ven/4977.jpeg",
+  ],
+  "5003": [
+    "Robin Van de Ven/5003.jpeg",
+  ],
+  "5020": [
+    "@delijn_spotter_mori/5020.jpeg",
+  ],
+  "502606": [
+    "Busspotter 95/502606.jpeg",
+  ],
+  "5089": [
+    "@delijn_spotter_mori/5089.jpeg",
+  ],
+  "5282": [
+    "@delijn_spotter_mori/5282.jpeg",
+  ],
+  "5299": [
+    "Robin Van de Ven/5299.jpeg",
+  ],
+  "5341": [
+    "@delijn_spotter_mori/5341.jpeg",
+  ],
+  "5343": [
+    "Robin Van de Ven/5343.jpeg",
+  ],
+  "5409": [
+    "Robin Van de Ven/5409.jpeg",
+  ],
+  "550529": [
+    "Busspotter 95/550529.jpeg",
+  ],
+  "5508": [
+    "Robin Van de Ven/5508.jpeg",
+  ],
+  "550820": [
+    "@dln.spotter/550820.jpeg",
+  ],
+  "550951": [
+    "Busspotter 95/550951.jpeg",
+  ],
+  "5544": [
+    "@delijn_spotter_mori/5544.jpeg",
+  ],
+  "5563": [
+    "@delijn_spotter_mori/5563.jpeg",
+  ],
+  "5577": [
+    "Robin Van de Ven/5577.jpeg",
+  ],
+  "5643": [
+    "Robin Van de Ven/5643.jpeg",
+  ],
+  "5738": [
+    "Robin Van de Ven/5738.jpeg",
+  ],
+  "5786": [
+    "@delijn_spotter_mori/5786.jpeg",
+  ],
+  "5882": [
+    "@delijn_spotter_mori/5882.jpeg",
+  ],
+  "5895": [
+    "@delijn_spotter_mori/5895.jpeg",
+  ],
+  "5906": [
+    "@delijn_spotter_mori/5906.jpeg",
+  ],
+  "618097": [
+    "@dln.spotter/618097.jpeg",
+  ],
+  "6211": [
+    "@delijn_spotter_mori/6211.jpeg",
+  ],
+  "643043": [
+    "@dln.spotter/643043.jpeg",
+  ],
+  "644081": [
+    "@dln.spotter/644081.jpeg",
+  ],
+  "646074": [
+    "Busspotter 95/646074.jpeg",
+  ],
+  "646075": [
+    "Robin Van de Ven/646075.jpeg",
+  ],
+  "646079": [
+    "@dln.spotter/646079 (1).jpeg",
+  ],
+  "646086": [
+    "@dln.spotter/646086.jpeg",
+  ],
+  "647017": [
+    "Robin Van de Ven/647017.jpeg",
+  ],
+  "649014": [
+    "Robin Van de Ven/649014.jpeg",
+  ],
+  "652034": [
+    "@dln.spotter/652034.jpeg",
+  ],
+  "656087": [
+    "Robin Van de Ven/656087.jpeg",
+  ],
+  "660044": [
+    "Robin Van de Ven/660044.jpeg",
+  ],
+  "660045": [
+    "Robin Van de Ven/660045.jpeg",
+  ],
+  "660046": [
+    "@dln.spotter/660046.jpeg",
+  ],
+  "669018": [
+    "Robin Van de Ven/669018.jpeg",
+  ],
+  "674113": [
+    "Robin Van de Ven/674113.jpeg",
+  ],
+  "678115": [
+    "Robin Van de Ven/678115.jpeg",
+  ],
+  "678130": [
+    "Robin Van de Ven/678130.jpeg",
+  ],
+  "678132": [
+    "Robin Van de Ven/678132.jpeg",
+  ],
+  "678163": [
+    "Robin Van de Ven/678163.jpeg",
+  ],
+  "689029": [
+    "Robin Van de Ven/689029.jpeg",
+  ],
+  "689040": [
+    "Busspotter 95/689040.jpeg",
+  ],
+  "689043": [
+    "Busspotter 95/689043.jpeg",
+  ],
+  "689047": [
+    "@dln.spotter/689047 (1).jpeg",
+  ],
+  "7133": [
+    "@delijn_spotter_mori/7133.jpeg",
+  ],
+  "7136": [
+    "@delijn_spotter_mori/7136.jpeg",
+  ],
+  "7158": [
+    "@delijn_spotter_mori/7158.jpeg",
+  ],
+  "7202": [
+    "@delijn_spotter_mori/7202.jpeg",
+  ],
+  "7212": [
+    "@delijn_spotter_mori/7212.jpeg",
+  ],
+  "7215": [
+    "@delijn_spotter_mori/7215.jpeg",
+  ],
+  "7237": [
+    "@delijn_spotter_mori/7237.jpeg",
+  ],
+  "7340": [
+    "@delijn_spotter_mori/7340.jpeg",
+  ],
+};
 
 function registerOverlayModal(modalEl) {
   if (!modalEl || overlayModalElements.includes(modalEl)) return;
@@ -631,7 +920,8 @@ const isAndroidWebView = isAndroidPlatform && /\bwv\b|Version\/[\d.]+/i.test(pla
 const isAndroidTvPlatform = isAndroidPlatform && /(TV|AFT|BRAVIA|GoogleTV|SmartTV|HbbTV)/i.test(platformUserAgent);
 const androidVersionMatch = platformUserAgent.match(/Android\s+(\d+(?:\.\d+)?)/i);
 const androidVersion = androidVersionMatch ? Number(androidVersionMatch[1]) : NaN;
-const isAndroid6OrNewer = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion >= 6;
+const isAndroid6OrLower = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion <= 6;
+const isAndroidAbove6 = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion > 6;
 let androidHostThemeMode = (document.documentElement.dataset.androidTheme || "").toLowerCase();
 const touchPointerMediaQuery = window.matchMedia ? window.matchMedia("(hover: none), (pointer: coarse)") : null;
 touchPointerMediaQuery?.addEventListener?.("change", syncPlatformBodyClasses);
@@ -1996,6 +2286,100 @@ function buildPhotoGpsMapLink(latitude, longitude) {
   return `https://www.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}`;
 }
 
+function waitMs(duration) {
+  return new Promise((resolve) => setTimeout(resolve, duration));
+}
+
+function buildPhotoReverseGeocodeCacheKey(latitude, longitude, language = settings.language) {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return "";
+  return `${latitude.toFixed(5)},${longitude.toFixed(5)}|${(language || DEFAULT_LANG).toLowerCase()}`;
+}
+
+function queuePhotoReverseGeocode(taskFactory) {
+  const task = photoReverseGeocodeQueue
+    .catch(() => null)
+    .then(async () => {
+      const elapsedMs = Date.now() - photoReverseGeocodeLastRequestAt;
+      if (photoReverseGeocodeLastRequestAt && elapsedMs < PHOTO_REVERSE_GEOCODE_MIN_INTERVAL_MS) {
+        await waitMs(PHOTO_REVERSE_GEOCODE_MIN_INTERVAL_MS - elapsedMs);
+      }
+      photoReverseGeocodeLastRequestAt = Date.now();
+      return taskFactory();
+    });
+
+  photoReverseGeocodeQueue = task.catch(() => null);
+  return task;
+}
+
+function formatPhotoReverseGeocodeLabel(address = {}, fallbackDisplayName = "") {
+  const streetName = pickFirstText(
+    address.road,
+    address.pedestrian,
+    address.footway,
+    address.path,
+    address.cycleway,
+    address.residential,
+    address.street,
+    address.square
+  );
+  const houseNumber = cleanText(address.house_number);
+  const streetLabel = [streetName, houseNumber].filter(Boolean).join(" ").trim();
+  const locality = pickFirstText(
+    address.city,
+    address.town,
+    address.village,
+    address.municipality,
+    address.suburb,
+    address.city_district,
+    address.hamlet,
+    address.county
+  );
+
+  if (streetLabel && locality) return `${streetLabel}, ${locality}`;
+  return streetLabel || locality || cleanText(fallbackDisplayName);
+}
+
+async function getPhotoReverseGeocode(latitude, longitude) {
+  const language = (settings.language || DEFAULT_LANG || "nl").toLowerCase();
+  const cacheKey = buildPhotoReverseGeocodeCacheKey(latitude, longitude, language);
+  const fallbackValue = {
+    label: "",
+    link: buildPhotoGpsMapLink(latitude, longitude)
+  };
+  if (!cacheKey) return fallbackValue;
+
+  const cached = photoReverseGeocodeCache.get(cacheKey);
+  if (cached && typeof cached === "object" && !(cached instanceof Promise)) return cached;
+  if (cached) return cached;
+
+  const pending = queuePhotoReverseGeocode(async () => {
+    try {
+      const requestUrl = new URL(PHOTO_REVERSE_GEOCODE_URL);
+      requestUrl.searchParams.set("format", "jsonv2");
+      requestUrl.searchParams.set("lat", latitude.toFixed(7));
+      requestUrl.searchParams.set("lon", longitude.toFixed(7));
+      requestUrl.searchParams.set("zoom", "18");
+      requestUrl.searchParams.set("addressdetails", "1");
+      requestUrl.searchParams.set("accept-language", language);
+
+      const response = await fetchWithTimeout(requestUrl.toString(), { cache: "force-cache" }, PHOTO_REVERSE_GEOCODE_TIMEOUT_MS);
+      const payload = await response.json();
+      const value = {
+        label: formatPhotoReverseGeocodeLabel(payload?.address || {}, payload?.display_name || ""),
+        link: buildPhotoGpsMapLink(latitude, longitude)
+      };
+      photoReverseGeocodeCache.set(cacheKey, value);
+      return value;
+    } catch (_) {
+      photoReverseGeocodeCache.set(cacheKey, fallbackValue);
+      return fallbackValue;
+    }
+  });
+
+  photoReverseGeocodeCache.set(cacheKey, pending);
+  return pending;
+}
+
 function buildInstagramProfileLink(handle) {
   const trimmedHandle = (handle || "").toString().trim();
   if (!trimmedHandle || !trimmedHandle.startsWith("@")) return "";
@@ -2203,8 +2587,48 @@ function getVehiclePhotoAliases(vehicleId) {
   return Array.from(aliases).filter(Boolean);
 }
 
+function buildAppAssetPath(relativePath) {
+  const normalizedPath = (relativePath || "").toString().replace(/^\/+/, "");
+  if (!normalizedPath) return "";
+  try {
+    return new URL(normalizedPath, window.location.href).pathname;
+  } catch (_) {
+    return normalizedPath;
+  }
+}
+
 function buildVehiclePhotoFolderPath(folderName, fileName) {
-  return `media/bus/${folderName}/${fileName}`;
+  const safeFolderName = encodeURIComponent((folderName || "").toString().trim());
+  const safeFileName = encodeURIComponent((fileName || "").toString().trim());
+  return buildAppAssetPath(`media/bus/${safeFolderName}/${safeFileName}`);
+}
+
+function getIndexedPhotoEntries(vehicleId) {
+  const aliases = getVehiclePhotoAliases(vehicleId);
+  const seen = new Set();
+  const indexedEntries = [];
+
+  aliases.forEach((alias) => {
+    if (!alias) return;
+    const indexedPaths = PHOTO_LIBRARY_INDEX[alias];
+    if (!Array.isArray(indexedPaths) || !indexedPaths.length) return;
+
+    indexedPaths.forEach((entryPath) => {
+      const normalizedEntryPath = (entryPath || "").toString().trim();
+      if (!normalizedEntryPath) return;
+      const slashIndex = normalizedEntryPath.indexOf("/");
+      if (slashIndex <= 0) return;
+      const folderName = normalizedEntryPath.slice(0, slashIndex);
+      const fileName = normalizedEntryPath.slice(slashIndex + 1);
+      if (!folderName || !fileName) return;
+      const src = buildVehiclePhotoFolderPath(folderName, fileName);
+      if (!src || seen.has(src)) return;
+      seen.add(src);
+      indexedEntries.push(buildVehiclePhotoEntry(src, folderName, indexedEntries.length));
+    });
+  });
+
+  return indexedEntries;
 }
 
 function getFallbackPhotoEntries(vehicleId, suffixesOverride = null) {
@@ -2226,7 +2650,7 @@ function getFallbackPhotoEntries(vehicleId, suffixesOverride = null) {
           seen.add(src);
           fallbackEntries.push(buildVehiclePhotoEntry(src, folderName, fallbackEntries.length));
         });
-        const legacySrc = `media/${fileName}`;
+        const legacySrc = buildAppAssetPath(`media/${encodeURIComponent(fileName)}`);
         if (seen.has(legacySrc)) return;
         seen.add(legacySrc);
         fallbackEntries.push(buildVehiclePhotoEntry(legacySrc, "", fallbackEntries.length));
@@ -2234,6 +2658,17 @@ function getFallbackPhotoEntries(vehicleId, suffixesOverride = null) {
     });
   });
   return fallbackEntries;
+}
+
+function syncVehiclePhotoEntryMeta(entry) {
+  if (!entry) return entry;
+  entry.meta = [
+    entry.metaFields?.maker,
+    entry.metaFields?.place,
+    entry.metaFields?.date,
+    entry.metaFields?.credit
+  ].filter((value) => cleanText(value)).join(" • ");
+  return entry;
 }
 
 async function enrichResolvedPhotoEntry(entry) {
@@ -2248,21 +2683,61 @@ async function enrichResolvedPhotoEntry(entry) {
     nextMetaFields.date = exifMetadata.date;
   }
   if (hasExifGps) {
+    entry.gpsCoordinates = {
+      latitude: exifMetadata.latitude,
+      longitude: exifMetadata.longitude
+    };
     if (!cleanText(nextMetaFields.place)) {
       nextMetaFields.place = formatPhotoGpsCoordinate(exifMetadata.latitude, exifMetadata.longitude);
+      entry.placeDerivedFromGps = true;
+    } else {
+      entry.placeDerivedFromGps = false;
     }
     if (!cleanText(nextMetaFields.placeLink)) {
       nextMetaFields.placeLink = buildPhotoGpsMapLink(exifMetadata.latitude, exifMetadata.longitude);
     }
+  } else {
+    entry.gpsCoordinates = null;
+    entry.placeDerivedFromGps = false;
   }
   entry.metaFields = nextMetaFields;
-  entry.meta = [
-    entry.metaFields.maker,
-    entry.metaFields.place,
-    entry.metaFields.date,
-    entry.metaFields.credit
-  ].filter((value) => cleanText(value)).join(" • ");
-  return entry;
+  return syncVehiclePhotoEntryMeta(entry);
+}
+
+async function hydrateVehiclePhotoEntryLocation(entry) {
+  const requestedLanguage = (settings.language || DEFAULT_LANG || "nl").toLowerCase();
+  if (
+    !entry?.gpsCoordinates ||
+    !entry.placeDerivedFromGps ||
+    (entry.locationResolved && entry.locationResolvedLanguage === requestedLanguage)
+  ) return entry;
+  if (entry.locationResolvePromise) return entry.locationResolvePromise;
+
+  const { latitude, longitude } = entry.gpsCoordinates;
+  entry.locationResolvePromise = getPhotoReverseGeocode(latitude, longitude)
+    .then((locationInfo) => {
+      entry.locationResolved = true;
+      entry.locationResolvedLanguage = requestedLanguage;
+      if (cleanText(locationInfo?.label)) {
+        entry.metaFields = {
+          ...(entry.metaFields || {}),
+          place: locationInfo.label,
+          placeLink: locationInfo.link || buildPhotoGpsMapLink(latitude, longitude)
+        };
+        syncVehiclePhotoEntryMeta(entry);
+      }
+      return entry;
+    })
+    .catch(() => {
+      entry.locationResolved = true;
+      entry.locationResolvedLanguage = requestedLanguage;
+      return entry;
+    })
+    .finally(() => {
+      entry.locationResolvePromise = null;
+    });
+
+  return entry.locationResolvePromise;
 }
 
 function probePhotoEntry(entry) {
@@ -2292,6 +2767,14 @@ async function resolvePhotoEntriesFromCandidates(candidates) {
 }
 
 async function resolveVehiclePhotoEntries(vehicleId) {
+  const indexedEntries = getIndexedPhotoEntries(vehicleId);
+  if (indexedEntries.length) {
+    const enrichedIndexedEntries = await Promise.all(
+      indexedEntries.map((entry) => enrichResolvedPhotoEntry(entry).catch(() => entry))
+    );
+    return enrichedIndexedEntries.filter(Boolean);
+  }
+
   const suffixes = ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)];
   const resolvedEntries = [];
   let foundAnyPhotos = false;
@@ -2373,6 +2856,22 @@ function updateVehiclePhotoNavigation() {
   }
 }
 
+function renderVehiclePhotoMeta(copy) {
+  if (!vehiclePhotoMetaEl) return;
+  const metaMarkup = buildVehiclePhotoMetaMarkup(copy);
+  vehiclePhotoMetaEl.innerHTML = metaMarkup;
+  vehiclePhotoMetaEl.hidden = !metaMarkup;
+  vehiclePhotoMetaEl.setAttribute("aria-hidden", String(!metaMarkup));
+}
+
+async function hydrateActiveVehiclePhotoLocation(entry, vehicleId, entryIndex) {
+  if (!entry) return;
+  await hydrateVehiclePhotoEntryLocation(entry);
+  if (currentPhotoVehicleId !== vehicleId) return;
+  if (currentVehiclePhotoEntries[entryIndex] !== entry) return;
+  renderVehiclePhotoMeta(buildVehiclePhotoCopy(entry, vehicleId));
+}
+
 function renderActiveVehiclePhoto() {
   if (!vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
   if (!currentPhotoVehicleId || !currentVehiclePhotoEntries.length) {
@@ -2394,13 +2893,9 @@ function renderActiveVehiclePhoto() {
   vehiclePhotoImgEl.alt = copy.alt;
   vehiclePhotoCaptionEl.textContent = copy.caption;
   vehiclePhotoCaptionEl.hidden = !copy.caption;
-  if (vehiclePhotoMetaEl) {
-    const metaMarkup = buildVehiclePhotoMetaMarkup(copy);
-    vehiclePhotoMetaEl.innerHTML = metaMarkup;
-    vehiclePhotoMetaEl.hidden = !metaMarkup;
-    vehiclePhotoMetaEl.setAttribute("aria-hidden", String(!metaMarkup));
-  }
+  renderVehiclePhotoMeta(copy);
   updateVehiclePhotoNavigation();
+  void hydrateActiveVehiclePhotoLocation(activeEntry, currentPhotoVehicleId, safeIndex);
 }
 
 function setPageLoading(active) {

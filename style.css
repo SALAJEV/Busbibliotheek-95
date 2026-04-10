@@ -4975,422 +4975,243 @@ footer h3 {
    REFINED UI
 ================================ */
 
-:root,
-:root[data-theme="light"],
-:root:not([data-theme="dark"])[data-color-theme="classic"],
-:root:not([data-theme="dark"])[data-color-theme="blue"],
-:root:not([data-theme="dark"])[data-color-theme="green"],
-:root:not([data-theme="dark"])[data-color-theme="yellow"],
-:root:not([data-theme="dark"])[data-color-theme="orange"],
-:root:not([data-theme="dark"])[data-color-theme="purple"],
-:root:not([data-theme="dark"])[data-color-theme="red"] {
-  --bg: #f5f5f7;
-  --bg-gradient-top: #fafafc;
-  --bg-gradient-bottom: #eef1f5;
-  --bg-glow-a: transparent;
-  --bg-glow-b: transparent;
-  --bg-glow-c: transparent;
-  --bg-noise-color: transparent;
-  --bg-noise-opacity: 0;
-  --bg-pattern: none;
-  --bg-pattern-size: auto;
-  --bg-pattern-opacity: 0;
-  --surface: #ffffff;
-  --surface-strong: #ffffff;
-  --surface-alt: #f8f9fb;
-  --surface-elevated: #ffffff;
-  --panel-bg: #ffffff;
-  --panel-bg-alt: #ffffff;
-  --panel-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
-  --stroke: #e5e7eb;
-  --stroke-strong: #d9dee5;
-  --stroke-soft: #edf1f5;
-  --text: #111827;
-  --muted: #6b7280;
-  --accent: #0a84ff;
-  --accent-2: #0a84ff;
-  --accent-soft: rgba(10, 132, 255, 0.08);
-  --overlay-bg: rgba(15, 23, 42, 0.34);
-  --overlay-blur: 0px;
-  --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.035);
-  --shadow-card: 0 10px 28px rgba(15, 23, 42, 0.04);
-  --shadow-strong: 0 18px 36px rgba(15, 23, 42, 0.08);
-  --radius-lg: 20px;
-  --radius-md: 16px;
+:root {
+  --blur: 0px;
+  --overlay-blur: 10px;
+  --radius-lg: 22px;
+  --radius-md: 18px;
   --radius-sm: 12px;
-  --panel-radius: 22px;
-  --panel-radius-sm: 16px;
-  --button-radius-theme: 14px;
-  --icon-radius-theme: 14px;
+  --panel-radius: 24px;
+  --panel-radius-sm: 18px;
+  --button-radius-theme: 15px;
+  --icon-radius-theme: 15px;
   --button-height: 42px;
-  --button-border: #111827;
-  --button-bg: #111827;
-  --button-bg-hover: #0b1220;
-  --button-bg-active: #030712;
-  --button-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
-  --button-shadow-hover: 0 8px 18px rgba(15, 23, 42, 0.14);
-  --button-text: #ffffff;
-  --button-secondary-border: #e5e7eb;
-  --button-secondary-bg: #ffffff;
-  --button-secondary-bg-hover: #f7f8fa;
-  --button-secondary-bg-active: #f0f2f5;
-  --button-secondary-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  --bg-pattern-position: 0 0;
+  --panel-bg:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 98%, white 2%), color-mix(in srgb, var(--surface) 95%, transparent));
+  --panel-bg-alt:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 99%, white 1%), color-mix(in srgb, var(--surface) 96%, transparent));
+  --panel-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 18px 42px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 24px 54px rgba(15, 23, 42, 0.12);
+  --button-shadow: 0 12px 24px color-mix(in srgb, var(--accent-soft) 64%, rgba(15, 23, 42, 0.08));
+  --button-shadow-hover: 0 18px 30px color-mix(in srgb, var(--accent-soft) 72%, rgba(15, 23, 42, 0.1));
 }
 
 :root[data-theme="dark"] {
-  --bg: #0f1115;
-  --bg-gradient-top: #161a22;
-  --bg-gradient-bottom: #0d1016;
-  --surface: #151922;
-  --surface-strong: #151922;
-  --surface-alt: #1a1f29;
-  --surface-elevated: #151922;
-  --panel-bg: #151922;
-  --panel-bg-alt: #151922;
-  --panel-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
-  --stroke: #252c36;
-  --stroke-strong: #323b47;
-  --stroke-soft: #1d2430;
-  --text: #f3f4f6;
-  --muted: #9aa4b2;
-  --accent: #4ea1ff;
-  --accent-2: #4ea1ff;
-  --accent-soft: rgba(78, 161, 255, 0.14);
-  --overlay-bg: rgba(2, 6, 23, 0.56);
-  --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 18px 36px rgba(0, 0, 0, 0.24);
-  --shadow-strong: 0 22px 40px rgba(0, 0, 0, 0.32);
-  --button-border: #f3f4f6;
-  --button-bg: #f3f4f6;
-  --button-bg-hover: #ffffff;
-  --button-bg-active: #e5e7eb;
-  --button-text: #111827;
-  --button-secondary-border: #2a3340;
-  --button-secondary-bg: #1a202c;
-  --button-secondary-bg-hover: #202734;
-  --button-secondary-bg-active: #252d3b;
-  --button-secondary-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  --panel-bg:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 97%, transparent), color-mix(in srgb, var(--surface) 93%, transparent));
+  --panel-bg-alt:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 97%, transparent), color-mix(in srgb, var(--surface) 94%, transparent));
+  --panel-shadow: 0 20px 46px rgba(2, 8, 23, 0.34);
+  --shadow-soft: 0 10px 28px rgba(2, 8, 23, 0.22);
+  --shadow-card: 0 20px 46px rgba(2, 8, 23, 0.34);
+  --shadow-strong: 0 28px 62px rgba(2, 8, 23, 0.44);
+  --button-shadow: 0 12px 26px rgba(2, 8, 23, 0.24);
+  --button-shadow-hover: 0 18px 34px rgba(2, 8, 23, 0.3);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1115;
-    --bg-gradient-top: #161a22;
-    --bg-gradient-bottom: #0d1016;
-    --surface: #151922;
-    --surface-strong: #151922;
-    --surface-alt: #1a1f29;
-    --surface-elevated: #151922;
-    --panel-bg: #151922;
-    --panel-bg-alt: #151922;
-    --stroke: #252c36;
-    --stroke-strong: #323b47;
-    --stroke-soft: #1d2430;
-    --text: #f3f4f6;
-    --muted: #9aa4b2;
-    --accent: #4ea1ff;
-    --accent-2: #4ea1ff;
-    --accent-soft: rgba(78, 161, 255, 0.14);
-    --button-border: #f3f4f6;
-    --button-bg: #f3f4f6;
-    --button-bg-hover: #ffffff;
-    --button-bg-active: #e5e7eb;
-    --button-text: #111827;
-    --button-secondary-border: #2a3340;
-    --button-secondary-bg: #1a202c;
-    --button-secondary-bg-hover: #202734;
-    --button-secondary-bg-active: #252d3b;
+    --panel-bg:
+      linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 97%, transparent), color-mix(in srgb, var(--surface) 93%, transparent));
+    --panel-bg-alt:
+      linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 97%, transparent), color-mix(in srgb, var(--surface) 94%, transparent));
+    --panel-shadow: 0 20px 46px rgba(2, 8, 23, 0.34);
+    --shadow-soft: 0 10px 28px rgba(2, 8, 23, 0.22);
+    --shadow-card: 0 20px 46px rgba(2, 8, 23, 0.34);
+    --shadow-strong: 0 28px 62px rgba(2, 8, 23, 0.44);
+    --button-shadow: 0 12px 26px rgba(2, 8, 23, 0.24);
+    --button-shadow-hover: 0 18px 34px rgba(2, 8, 23, 0.3);
+  }
+}
+
+:root[data-color-theme="classic"] {
+  --bg-pattern:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent) 9%, transparent) 0 2px, transparent 2px 18px);
+  --bg-pattern-size: 180px 180px;
+  --bg-pattern-opacity: 0.14;
+}
+
+:root[data-color-theme="blue"] {
+  --bg-pattern:
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 18%, transparent) 1.2px, transparent 1.3px),
+    radial-gradient(circle, color-mix(in srgb, var(--accent-2) 11%, transparent) 1px, transparent 1.1px);
+  --bg-pattern-size: 24px 24px, 24px 24px;
+  --bg-pattern-position: 0 0, 12px 12px;
+  --bg-pattern-opacity: 0.18;
+}
+
+:root[data-color-theme="green"] {
+  --bg-pattern:
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--accent) 10%, transparent) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent-2) 8%, transparent) 0 1px, transparent 1px 18px);
+  --bg-pattern-size: 18px 18px, 18px 18px;
+  --bg-pattern-opacity: 0.14;
+}
+
+:root[data-color-theme="yellow"] {
+  --bg-pattern:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, transparent) 0 9px, transparent 9px 28px),
+    repeating-linear-gradient(90deg, transparent 0 28px, color-mix(in srgb, var(--accent-2) 9%, transparent) 28px 32px, transparent 32px 56px);
+  --bg-pattern-size: 220px 16px, 220px 16px;
+  --bg-pattern-opacity: 0.15;
+}
+
+:root[data-color-theme="orange"] {
+  --bg-pattern:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, transparent) 0 2px, transparent 2px 16px),
+    repeating-linear-gradient(135deg, transparent 0 22px, color-mix(in srgb, var(--accent-2) 9%, transparent) 22px 24px, transparent 24px 46px);
+  --bg-pattern-size: 160px 160px, 200px 200px;
+  --bg-pattern-opacity: 0.15;
+}
+
+:root[data-color-theme="purple"] {
+  --bg-pattern:
+    linear-gradient(45deg, color-mix(in srgb, var(--accent) 10%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, var(--accent) 10%, transparent) 75%),
+    linear-gradient(45deg, color-mix(in srgb, var(--accent-2) 9%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, var(--accent-2) 9%, transparent) 75%);
+  --bg-pattern-size: 28px 28px, 28px 28px;
+  --bg-pattern-position: 0 0, 14px 14px;
+  --bg-pattern-opacity: 0.13;
+}
+
+:root[data-color-theme="red"] {
+  --bg-pattern:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent) 11%, transparent) 0 2px, transparent 2px 18px),
+    repeating-linear-gradient(90deg, transparent 0 34px, color-mix(in srgb, var(--accent-2) 8%, transparent) 34px 36px, transparent 36px 70px);
+  --bg-pattern-size: 180px 180px, 180px 180px;
+  --bg-pattern-opacity: 0.15;
+}
+
+:root[data-theme="dark"] {
+  --bg-pattern-opacity: 0.1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-pattern-opacity: 0.1;
   }
 }
 
 body {
   background:
-    radial-gradient(circle at top center, rgba(255, 255, 255, 0.92), transparent 30%),
-    linear-gradient(180deg, #fafafc 0%, #f5f5f7 52%, #eef1f5 100%) !important;
+    linear-gradient(180deg, var(--bg-gradient-top), var(--bg-gradient-bottom)) !important;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  isolation: isolate;
 }
 
-:root[data-theme="dark"] body {
-  background:
-    radial-gradient(circle at top center, rgba(58, 74, 99, 0.18), transparent 30%),
-    linear-gradient(180deg, #161a22 0%, #10141b 52%, #0d1016 100%) !important;
+body::before {
+  content: none !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) body {
-    background:
-      radial-gradient(circle at top center, rgba(58, 74, 99, 0.18), transparent 30%),
-      linear-gradient(180deg, #161a22 0%, #10141b 52%, #0d1016 100%) !important;
-  }
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bg-pattern) !important;
+  background-size: var(--bg-pattern-size) !important;
+  background-position: var(--bg-pattern-position, 0 0) !important;
+  opacity: var(--bg-pattern-opacity, 0.14) !important;
 }
 
-body::before,
-footer::before {
-  display: none !important;
+.legacy-experience,
+.app-shell {
+  position: relative;
+  z-index: 1;
+}
+
+body,
+p,
+label,
+input,
+select,
+textarea,
+button,
+.vehicle-photo-caption,
+.vehicle-photo-counter,
+.vehicle-photo-meta-value {
+  color: var(--text);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+th,
+.favorites-panel h3,
+.pdf-modal-header h3,
+.weather-modal-hero-copy strong {
+  color: var(--text) !important;
+}
+
+p,
+.footer-meta,
+.more-panel-subtitle,
+.pdf-modal-summary,
+.pdf-modal-note,
+.halte-module-help,
+.instagram-help-text,
+.settings-grid label,
+.weather-source,
+.weather-source-meta,
+.vehicle-photo-meta-label,
+.app-context-line,
+.dashboard-summary,
+.compare-card-summary,
+.vehicle-suggestion-secondary {
+  color: var(--muted) !important;
+}
+
+::placeholder {
+  color: color-mix(in srgb, var(--muted) 88%, transparent);
+  opacity: 1;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1180px;
   padding:
-    max(0.95rem, env(safe-area-inset-top))
-    clamp(0.8rem, 1.8vw, 1.3rem)
+    max(0.88rem, env(safe-area-inset-top))
+    clamp(0.78rem, 1.7vw, 1.2rem)
     max(1rem, env(safe-area-inset-bottom))
-    clamp(0.8rem, 1.8vw, 1.3rem);
-}
-
-.header-bar,
-.card,
-.dashboard-panel,
-.menu-sheet,
-.stack-card,
-.favorites-panel,
-.pdf-modal-content,
-.compare-modal-content,
-.weather-modal-content,
-.halte-search-modal-content,
-.review-modal-content,
-.terms-modal-content,
-.funny-modal-content,
-.search-row,
-#suggestielijst,
-.inline-suggestion-list,
-.weather-card,
-.weather-card-link,
-.vehicle-photo-frame,
-.vehicle-photo-meta-card,
-.more-panel-section,
-.favorite-item,
-#map,
-#dashboardMap {
-  background: #ffffff !important;
-  background-image: none !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+    clamp(0.78rem, 1.7vw, 1.2rem);
 }
 
 .header-bar {
   gap: 1rem 1.15rem;
   margin-bottom: 1.1rem;
-  padding: 1.1rem 1.2rem;
+  padding: 1.04rem 1.18rem 1.12rem;
   border-radius: 24px;
-  position: sticky;
-  top: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 11%, var(--stroke-strong)) !important;
+  background: var(--panel-bg) !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation: uiSoftDown 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .header-intro {
-  gap: 0.28rem;
-}
-
-.title-home-btn {
-  transition: opacity 0.16s ease;
-}
-
-.title-home-btn:hover {
-  opacity: 0.88;
-}
-
-h1 {
-  font-size: clamp(1.9rem, 2.35vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-}
-
-#appSubtitle {
-  margin-top: 0.08rem;
-  max-width: 58ch;
-  color: #5f6b7a;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.app-context-line {
-  margin-top: 0;
-  color: #7b8794;
-  font-size: 0.84rem;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.search-shell {
-  margin-top: 0.88rem;
-}
-
-.search-row {
-  min-height: 56px;
-  gap: 0.52rem;
-  padding: 0.36rem;
-  border-radius: 18px;
-}
-
-.search-row input,
-input,
-select,
-textarea {
-  background: #ffffff !important;
-  border-color: #e5e7eb !important;
-  box-shadow: none !important;
-}
-
-.search-row input {
-  padding-inline: 0.95rem 0.82rem;
-  font-size: 1rem;
-}
-
-button,
-.btn,
-#searchBtn,
-.icon-btn,
-.more-secondary-btn,
-.footer-link-btn {
-  letter-spacing: 0 !important;
-  font-size: 0.92rem !important;
-  font-weight: 700 !important;
-}
-
-button,
-.btn,
-#searchBtn {
-  min-height: 42px;
-  padding: 0.52rem 0.96rem;
-  background: #111827 !important;
-  background-image: none !important;
-  border: 1px solid #111827 !important;
-  color: #ffffff !important;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12) !important;
-}
-
-button:hover,
-.btn:hover,
-#searchBtn:hover {
-  background: #0b1220 !important;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14) !important;
-  transform: none !important;
-}
-
-.icon-btn,
-.settings-close-btn,
-.close-btn,
-.chip,
-.more-secondary-btn,
-.footer-link-btn {
-  background: #ffffff !important;
-  color: #111827 !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
-}
-
-.icon-btn:hover,
-.settings-close-btn:hover,
-.close-btn:hover,
-.chip:hover,
-.more-secondary-btn:hover,
-.footer-link-btn:hover,
-.card:hover {
-  background-image: none !important;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06) !important;
-  transform: none !important;
-}
-
-.icon-btn,
-.settings-close-btn,
-.close-btn {
-  min-width: 42px;
-  height: 42px;
-  border-radius: 14px !important;
-}
-
-.close-btn {
-  padding-inline: 0.82rem 0.92rem;
-}
-
-.grid {
-  gap: 1.05rem;
-}
-
-.results-toolbar {
-  margin-bottom: 0.62rem;
-}
-
-.card {
-  min-height: 0;
-  gap: 0.72rem;
-  padding: 1.02rem 1.04rem 1.08rem;
-  border-radius: 24px;
-}
-
-.card h2 {
-  margin-bottom: 0.12rem;
-  font-size: 1.01rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-}
-
-.menu-sheet,
-.dashboard-panel,
-.pdf-modal-content,
-.compare-modal-content,
-.weather-modal-content,
-.halte-search-modal-content,
-.review-modal-content,
-.terms-modal-content,
-.funny-modal-content {
-  border-radius: 24px !important;
-}
-
-.menu-sheet {
-  width: min(420px, calc(100vw - 1.4rem));
-  padding: 0.96rem;
-}
-
-.more-panel-header,
-.dashboard-panel-header {
-  align-items: center;
-  padding-bottom: 0.72rem;
-}
-
-.more-panel-section {
-  padding: 0.78rem;
-  border-radius: 18px;
-}
-
-.favorite-item {
-  min-height: 48px;
-  padding: 0.5rem 0.5rem 0.5rem 0.78rem;
-  border-radius: 16px;
-}
-
-.weather-card,
-.weather-card-link,
-.vehicle-photo-frame,
-.vehicle-photo-meta-card,
-#map,
-#dashboardMap {
-  border-radius: 18px !important;
-}
-
-.weather-icon,
-.vehicle-photo-meta-icon {
-  background: rgba(10, 132, 255, 0.08) !important;
-  color: #0a84ff !important;
-}
-
-footer {
-  margin-top: auto;
-  padding-top: 1.25rem;
-  color: #7b8794;
+  gap: 0.3rem;
 }
 
 .title-home-btn,
 .title-home-btn:hover,
+.title-home-btn:active,
 .title-home-btn:focus-visible {
-  padding: 0 !important;
-  min-height: 0 !important;
-  height: auto !important;
-  border: 0 !important;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  border: 0;
   background: transparent !important;
   box-shadow: none !important;
   color: inherit !important;
@@ -5400,181 +5221,398 @@ footer {
   content: none !important;
 }
 
-.footer-link-btn,
-.footer-link-btn:hover,
-.footer-link-btn:focus-visible {
-  padding: 0 !important;
-  min-height: 0 !important;
-  height: auto !important;
+h1 {
+  font-size: clamp(1.95rem, 2.4vw, 2.55rem);
+  font-weight: 700;
+  letter-spacing: -0.038em;
+}
+
+#appSubtitle {
+  margin-top: 0.06rem;
+  max-width: 58ch;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted) 12%) !important;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.app-context-line {
+  margin-top: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.search-shell {
+  margin-top: 0.92rem;
+}
+
+.search-row {
+  min-height: 56px;
+  gap: 0.52rem;
+  padding: 0.34rem;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke-strong)) !important;
+  background: color-mix(in srgb, var(--surface-strong) 96%, transparent) !important;
+  box-shadow: var(--shadow-soft) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.search-row input {
+  margin-bottom: 0;
+  padding-inline: 0.95rem 0.82rem;
+  border-radius: 16px;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+  font-size: 1rem;
+}
+
+input,
+select,
+textarea {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke-strong)) !important;
+  background: color-mix(in srgb, var(--surface-strong) 97%, transparent) !important;
+  color: var(--text) !important;
+  box-shadow: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--stroke-strong)) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-soft) 60%, transparent) !important;
+}
+
+#suggestielijst,
+.inline-suggestion-list {
+  z-index: 220;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke-strong)) !important;
+  background: color-mix(in srgb, var(--surface-strong) 98%, transparent) !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+#suggestielijst li:hover,
+#suggestielijst li.is-active,
+.inline-suggestion-list li:hover,
+.inline-suggestion-list li.is-active {
+  background: color-mix(in srgb, var(--accent-soft) 88%, var(--surface-strong)) !important;
+}
+
+button:not(.title-home-btn):not(.footer-link-btn),
+.btn,
+#searchBtn {
+  min-height: var(--button-height);
+  border-radius: var(--button-radius);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--button-bg) 90%, white 10%), var(--button-bg)) !important;
+  border-color: color-mix(in srgb, var(--button-border) 90%, black 10%) !important;
+  box-shadow: var(--button-shadow) !important;
+  color: var(--button-text) !important;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+button:not(.title-home-btn):not(.footer-link-btn):hover,
+.btn:hover,
+#searchBtn:hover {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--button-bg-hover) 92%, white 8%), var(--button-bg-hover)) !important;
+  box-shadow: var(--button-shadow-hover) !important;
+  transform: translateY(-1px);
+}
+
+button:not(.title-home-btn):not(.footer-link-btn):active,
+.btn:active,
+#searchBtn:active {
+  transform: translateY(0);
+  box-shadow: var(--button-shadow) !important;
+}
+
+.icon-btn,
+.settings-close-btn,
+.close-btn,
+.chip,
+.more-secondary-btn,
+.favorite-item,
+.favorite-action-btn {
+  background: color-mix(in srgb, var(--surface-strong) 98%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--button-secondary-border)) !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.icon-btn:hover,
+.settings-close-btn:hover,
+.close-btn:hover,
+.chip:hover,
+.more-secondary-btn:hover,
+.favorite-item:hover,
+.favorite-action-btn:hover {
+  background: color-mix(in srgb, var(--accent-soft) 46%, var(--surface-strong)) !important;
+}
+
+.grid {
+  gap: 1.05rem;
+}
+
+.results-wrap.show .card {
+  animation: uiSoftUp 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.results-wrap.show .card:nth-child(2) {
+  animation-delay: 0.03s;
+}
+
+.results-wrap.show .card:nth-child(3) {
+  animation-delay: 0.06s;
+}
+
+.results-wrap.show .card:nth-child(4) {
+  animation-delay: 0.09s;
+}
+
+.card,
+.weather-card,
+.weather-card-link,
+.vehicle-photo-frame,
+.vehicle-photo-meta-card,
+.more-panel-section,
+.favorite-item,
+.stack-card,
+.dashboard-card,
+#map,
+#dashboardMap {
+  border-radius: 22px !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.card {
+  min-height: 0;
+  padding: 1.02rem 1.05rem 1.08rem;
+  background: var(--panel-bg) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.card:hover,
+.weather-card:hover,
+.weather-card-link:hover,
+.weather-card-link:focus-visible,
+.favorite-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong) !important;
+}
+
+.weather-card,
+.weather-card-link,
+.vehicle-photo-frame,
+.vehicle-photo-meta-card,
+.more-panel-section,
+.dashboard-card {
+  background: var(--panel-bg-alt) !important;
+}
+
+.weather-icon,
+.vehicle-photo-meta-icon {
+  background: color-mix(in srgb, var(--accent-soft) 80%, var(--surface-strong)) !important;
   color: var(--accent) !important;
-  text-decoration: underline !important;
-  text-underline-offset: 0.18em !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke));
 }
 
-:root[data-theme="dark"] .header-bar,
-:root[data-theme="dark"] .card,
-:root[data-theme="dark"] .dashboard-panel,
-:root[data-theme="dark"] .menu-sheet,
-:root[data-theme="dark"] .stack-card,
-:root[data-theme="dark"] .favorites-panel,
-:root[data-theme="dark"] .pdf-modal-content,
-:root[data-theme="dark"] .compare-modal-content,
-:root[data-theme="dark"] .weather-modal-content,
-:root[data-theme="dark"] .halte-search-modal-content,
-:root[data-theme="dark"] .review-modal-content,
-:root[data-theme="dark"] .terms-modal-content,
-:root[data-theme="dark"] .funny-modal-content,
-:root[data-theme="dark"] .search-row,
-:root[data-theme="dark"] #suggestielijst,
-:root[data-theme="dark"] .inline-suggestion-list,
-:root[data-theme="dark"] .weather-card,
-:root[data-theme="dark"] .weather-card-link,
-:root[data-theme="dark"] .vehicle-photo-frame,
-:root[data-theme="dark"] .vehicle-photo-meta-card,
-:root[data-theme="dark"] .more-panel-section,
-:root[data-theme="dark"] .favorite-item,
-:root[data-theme="dark"] #map,
-:root[data-theme="dark"] #dashboardMap {
-  background: #151922 !important;
-  border-color: #252c36 !important;
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24) !important;
+.menu-overlay,
+.pdf-modal,
+.funny-modal {
+  background: color-mix(in srgb, var(--overlay-bg) 84%, transparent) !important;
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
+  animation: uiFadeIn 0.18s ease both;
 }
 
-:root[data-theme="dark"] .search-row input,
-:root[data-theme="dark"] input,
-:root[data-theme="dark"] select,
-:root[data-theme="dark"] textarea {
-  background: #0f141b !important;
-  border-color: #2a3340 !important;
-  color: #f3f4f6 !important;
+.menu-overlay {
+  align-items: center;
 }
 
-:root[data-theme="dark"] button:not(.title-home-btn):not(.footer-link-btn),
-:root[data-theme="dark"] .btn,
-:root[data-theme="dark"] #searchBtn {
-  background: #f3f4f6 !important;
-  border-color: #f3f4f6 !important;
-  color: #111827 !important;
+.menu-overlay-scrim {
+  background: transparent !important;
 }
 
-:root[data-theme="dark"] button:not(.title-home-btn):not(.footer-link-btn):hover,
-:root[data-theme="dark"] .btn:hover,
-:root[data-theme="dark"] #searchBtn:hover {
-  background: #ffffff !important;
-  border-color: #ffffff !important;
-  color: #111827 !important;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+.menu-sheet,
+.pdf-modal-card,
+.funny-modal-card,
+.offline-shell,
+.dashboard-setup-card,
+.halte-search-modal-card,
+.legal-modal-card,
+.weather-modal-card {
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke-strong)) !important;
+  background: var(--panel-bg-alt) !important;
+  box-shadow: var(--shadow-strong) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation: uiScaleIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-:root[data-theme="dark"] .icon-btn,
-:root[data-theme="dark"] .settings-close-btn,
-:root[data-theme="dark"] .close-btn,
-:root[data-theme="dark"] .chip,
-:root[data-theme="dark"] .more-secondary-btn {
-  background: #1a202c !important;
-  border-color: #2a3340 !important;
-  color: #f3f4f6 !important;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+.menu-sheet {
+  width: min(430px, calc(100vw - 1.4rem));
+  max-height: calc(var(--app-height) - 1.4rem);
+  padding: 0.98rem;
+  overflow-y: auto;
 }
 
-:root[data-theme="dark"] #appSubtitle {
-  color: #c0c7d2;
+.pdf-modal-card,
+.dashboard-setup-card,
+.halte-search-modal-card,
+.legal-modal-card,
+.weather-modal-card {
+  width: min(560px, calc(100vw - 1.4rem));
+  max-height: calc(var(--app-height) - 1.4rem);
 }
 
-:root[data-theme="dark"] .app-context-line,
-:root[data-theme="dark"] footer {
-  color: #9aa4b2;
+.compare-modal-card,
+.legal-modal-card {
+  width: min(760px, calc(100vw - 1.4rem));
 }
 
-:root[data-theme="dark"] .weather-icon,
-:root[data-theme="dark"] .vehicle-photo-meta-icon {
-  background: rgba(78, 161, 255, 0.12) !important;
-  color: #4ea1ff !important;
+.weather-modal-card {
+  width: min(560px, calc(100vw - 1.4rem));
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .header-bar,
-  :root:not([data-theme="light"]) .card,
-  :root:not([data-theme="light"]) .dashboard-panel,
-  :root:not([data-theme="light"]) .menu-sheet,
-  :root:not([data-theme="light"]) .stack-card,
-  :root:not([data-theme="light"]) .favorites-panel,
-  :root:not([data-theme="light"]) .pdf-modal-content,
-  :root:not([data-theme="light"]) .compare-modal-content,
-  :root:not([data-theme="light"]) .weather-modal-content,
-  :root:not([data-theme="light"]) .halte-search-modal-content,
-  :root:not([data-theme="light"]) .review-modal-content,
-  :root:not([data-theme="light"]) .terms-modal-content,
-  :root:not([data-theme="light"]) .funny-modal-content,
-  :root:not([data-theme="light"]) .search-row,
-  :root:not([data-theme="light"]) #suggestielijst,
-  :root:not([data-theme="light"]) .inline-suggestion-list,
-  :root:not([data-theme="light"]) .weather-card,
-  :root:not([data-theme="light"]) .weather-card-link,
-  :root:not([data-theme="light"]) .vehicle-photo-frame,
-  :root:not([data-theme="light"]) .vehicle-photo-meta-card,
-  :root:not([data-theme="light"]) .more-panel-section,
-  :root:not([data-theme="light"]) .favorite-item,
-  :root:not([data-theme="light"]) #map,
-  :root:not([data-theme="light"]) #dashboardMap {
-    background: #151922 !important;
-    border-color: #252c36 !important;
-    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24) !important;
+.more-panel-header,
+.dashboard-panel-header {
+  align-items: center;
+}
+
+.pdf-modal-body,
+.legal-modal-body,
+.weather-modal-body {
+  padding-right: 0.08rem;
+}
+
+.favorites-panel .chip,
+.favorite-item {
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.dashboard-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 97%, transparent), color-mix(in srgb, var(--surface) 94%, transparent)) !important;
+  box-shadow: none !important;
+}
+
+.footer-links {
+  gap: 0.6rem;
+}
+
+.footer-link-btn,
+.footer-link-btn:hover,
+.footer-link-btn:focus-visible {
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  border: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--accent) !important;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  transform: none !important;
+}
+
+footer {
+  margin-top: auto;
+  padding-top: 1.15rem;
+}
+
+footer::before {
+  content: "";
+  display: block;
+  margin: 0 0 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 10%, var(--stroke));
+}
+
+.footer-meta,
+.more-panel-subtitle,
+.pdf-modal-summary,
+.halte-module-help,
+.instagram-help-text,
+.settings-grid label,
+.weather-source,
+.weather-source-meta,
+.vehicle-photo-meta-label {
+  color: var(--muted);
+}
+
+@keyframes uiSoftUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-
-  :root:not([data-theme="light"]) .search-row input,
-  :root:not([data-theme="light"]) input,
-  :root:not([data-theme="light"]) select,
-  :root:not([data-theme="light"]) textarea {
-    background: #0f141b !important;
-    border-color: #2a3340 !important;
-    color: #f3f4f6 !important;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  :root:not([data-theme="light"]) button:not(.title-home-btn):not(.footer-link-btn),
-  :root:not([data-theme="light"]) .btn,
-  :root:not([data-theme="light"]) #searchBtn {
-    background: #f3f4f6 !important;
-    border-color: #f3f4f6 !important;
-    color: #111827 !important;
+@keyframes uiSoftDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-
-  :root:not([data-theme="light"]) button:not(.title-home-btn):not(.footer-link-btn):hover,
-  :root:not([data-theme="light"]) .btn:hover,
-  :root:not([data-theme="light"]) #searchBtn:hover {
-    background: #ffffff !important;
-    border-color: #ffffff !important;
-    color: #111827 !important;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  :root:not([data-theme="light"]) .icon-btn,
-  :root:not([data-theme="light"]) .settings-close-btn,
-  :root:not([data-theme="light"]) .close-btn,
-  :root:not([data-theme="light"]) .chip,
-  :root:not([data-theme="light"]) .more-secondary-btn {
-    background: #1a202c !important;
-    border-color: #2a3340 !important;
-    color: #f3f4f6 !important;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+@keyframes uiFadeIn {
+  from {
+    opacity: 0;
   }
-
-  :root:not([data-theme="light"]) #appSubtitle {
-    color: #c0c7d2;
+  to {
+    opacity: 1;
   }
+}
 
-  :root:not([data-theme="light"]) .app-context-line,
-  :root:not([data-theme="light"]) footer {
-    color: #9aa4b2;
+@keyframes uiScaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
-  :root:not([data-theme="light"]) .weather-icon,
-  :root:not([data-theme="light"]) .vehicle-photo-meta-icon {
-    background: rgba(78, 161, 255, 0.12) !important;
-    color: #4ea1ff !important;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -5585,8 +5623,20 @@ footer {
     border-radius: 20px;
   }
 
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    justify-self: stretch;
+  }
+
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .menu-overlay,
+  .pdf-modal,
+  .funny-modal {
+    padding: 0.85rem;
   }
 }
 
@@ -5599,9 +5649,8 @@ footer {
   .card,
   .menu-sheet,
   .dashboard-panel,
-  .pdf-modal-content,
-  .compare-modal-content,
-  .weather-modal-content {
+  .pdf-modal-card,
+  .funny-modal-card {
     border-radius: 20px !important;
   }
 
@@ -5612,8 +5661,34 @@ footer {
   }
 
   .search-row {
-    min-height: 52px;
-    border-radius: 16px;
+    min-height: 54px;
+    border-radius: 18px;
+  }
+
+  .menu-overlay,
+  .pdf-modal,
+  .funny-modal {
+    align-items: flex-end;
+    padding: 0.6rem;
+  }
+
+  .menu-sheet,
+  .pdf-modal-card,
+  .funny-modal-card,
+  .dashboard-setup-card,
+  .halte-search-modal-card,
+  .legal-modal-card,
+  .weather-modal-card,
+  .compare-modal-card {
+    width: min(100%, calc(100vw - 1.2rem));
+    max-height: calc(100dvh - 1.2rem);
+    border-radius: 22px !important;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
   }
 }
 
