@@ -420,7 +420,7 @@ let realtimePausedByInactivity = false;
 let deeplinkHandled = false;
 let routeNavigationLocked = false;
 let injectedInitialHomeHistoryState = false;
-const APP_VERSION = "2026.04.10-4";
+const APP_VERSION = "2026.04.11-1";
 const dataLoadTimestamps = {
   realtime: 0
 };
@@ -1103,6 +1103,42 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_M
   }
 }
 
+function openExternalUrl(url, options = {}) {
+  const {
+    preferSameTab = false,
+    forceSameTab = false
+  } = options;
+  const targetUrl = String(url || "").trim();
+  if (!targetUrl) return false;
+
+  const shouldUseSameTab =
+    forceSameTab ||
+    (preferSameTab && (
+      isTouchPlatform() ||
+      isStandaloneDisplayMode() ||
+      isAndroidWebView ||
+      isAndroidHostApp()
+    ));
+
+  if (shouldUseSameTab) {
+    window.location.assign(targetUrl);
+    return true;
+  }
+
+  const openedWindow = window.open(targetUrl, "_blank", "noopener,noreferrer");
+  if (openedWindow && typeof openedWindow.focus === "function") {
+    try {
+      openedWindow.focus();
+    } catch (_) {
+      // Ignore focus errors from strict browser contexts.
+    }
+    return true;
+  }
+
+  window.location.assign(targetUrl);
+  return true;
+}
+
 function translateKey(key, language = settings.language) {
   return (
     i18n[language]?.[key] ??
@@ -1237,9 +1273,7 @@ function hideInfoModal() {
 
 function showHalteSearchModal() {
   if (!halteSearchModalEl) return;
-  window.requestAnimationFrame(() => {
-    openOverlayModal(halteSearchModalEl, { focusTarget: haltecodeInputEl });
-  });
+  openOverlayModal(halteSearchModalEl, { focusTarget: haltecodeInputEl });
 }
 
 function hideHalteSearchModal() {
@@ -1254,7 +1288,7 @@ function showReviewModal() {
     (window.matchMedia?.("(max-width: 700px)")?.matches ?? false);
 
   if (shouldOpenExternally && reviewMobileLinkEl?.href) {
-    window.open(reviewMobileLinkEl.href, "_blank", "noopener,noreferrer");
+    openExternalUrl(reviewMobileLinkEl.href, { preferSameTab: true });
     return;
   }
 
@@ -2631,6 +2665,36 @@ function getIndexedPhotoEntries(vehicleId) {
   return indexedEntries;
 }
 
+function getPhotoEntrySuffixOrder(entry) {
+  const rawSrc = (entry?.src || "").toString();
+  if (!rawSrc) return Number.MAX_SAFE_INTEGER;
+  const encodedFileName = rawSrc.split("/").pop() || "";
+  const fileName = decodeURIComponent(encodedFileName);
+  const suffixMatch = fileName.match(/\s\((\d+)\)(?=\.[^.]+$)/);
+  return suffixMatch ? Number(suffixMatch[1]) : 0;
+}
+
+function mergeVehiclePhotoEntries(...entryGroups) {
+  const mergedEntries = [];
+  const seen = new Set();
+
+  entryGroups
+    .flat()
+    .forEach((entry) => {
+      if (!entry?.src || seen.has(entry.src)) return;
+      seen.add(entry.src);
+      mergedEntries.push(entry);
+    });
+
+  return mergedEntries.sort((left, right) => {
+    const suffixOrderDiff = getPhotoEntrySuffixOrder(left) - getPhotoEntrySuffixOrder(right);
+    if (suffixOrderDiff !== 0) return suffixOrderDiff;
+    const sortOrderDiff = Number(left?.sortOrder || 0) - Number(right?.sortOrder || 0);
+    if (sortOrderDiff !== 0) return sortOrderDiff;
+    return String(left?.src || "").localeCompare(String(right?.src || ""), "nl");
+  });
+}
+
 function getFallbackPhotoEntries(vehicleId, suffixesOverride = null) {
   const aliases = getVehiclePhotoAliases(vehicleId);
   const extensions = ["jpeg", "jpg", "JPG", "png", "webp"];
@@ -2772,7 +2836,25 @@ async function resolveVehiclePhotoEntries(vehicleId) {
     const enrichedIndexedEntries = await Promise.all(
       indexedEntries.map((entry) => enrichResolvedPhotoEntry(entry).catch(() => entry))
     );
-    return enrichedIndexedEntries.filter(Boolean);
+    const presentSuffixes = new Set(
+      enrichedIndexedEntries
+        .filter(Boolean)
+        .map((entry) => getPhotoEntrySuffixOrder(entry))
+        .filter((suffixOrder) => Number.isFinite(suffixOrder))
+    );
+    const missingSuffixes = ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)]
+      .filter((suffix, index) => !presentSuffixes.has(index));
+    if (!missingSuffixes.length) {
+      return mergeVehiclePhotoEntries(enrichedIndexedEntries.filter(Boolean));
+    }
+
+    const supplementalEntries = await resolvePhotoEntriesFromCandidates(
+      getFallbackPhotoEntries(vehicleId, missingSuffixes)
+    );
+    return mergeVehiclePhotoEntries(
+      enrichedIndexedEntries.filter(Boolean),
+      supplementalEntries.filter(Boolean)
+    );
   }
 
   const suffixes = ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)];
@@ -3757,8 +3839,7 @@ function openHalteRealtime(codeOverride = "") {
   setHalteStatus("");
   clearHalteSearchResults();
   hideHalteSearchModal();
-  window.open(getHalteRealtimeLink(validCodes), "_blank", "noopener,noreferrer");
-  return true;
+  return openExternalUrl(getHalteRealtimeLink(validCodes), { preferSameTab: true });
 }
 
 async function searchHaltes() {
@@ -3782,6 +3863,10 @@ async function searchHaltes() {
   try {
     const haltes = await searchHaltesLocal(zoekTerm);
     if (requestToken !== halteSearchRequestToken) return;
+    if (haltes.length === 1) {
+      openHalteRealtime(haltes[0]?.haltenummers || haltes[0]?.haltenummer || "");
+      return;
+    }
     renderHalteSearchResults(haltes);
     if (!haltes.length) {
       setHalteStatus(getLabel("haltSearchNoResults", "Geen haltes gevonden."));
