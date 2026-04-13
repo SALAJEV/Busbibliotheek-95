@@ -2416,8 +2416,9 @@ async function getPhotoReverseGeocode(latitude, longitude) {
 
 function buildInstagramProfileLink(handle) {
   const trimmedHandle = (handle || "").toString().trim();
-  if (!trimmedHandle || !trimmedHandle.startsWith("@")) return "";
-  return `https://www.instagram.com/${encodeURIComponent(trimmedHandle)}`;
+  const normalizedHandle = trimmedHandle.replace(/^@+/, "");
+  if (!normalizedHandle) return "";
+  return `https://www.instagram.com/${encodeURIComponent(normalizedHandle)}`;
 }
 
 function parseExifMetadataFromArrayBuffer(buffer) {
