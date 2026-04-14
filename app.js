@@ -2984,7 +2984,28 @@ function getPhotoMetadataTimestamp(rawValue) {
   return Number.isFinite(parsedTimestamp) ? parsedTimestamp : Number.NaN;
 }
 
+function hasKnownPhotoPhotographer(entry) {
+  const makerValue = cleanText(entry?.metaFields?.maker || entry?.meta || "");
+  if (!makerValue) return false;
+  const normalizedMakerValue = makerValue.toLowerCase();
+  return ![
+    "onbekend",
+    "unknown",
+    "niet gekend",
+    "niet bekend",
+    "n/a",
+    "na",
+    "?"
+  ].includes(normalizedMakerValue);
+}
+
 function compareVehiclePhotoEntries(left, right) {
+  const leftHasKnownPhotographer = hasKnownPhotoPhotographer(left);
+  const rightHasKnownPhotographer = hasKnownPhotoPhotographer(right);
+  if (leftHasKnownPhotographer !== rightHasKnownPhotographer) {
+    return leftHasKnownPhotographer ? -1 : 1;
+  }
+
   const leftTimestamp = Number.isFinite(left?.dateSortTimestamp)
     ? left.dateSortTimestamp
     : getPhotoMetadataTimestamp(left?.metaFields?.date);
@@ -2999,7 +3020,7 @@ function compareVehiclePhotoEntries(left, right) {
   }
 
   if (leftHasKnownDate && rightHasKnownDate) {
-    const dateDiff = leftTimestamp - rightTimestamp;
+    const dateDiff = rightTimestamp - leftTimestamp;
     if (dateDiff !== 0) return dateDiff;
   }
 
@@ -3012,6 +3033,13 @@ function compareVehiclePhotoEntries(left, right) {
 
   const suffixOrderDiff = getPhotoEntrySuffixOrder(left) - getPhotoEntrySuffixOrder(right);
   if (suffixOrderDiff !== 0) return suffixOrderDiff;
+
+  const photographerDiff = cleanText(left?.metaFields?.maker || left?.meta || "").localeCompare(
+    cleanText(right?.metaFields?.maker || right?.meta || ""),
+    "nl",
+    { sensitivity: "base" }
+  );
+  if (photographerDiff !== 0) return photographerDiff;
 
   const sortOrderDiff = Number(left?.sortOrder || 0) - Number(right?.sortOrder || 0);
   if (sortOrderDiff !== 0) return sortOrderDiff;
@@ -3182,23 +3210,24 @@ async function resolveVehiclePhotoEntries(vehicleId) {
     const enrichedIndexedEntries = await Promise.all(
       indexedEntries.map((entry) => enrichResolvedPhotoEntry(entry).catch(() => entry))
     );
-    const presentSuffixes = new Set(
-      enrichedIndexedEntries
+    const resolvedIndexedEntries = enrichedIndexedEntries.filter(Boolean);
+    const indexedSrcSet = new Set(
+      resolvedIndexedEntries
+        .map((entry) => (entry?.src || "").toString())
         .filter(Boolean)
-        .map((entry) => getPhotoEntrySuffixOrder(entry))
-        .filter((suffixOrder) => Number.isFinite(suffixOrder))
     );
-    const missingSuffixes = ["", ...Array.from({ length: 12 }, (_, index) => ` (${index + 1})`)]
-      .filter((suffix, index) => !presentSuffixes.has(index));
-    if (!missingSuffixes.length) {
-      return mergeVehiclePhotoEntries(enrichedIndexedEntries.filter(Boolean));
+    const supplementalCandidates = getFallbackPhotoEntries(vehicleId).filter(
+      (entry) => entry?.src && !indexedSrcSet.has(entry.src)
+    );
+    if (!supplementalCandidates.length) {
+      return mergeVehiclePhotoEntries(resolvedIndexedEntries);
     }
 
     const supplementalEntries = await resolvePhotoEntriesFromCandidates(
-      getFallbackPhotoEntries(vehicleId, missingSuffixes)
+      supplementalCandidates
     );
     return mergeVehiclePhotoEntries(
-      enrichedIndexedEntries.filter(Boolean),
+      resolvedIndexedEntries,
       supplementalEntries.filter(Boolean)
     );
   }
