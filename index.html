@@ -19,12 +19,29 @@
 <script>
   (function () {
     var root = document.documentElement;
-    root.className += (root.className ? " " : "") + "preload";
+    var addClass = function (className) {
+      if ((" " + root.className + " ").indexOf(" " + className + " ") >= 0) return;
+      root.className += (root.className ? " " : "") + className;
+    };
+    var removeClass = function (className) {
+      root.className = (" " + root.className + " ")
+        .replace(" " + className + " ", " ")
+        .replace(/\s+/g, " ")
+        .replace(/^\s+|\s+$/g, "");
+    };
+    var isFiniteNumber = function (value) {
+      return typeof value === "number" && isFinite(value);
+    };
+
+    addClass("preload");
+    addClass("legacy-browser");
+
     var userAgent = window.navigator.userAgent || "";
     var androidMatch = userAgent.match(/Android\s+(\d+(?:\.\d+)?)/i);
-    var androidVersion = androidMatch ? Number(androidMatch[1]) : NaN;
-    var forceLegacyAndroid = /Android/i.test(userAgent) && Number.isFinite(androidVersion) && androidVersion <= 6;
+    var androidVersion = androidMatch && androidMatch[1] ? parseFloat(androidMatch[1]) : NaN;
+    var forceLegacyAndroid = /Android/i.test(userAgent) && isFiniteNumber(androidVersion) && androidVersion <= 6;
     var supportsModernApp = false;
+
     try {
       supportsModernApp =
         !!window.Promise &&
@@ -43,9 +60,19 @@
     } catch (error) {
       supportsModernApp = false;
     }
+
     if (forceLegacyAndroid) supportsModernApp = false;
-    root.className += (root.className ? " " : "") + (supportsModernApp ? "modern-browser" : "legacy-browser");
-    if (forceLegacyAndroid) root.className += " legacy-android6";
+
+    if (supportsModernApp) {
+      removeClass("legacy-browser");
+      addClass("modern-browser");
+    } else {
+      removeClass("modern-browser");
+      addClass("legacy-browser");
+      removeClass("preload");
+    }
+
+    if (forceLegacyAndroid) addClass("legacy-android6");
     window.__BB_SUPPORTS_MODERN_APP__ = supportsModernApp;
     window.__BB_FORCE_LEGACY_ANDROID__ = forceLegacyAndroid;
   })();
