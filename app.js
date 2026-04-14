@@ -70,7 +70,7 @@ window.addEventListener('appinstalled', () => {
 
 function syncHeaderActionPlacement() {
   if (!favoritesTopEl || !headerActionsEl || !headerSearchRowEl || !window.matchMedia) return;
-  const shouldInlineMenu = window.matchMedia("(max-width: 980px)").matches;
+  const shouldInlineMenu = true;
   const targetParent = shouldInlineMenu ? headerSearchRowEl : headerActionsEl;
   if (favoritesTopEl.parentElement !== targetParent) {
     targetParent.appendChild(favoritesTopEl);
@@ -405,7 +405,10 @@ const photoCaptureDateCache = new Map();
 const photoExifMetadataCache = new Map();
 const photoReverseGeocodeCache = new Map();
 const PHOTO_REVERSE_GEOCODE_URL = "https://nominatim.openstreetmap.org/reverse";
+const PHOTO_TRANSIT_POI_URL = "https://overpass-api.de/api/interpreter";
 const PHOTO_REVERSE_GEOCODE_TIMEOUT_MS = 5000;
+const PHOTO_TRANSIT_POI_TIMEOUT_MS = 5000;
+const PHOTO_TRANSIT_POI_RADIUS_METERS = 250;
 const PHOTO_REVERSE_GEOCODE_MIN_INTERVAL_MS = 1100;
 let photoReverseGeocodeQueue = Promise.resolve();
 let photoReverseGeocodeLastRequestAt = 0;
@@ -2345,7 +2348,228 @@ function queuePhotoReverseGeocode(taskFactory) {
   return task;
 }
 
-function formatPhotoReverseGeocodeLabel(address = {}, fallbackDisplayName = "") {
+function toRadians(degrees) {
+  return (Number(degrees) * Math.PI) / 180;
+}
+
+function getPhotoGpsDistanceMeters(latitudeA, longitudeA, latitudeB, longitudeB) {
+  if (
+    !Number.isFinite(latitudeA) ||
+    !Number.isFinite(longitudeA) ||
+    !Number.isFinite(latitudeB) ||
+    !Number.isFinite(longitudeB)
+  ) return Number.POSITIVE_INFINITY;
+  const earthRadiusMeters = 6371000;
+  const latitudeDelta = toRadians(latitudeB - latitudeA);
+  const longitudeDelta = toRadians(longitudeB - longitudeA);
+  const halfLatitudeDelta = Math.sin(latitudeDelta / 2);
+  const halfLongitudeDelta = Math.sin(longitudeDelta / 2);
+  const haversine =
+    halfLatitudeDelta * halfLatitudeDelta +
+    Math.cos(toRadians(latitudeA)) *
+      Math.cos(toRadians(latitudeB)) *
+      halfLongitudeDelta *
+      halfLongitudeDelta;
+  return 2 * earthRadiusMeters * Math.asin(Math.min(1, Math.sqrt(haversine)));
+}
+
+function getPhotoPlaceLocality(address = {}) {
+  return pickFirstText(
+    address.city,
+    address.town,
+    address.village,
+    address.municipality,
+    address.suburb,
+    address.city_district,
+    address.hamlet,
+    address.county
+  );
+}
+
+function buildPhotoNamedPlaceLabel(name = "", locality = "") {
+  const cleanedName = cleanText(name);
+  const cleanedLocality = cleanText(locality);
+  if (!cleanedName) return "";
+  if (
+    cleanedLocality &&
+    !normalizeSearchText(cleanedName).includes(normalizeSearchText(cleanedLocality))
+  ) {
+    return `${cleanedName}, ${cleanedLocality}`;
+  }
+  return cleanedName;
+}
+
+function mergePhotoPlaceLabels(primaryLabel = "", secondaryLabel = "") {
+  const primary = cleanText(primaryLabel);
+  const secondary = cleanText(secondaryLabel);
+  if (!primary) return secondary;
+  if (!secondary) return primary;
+
+  const normalizedPrimary = normalizeSearchText(primary);
+  const normalizedSecondary = normalizeSearchText(secondary);
+  if (!normalizedPrimary || !normalizedSecondary) return primary || secondary;
+  if (normalizedPrimary === normalizedSecondary) return primary;
+  if (normalizedPrimary.includes(normalizedSecondary)) return primary;
+  if (normalizedSecondary.includes(normalizedPrimary)) return secondary;
+  return `${primary} • ${secondary}`;
+}
+
+function getPhotoPreferredNamedValue(payload = {}, address = {}, language = settings.language) {
+  const namedetails = payload?.namedetails || {};
+  const normalizedLanguage = (language || DEFAULT_LANG || "nl").toLowerCase();
+  return pickFirstText(
+    namedetails[`name:${normalizedLanguage}`],
+    payload?.name,
+    namedetails.name,
+    namedetails[`official_name:${normalizedLanguage}`],
+    namedetails.official_name,
+    namedetails[`short_name:${normalizedLanguage}`],
+    namedetails.short_name,
+    namedetails[`alt_name:${normalizedLanguage}`],
+    namedetails.alt_name,
+    address.public_transport,
+    address.station,
+    address.railway,
+    address.bus_station,
+    address.bus_stop,
+    address.tram_stop,
+    address.platform,
+    address.amenity,
+    address.building
+  );
+}
+
+function isTransitRelatedPhotoPayload(payload = {}, address = {}) {
+  const transitCandidates = [
+    payload?.category,
+    payload?.type,
+    payload?.addresstype,
+    payload?.class,
+    payload?.extratags?.public_transport,
+    payload?.extratags?.station,
+    payload?.extratags?.railway,
+    address.public_transport,
+    address.station,
+    address.railway,
+    address.bus_station,
+    address.bus_stop,
+    address.tram_stop,
+    address.platform
+  ].map((value) => cleanText(value));
+
+  if (transitCandidates.some(Boolean)) return true;
+
+  const keywordText = [
+    payload?.display_name,
+    payload?.name,
+    payload?.namedetails?.name,
+    payload?.namedetails?.official_name
+  ].map((value) => cleanText(value).toLowerCase()).filter(Boolean).join(" ");
+
+  return [
+    "station",
+    "halte",
+    "busstation",
+    "bus stop",
+    "tram stop",
+    "tramhalte",
+    "metrostation",
+    "railway station",
+    "train station",
+    "perron"
+  ].some((keyword) => keywordText.includes(keyword));
+}
+
+function buildTransitPoiLabelFromReversePayload(payload = {}, language = settings.language) {
+  const address = payload?.address || {};
+  if (!isTransitRelatedPhotoPayload(payload, address)) return "";
+  return buildPhotoNamedPlaceLabel(
+    getPhotoPreferredNamedValue(payload, address, language),
+    getPhotoPlaceLocality(address)
+  );
+}
+
+function getPhotoTransitPoiRank(tags = {}) {
+  if (!tags || typeof tags !== "object") return 99;
+  if (tags.railway === "station" || tags.public_transport === "station") return 0;
+  if (tags.amenity === "bus_station" || tags.railway === "halt") return 1;
+  if (tags.public_transport === "stop_area") return 2;
+  if (tags.highway === "bus_stop" || tags.railway === "tram_stop") return 3;
+  if (tags.public_transport === "platform" || tags.railway === "platform") return 4;
+  if (tags.public_transport === "stop_position") return 5;
+  return 99;
+}
+
+function getPhotoTransitPoiLabel(tags = {}, language = settings.language, locality = "") {
+  const normalizedLanguage = (language || DEFAULT_LANG || "nl").toLowerCase();
+  const name = pickFirstText(
+    tags[`name:${normalizedLanguage}`],
+    tags.name,
+    tags[`official_name:${normalizedLanguage}`],
+    tags.official_name,
+    tags[`short_name:${normalizedLanguage}`],
+    tags.short_name
+  );
+  return buildPhotoNamedPlaceLabel(name, locality);
+}
+
+async function fetchNearbyPhotoTransitPoi(latitude, longitude, language = settings.language, locality = "") {
+  const aroundClause = `around:${PHOTO_TRANSIT_POI_RADIUS_METERS},${latitude.toFixed(7)},${longitude.toFixed(7)}`;
+  const query = `[out:json][timeout:6];
+(
+  node(${aroundClause})["railway"~"station|halt|tram_stop|platform"];
+  way(${aroundClause})["railway"~"station|halt|tram_stop|platform"];
+  relation(${aroundClause})["railway"~"station|halt|tram_stop|platform"];
+  node(${aroundClause})["public_transport"~"station|platform|stop_position|stop_area"];
+  way(${aroundClause})["public_transport"~"station|platform|stop_position|stop_area"];
+  relation(${aroundClause})["public_transport"~"station|platform|stop_position|stop_area"];
+  node(${aroundClause})["amenity"="bus_station"];
+  way(${aroundClause})["amenity"="bus_station"];
+  relation(${aroundClause})["amenity"="bus_station"];
+  node(${aroundClause})["highway"="bus_stop"];
+  way(${aroundClause})["highway"="bus_stop"];
+  relation(${aroundClause})["highway"="bus_stop"];
+);
+out center tags;`;
+
+  const response = await fetchWithTimeout(
+    PHOTO_TRANSIT_POI_URL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=UTF-8"
+      },
+      body: query,
+      cache: "no-store"
+    },
+    PHOTO_TRANSIT_POI_TIMEOUT_MS
+  );
+  const payload = await response.json();
+  const bestCandidate = (Array.isArray(payload?.elements) ? payload.elements : [])
+    .map((element) => {
+      const tags = element?.tags || {};
+      const label = getPhotoTransitPoiLabel(tags, language, locality);
+      if (!label) return null;
+      const elementLatitude = Number(element?.lat ?? element?.center?.lat);
+      const elementLongitude = Number(element?.lon ?? element?.center?.lon);
+      return {
+        label,
+        rank: getPhotoTransitPoiRank(tags),
+        distanceMeters: getPhotoGpsDistanceMeters(latitude, longitude, elementLatitude, elementLongitude)
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => {
+      if (left.rank !== right.rank) return left.rank - right.rank;
+      if (left.distanceMeters !== right.distanceMeters) return left.distanceMeters - right.distanceMeters;
+      return left.label.localeCompare(right.label, "nl", { sensitivity: "base" });
+    })[0];
+
+  return bestCandidate?.label || "";
+}
+
+function formatPhotoReverseGeocodeLabel(payload = {}, nearbyTransitLabel = "", language = settings.language) {
+  const address = payload?.address || {};
   const streetName = pickFirstText(
     address.road,
     address.pedestrian,
@@ -2358,19 +2582,16 @@ function formatPhotoReverseGeocodeLabel(address = {}, fallbackDisplayName = "") 
   );
   const houseNumber = cleanText(address.house_number);
   const streetLabel = [streetName, houseNumber].filter(Boolean).join(" ").trim();
-  const locality = pickFirstText(
-    address.city,
-    address.town,
-    address.village,
-    address.municipality,
-    address.suburb,
-    address.city_district,
-    address.hamlet,
-    address.county
-  );
+  const locality = getPhotoPlaceLocality(address);
+  const addressLabel = streetLabel && locality ? `${streetLabel}, ${locality}` : (streetLabel || locality);
+  const reverseTransitLabel = buildTransitPoiLabelFromReversePayload(payload, language);
+  const preferredTransitLabel = mergePhotoPlaceLabels(reverseTransitLabel, nearbyTransitLabel);
 
-  if (streetLabel && locality) return `${streetLabel}, ${locality}`;
-  return streetLabel || locality || cleanText(fallbackDisplayName);
+  if (preferredTransitLabel) {
+    return mergePhotoPlaceLabels(preferredTransitLabel, addressLabel);
+  }
+
+  return addressLabel || cleanText(payload?.display_name || "");
 }
 
 async function getPhotoReverseGeocode(latitude, longitude) {
@@ -2394,12 +2615,27 @@ async function getPhotoReverseGeocode(latitude, longitude) {
       requestUrl.searchParams.set("lon", longitude.toFixed(7));
       requestUrl.searchParams.set("zoom", "18");
       requestUrl.searchParams.set("addressdetails", "1");
+      requestUrl.searchParams.set("namedetails", "1");
+      requestUrl.searchParams.set("extratags", "1");
       requestUrl.searchParams.set("accept-language", language);
 
       const response = await fetchWithTimeout(requestUrl.toString(), { cache: "force-cache" }, PHOTO_REVERSE_GEOCODE_TIMEOUT_MS);
       const payload = await response.json();
+      const reverseTransitLabel = buildTransitPoiLabelFromReversePayload(payload, language);
+      const nearbyTransitLabel = reverseTransitLabel
+        ? ""
+        : await fetchNearbyPhotoTransitPoi(
+          latitude,
+          longitude,
+          language,
+          getPhotoPlaceLocality(payload?.address || {})
+        ).catch(() => "");
       const value = {
-        label: formatPhotoReverseGeocodeLabel(payload?.address || {}, payload?.display_name || ""),
+        label: formatPhotoReverseGeocodeLabel(
+          payload || {},
+          mergePhotoPlaceLabels(reverseTransitLabel, nearbyTransitLabel),
+          language
+        ),
         link: buildPhotoGpsMapLink(latitude, longitude)
       };
       photoReverseGeocodeCache.set(cacheKey, value);
@@ -2416,6 +2652,7 @@ async function getPhotoReverseGeocode(latitude, longitude) {
 
 function buildInstagramProfileLink(handle) {
   const trimmedHandle = (handle || "").toString().trim();
+  if (!trimmedHandle.startsWith("@")) return "";
   const normalizedHandle = trimmedHandle.replace(/^@+/, "");
   if (!normalizedHandle) return "";
   return `https://www.instagram.com/${encodeURIComponent(normalizedHandle)}`;
@@ -2424,16 +2661,21 @@ function buildInstagramProfileLink(handle) {
 function parseExifMetadataFromArrayBuffer(buffer) {
   try {
     const view = new DataView(buffer);
-    if (view.byteLength < 4 || view.getUint16(0, false) !== 0xFFD8) return { date: "", latitude: NaN, longitude: NaN };
+    if (view.byteLength < 4 || view.getUint16(0, false) !== 0xFFD8) {
+      return { date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN };
+    }
     let offset = 2;
 
     const readIfd = (viewRef, tiffOffset, dirOffset, littleEndian) => {
       const absoluteDirOffset = tiffOffset + dirOffset;
-      if (absoluteDirOffset + 2 > viewRef.byteLength) return { date: "", exifPointer: 0, gpsPointer: 0 };
+      if (absoluteDirOffset + 2 > viewRef.byteLength) {
+        return { date: "", dateTimestamp: Number.NaN, exifPointer: 0, gpsPointer: 0 };
+      }
       const entryCount = viewRef.getUint16(absoluteDirOffset, littleEndian);
       let exifPointer = 0;
       let gpsPointer = 0;
       let date = "";
+      let dateTimestamp = Number.NaN;
 
       for (let index = 0; index < entryCount; index += 1) {
         const entryOffset = absoluteDirOffset + 2 + index * 12;
@@ -2450,11 +2692,17 @@ function parseExifMetadataFromArrayBuffer(buffer) {
           const rawValue = readExifTextValue(viewRef, textOffset);
           const normalizedValue = rawValue.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");
           const formatted = formatPhotoMetaDate(normalizedValue);
-          if (formatted && !date) date = formatted;
+          const timestamp = getPhotoMetadataTimestamp(normalizedValue);
+          if (formatted && !date) {
+            date = formatted;
+            dateTimestamp = timestamp;
+          } else if (!Number.isFinite(dateTimestamp) && Number.isFinite(timestamp)) {
+            dateTimestamp = timestamp;
+          }
         }
       }
 
-      return { date, exifPointer, gpsPointer };
+      return { date, dateTimestamp, exifPointer, gpsPointer };
     };
 
     const readGpsIfd = (viewRef, tiffOffset, dirOffset, littleEndian) => {
@@ -2524,13 +2772,21 @@ function parseExifMetadataFromArrayBuffer(buffer) {
           const tiffOffset = offset + 10;
           const byteOrder = view.getUint16(tiffOffset, false);
           const littleEndian = byteOrder === 0x4949;
-          if (!littleEndian && byteOrder !== 0x4D4D) return { date: "", latitude: NaN, longitude: NaN };
+          if (!littleEndian && byteOrder !== 0x4D4D) {
+            return { date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN };
+          }
           const ifd0Offset = view.getUint32(tiffOffset + 4, littleEndian);
           const ifd0Result = readIfd(view, tiffOffset, ifd0Offset, littleEndian);
           let date = ifd0Result.date || "";
+          let dateTimestamp = ifd0Result.dateTimestamp;
           if (ifd0Result.exifPointer) {
             const exifResult = readIfd(view, tiffOffset, ifd0Result.exifPointer, littleEndian);
-            if (!date && exifResult.date) date = exifResult.date;
+            if (!date && exifResult.date) {
+              date = exifResult.date;
+              dateTimestamp = exifResult.dateTimestamp;
+            } else if (!Number.isFinite(dateTimestamp) && Number.isFinite(exifResult.dateTimestamp)) {
+              dateTimestamp = exifResult.dateTimestamp;
+            }
           }
           let latitude = NaN;
           let longitude = NaN;
@@ -2539,21 +2795,21 @@ function parseExifMetadataFromArrayBuffer(buffer) {
             latitude = gpsResult.latitude;
             longitude = gpsResult.longitude;
           }
-          return { date, latitude, longitude };
+          return { date, dateTimestamp, latitude, longitude };
         }
       }
 
       offset += 2 + segmentLength;
     }
   } catch (_) {
-    return { date: "", latitude: NaN, longitude: NaN };
+    return { date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN };
   }
-  return { date: "", latitude: NaN, longitude: NaN };
+  return { date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN };
 }
 
 async function getPhotoExifMetadata(src) {
   const cacheKey = buildVehiclePhotoRequestUrl(src);
-  if (!cacheKey) return { date: "", latitude: NaN, longitude: NaN };
+  if (!cacheKey) return { date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN };
   const cached = photoExifMetadataCache.get(cacheKey);
   if (cached && typeof cached === "object" && !(cached instanceof Promise)) return cached;
   if (cached) return cached;
@@ -2564,10 +2820,13 @@ async function getPhotoExifMetadata(src) {
       return response.arrayBuffer();
     })
     .then((buffer) => parseExifMetadataFromArrayBuffer(buffer))
-    .catch(() => ({ date: "", latitude: NaN, longitude: NaN }))
+    .catch(() => ({ date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN }))
     .then((value) => {
-      photoExifMetadataCache.set(cacheKey, value || { date: "", latitude: NaN, longitude: NaN });
-      return value || { date: "", latitude: NaN, longitude: NaN };
+      photoExifMetadataCache.set(
+        cacheKey,
+        value || { date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN }
+      );
+      return value || { date: "", dateTimestamp: Number.NaN, latitude: NaN, longitude: NaN };
     });
 
   photoExifMetadataCache.set(cacheKey, pending);
@@ -2608,6 +2867,7 @@ function buildVehiclePhotoEntry(src, maker = "", sortOrder = 0) {
       credit: ""
     },
     alt: "",
+    dateSortTimestamp: Number.NaN,
     sortOrder
   };
 }
@@ -2675,6 +2935,94 @@ function getPhotoEntrySuffixOrder(entry) {
   return suffixMatch ? Number(suffixMatch[1]) : 0;
 }
 
+function getPhotoEntryFileName(entry) {
+  const rawSrc = (entry?.src || "").toString();
+  if (!rawSrc) return "";
+  const withoutQuery = rawSrc.split("?")[0] || "";
+  const encodedFileName = withoutQuery.split("/").pop() || "";
+  try {
+    return decodeURIComponent(encodedFileName);
+  } catch (_) {
+    return encodedFileName;
+  }
+}
+
+function getPhotoMetadataTimestamp(rawValue) {
+  const value = (rawValue || "").toString().trim().replace(/^"|"$/g, "");
+  if (!value || value === "/") return Number.NaN;
+
+  const exifMatch = value.match(
+    /^(\d{4})[:/-](\d{2})[:/-](\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/
+  );
+  if (exifMatch) {
+    const year = Number(exifMatch[1]);
+    const month = Number(exifMatch[2]);
+    const day = Number(exifMatch[3]);
+    const hours = Number(exifMatch[4] || 0);
+    const minutes = Number(exifMatch[5] || 0);
+    const seconds = Number(exifMatch[6] || 0);
+    const parsedDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
+    if (
+      parsedDate.getUTCFullYear() === year &&
+      parsedDate.getUTCMonth() === month - 1 &&
+      parsedDate.getUTCDate() === day
+    ) {
+      return parsedDate.getTime();
+    }
+  }
+
+  const flexibleDateParts = parseFlexibleDateParts(value);
+  if (flexibleDateParts) {
+    return Date.UTC(
+      flexibleDateParts.year,
+      flexibleDateParts.month - 1,
+      flexibleDateParts.day
+    );
+  }
+
+  const parsedTimestamp = Date.parse(value);
+  return Number.isFinite(parsedTimestamp) ? parsedTimestamp : Number.NaN;
+}
+
+function compareVehiclePhotoEntries(left, right) {
+  const leftTimestamp = Number.isFinite(left?.dateSortTimestamp)
+    ? left.dateSortTimestamp
+    : getPhotoMetadataTimestamp(left?.metaFields?.date);
+  const rightTimestamp = Number.isFinite(right?.dateSortTimestamp)
+    ? right.dateSortTimestamp
+    : getPhotoMetadataTimestamp(right?.metaFields?.date);
+  const leftHasKnownDate = Number.isFinite(leftTimestamp);
+  const rightHasKnownDate = Number.isFinite(rightTimestamp);
+
+  if (leftHasKnownDate !== rightHasKnownDate) {
+    return leftHasKnownDate ? -1 : 1;
+  }
+
+  if (leftHasKnownDate && rightHasKnownDate) {
+    const dateDiff = leftTimestamp - rightTimestamp;
+    if (dateDiff !== 0) return dateDiff;
+  }
+
+  const fileNameDiff = getPhotoEntryFileName(left).localeCompare(
+    getPhotoEntryFileName(right),
+    "nl",
+    { numeric: true, sensitivity: "base" }
+  );
+  if (fileNameDiff !== 0) return fileNameDiff;
+
+  const suffixOrderDiff = getPhotoEntrySuffixOrder(left) - getPhotoEntrySuffixOrder(right);
+  if (suffixOrderDiff !== 0) return suffixOrderDiff;
+
+  const sortOrderDiff = Number(left?.sortOrder || 0) - Number(right?.sortOrder || 0);
+  if (sortOrderDiff !== 0) return sortOrderDiff;
+
+  return String(left?.src || "").localeCompare(String(right?.src || ""), "nl");
+}
+
+function sortVehiclePhotoEntries(entries = []) {
+  return [...entries].sort(compareVehiclePhotoEntries);
+}
+
 function mergeVehiclePhotoEntries(...entryGroups) {
   const mergedEntries = [];
   const seen = new Set();
@@ -2687,13 +3035,7 @@ function mergeVehiclePhotoEntries(...entryGroups) {
       mergedEntries.push(entry);
     });
 
-  return mergedEntries.sort((left, right) => {
-    const suffixOrderDiff = getPhotoEntrySuffixOrder(left) - getPhotoEntrySuffixOrder(right);
-    if (suffixOrderDiff !== 0) return suffixOrderDiff;
-    const sortOrderDiff = Number(left?.sortOrder || 0) - Number(right?.sortOrder || 0);
-    if (sortOrderDiff !== 0) return sortOrderDiff;
-    return String(left?.src || "").localeCompare(String(right?.src || ""), "nl");
-  });
+  return sortVehiclePhotoEntries(mergedEntries);
 }
 
 function getFallbackPhotoEntries(vehicleId, suffixesOverride = null) {
@@ -2766,6 +3108,9 @@ async function enrichResolvedPhotoEntry(entry) {
     entry.placeDerivedFromGps = false;
   }
   entry.metaFields = nextMetaFields;
+  entry.dateSortTimestamp = Number.isFinite(exifMetadata?.dateTimestamp)
+    ? exifMetadata.dateTimestamp
+    : getPhotoMetadataTimestamp(nextMetaFields.date);
   return syncVehiclePhotoEntryMeta(entry);
 }
 
@@ -2872,7 +3217,7 @@ async function resolveVehiclePhotoEntries(vehicleId) {
     if (foundAnyPhotos) break;
   }
 
-  return resolvedEntries;
+  return sortVehiclePhotoEntries(resolvedEntries);
 }
 
 function buildVehiclePhotoCopy(entry, vehicleId) {
@@ -5800,7 +6145,7 @@ function toonVasteData(id){
   updateVehiclePhotoCard(id);
 
   const favoriteLabel = favorites.includes(id) ? t("favoriteRemove") : t("favoriteAdd");
-  const favoriteStateSymbol = favorites.includes(id) ? "\u2605" : "\u2606";
+  const favoriteStateSymbol = favorites.includes(id) ? "\u2605\uFE0E" : "\u2606\uFE0E";
   const safeFavoriteId = id.replace(/"/g, "&quot;");
   const favoriteClass = favorites.includes(id) ? "vehicle-favorite-btn is-favorite" : "vehicle-favorite-btn";
 

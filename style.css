@@ -1443,19 +1443,37 @@ button:disabled,
 }
 
 .menu-inline-search .search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
+  gap: 0.42rem;
+  padding-right: 0.36rem;
 }
 
 .menu-inline-search .search-row .favorites-top {
   flex: 0 0 auto;
   align-self: center;
+  margin-left: 0;
 }
 
 .menu-inline-search .search-row .more-toggle-btn {
+  width: 52px;
+  min-width: 52px;
   height: 52px;
   min-height: 52px;
-  padding-inline: 0.88rem 0.94rem;
+  padding: 0 !important;
   border-radius: 18px;
+  justify-content: center;
+}
+
+.menu-inline-search .search-row .more-toggle-btn #menuToggleText {
+  display: none;
+}
+
+.menu-inline-search .search-row .more-toggle-icon {
+  width: auto;
+  min-width: 0;
+  font-size: 1.18rem;
 }
 
 #searchBtn:hover {
@@ -3133,6 +3151,22 @@ tr + tr td {
 
 .photo-card:hover .vehicle-photo-image {
   transform: scale(1.015);
+}
+
+.photo-card,
+.photo-card:hover,
+.photo-card:focus-within {
+  transform: none !important;
+  transition: none !important;
+  border-color: color-mix(in srgb, var(--accent) 10%, var(--stroke)) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.photo-card .vehicle-photo-image,
+.photo-card:hover .vehicle-photo-image,
+.photo-card:focus-within .vehicle-photo-image {
+  transform: none !important;
+  transition: none !important;
 }
 
 .photo-nav-btn {
@@ -5136,6 +5170,32 @@ footer h3 {
   --theme-map-border: color-mix(in srgb, var(--accent) 14%, var(--stroke));
   --theme-icon-surface: color-mix(in srgb, var(--surface-strong) 95%, var(--accent) 5%);
   --theme-icon-border: color-mix(in srgb, var(--accent) 12%, var(--stroke));
+  --weather-card-bg:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, white 54%, var(--accent) 46%), transparent 40%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 34%, white 66%), color-mix(in srgb, var(--accent-2) 16%, white 84%));
+  --weather-card-border: color-mix(in srgb, var(--accent) 26%, white 14%);
+  --weather-card-border-hover: color-mix(in srgb, var(--accent) 38%, white 12%);
+  --weather-card-shadow: 0 18px 40px color-mix(in srgb, rgba(15, 23, 42, 0.12) 64%, var(--accent-soft) 36%);
+  --weather-card-shadow-hover: 0 24px 52px color-mix(in srgb, rgba(15, 23, 42, 0.16) 60%, var(--accent-soft) 40%);
+  --weather-card-title: color-mix(in srgb, var(--text) 94%, var(--accent) 6%);
+  --weather-card-text: color-mix(in srgb, var(--text) 82%, var(--accent) 18%);
+  --weather-card-meta: color-mix(in srgb, var(--text) 64%, var(--accent) 36%);
+  --weather-card-temp: color-mix(in srgb, var(--text) 96%, var(--accent) 4%);
+  --weather-card-icon-bg: color-mix(in srgb, rgb(255 255 255 / 0.84) 78%, var(--accent) 22%);
+  --weather-card-icon-border: color-mix(in srgb, var(--accent) 16%, rgb(255 255 255 / 0.5));
+  --weather-card-icon-color: color-mix(in srgb, var(--text) 54%, var(--accent) 46%);
+  --weather-card-chevron-bg: color-mix(in srgb, rgb(255 255 255 / 0.76) 74%, var(--accent) 26%);
+  --weather-card-chevron-color: color-mix(in srgb, var(--text) 72%, var(--accent) 28%);
+  --weather-modal-hero-bg:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-soft) 94%, transparent), transparent 54%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--surface-strong) 88%), color-mix(in srgb, var(--accent-2) 10%, var(--surface-alt) 90%));
+  --weather-modal-hero-border: color-mix(in srgb, var(--accent) 16%, var(--stroke));
+  --weather-modal-detail-bg: color-mix(in srgb, var(--surface-alt) 94%, var(--accent) 6%);
+  --weather-modal-detail-border: color-mix(in srgb, var(--accent) 10%, var(--stroke));
+  --weather-modal-detail-icon-bg: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-strong));
+  --weather-modal-detail-icon-border: color-mix(in srgb, var(--accent) 12%, var(--stroke));
+  --weather-modal-source-bg: color-mix(in srgb, var(--surface-alt) 90%, var(--accent) 10%);
+  --weather-modal-source-border: color-mix(in srgb, var(--accent) 22%, var(--stroke));
 }
 
 :root[data-theme="dark"] {
@@ -5157,6 +5217,32 @@ footer h3 {
   --theme-map-border: color-mix(in srgb, var(--accent) 16%, var(--stroke));
   --theme-icon-surface: color-mix(in srgb, var(--surface-elevated) 93%, var(--accent) 7%);
   --theme-icon-border: color-mix(in srgb, var(--accent) 14%, var(--stroke));
+  --weather-card-bg:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 42%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 26%, var(--surface-elevated) 74%), color-mix(in srgb, var(--accent-2) 16%, var(--surface-strong) 84%));
+  --weather-card-border: color-mix(in srgb, var(--accent) 22%, var(--stroke-strong));
+  --weather-card-border-hover: color-mix(in srgb, var(--accent) 32%, var(--stroke-strong));
+  --weather-card-shadow: 0 20px 44px color-mix(in srgb, rgba(2, 8, 23, 0.54) 70%, var(--accent-soft) 30%);
+  --weather-card-shadow-hover: 0 28px 58px color-mix(in srgb, rgba(2, 8, 23, 0.62) 68%, var(--accent-soft) 32%);
+  --weather-card-title: color-mix(in srgb, white 88%, var(--accent) 12%);
+  --weather-card-text: color-mix(in srgb, white 78%, var(--accent) 22%);
+  --weather-card-meta: color-mix(in srgb, white 64%, var(--accent) 36%);
+  --weather-card-temp: color-mix(in srgb, white 92%, var(--accent) 8%);
+  --weather-card-icon-bg: color-mix(in srgb, rgb(255 255 255 / 0.14) 76%, var(--accent) 24%);
+  --weather-card-icon-border: color-mix(in srgb, var(--accent) 18%, rgb(255 255 255 / 0.08));
+  --weather-card-icon-color: color-mix(in srgb, white 80%, var(--accent) 20%);
+  --weather-card-chevron-bg: color-mix(in srgb, rgb(255 255 255 / 0.1) 72%, var(--accent) 28%);
+  --weather-card-chevron-color: color-mix(in srgb, white 84%, var(--accent) 16%);
+  --weather-modal-hero-bg:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 26%, transparent), transparent 52%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, var(--surface-elevated) 82%), color-mix(in srgb, var(--accent-2) 12%, var(--surface-strong) 88%));
+  --weather-modal-hero-border: color-mix(in srgb, var(--accent) 18%, var(--stroke));
+  --weather-modal-detail-bg: color-mix(in srgb, var(--surface-alt) 92%, var(--accent) 8%);
+  --weather-modal-detail-border: color-mix(in srgb, var(--accent) 12%, var(--stroke));
+  --weather-modal-detail-icon-bg: color-mix(in srgb, var(--accent) 12%, var(--surface-elevated) 88%);
+  --weather-modal-detail-icon-border: color-mix(in srgb, var(--accent) 16%, var(--stroke));
+  --weather-modal-source-bg: color-mix(in srgb, var(--surface-alt) 88%, var(--accent) 12%);
+  --weather-modal-source-border: color-mix(in srgb, var(--accent) 22%, var(--stroke));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -5179,6 +5265,32 @@ footer h3 {
     --theme-map-border: color-mix(in srgb, var(--accent) 16%, var(--stroke));
     --theme-icon-surface: color-mix(in srgb, var(--surface-elevated) 93%, var(--accent) 7%);
     --theme-icon-border: color-mix(in srgb, var(--accent) 14%, var(--stroke));
+    --weather-card-bg:
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 42%),
+      linear-gradient(135deg, color-mix(in srgb, var(--accent) 26%, var(--surface-elevated) 74%), color-mix(in srgb, var(--accent-2) 16%, var(--surface-strong) 84%));
+    --weather-card-border: color-mix(in srgb, var(--accent) 22%, var(--stroke-strong));
+    --weather-card-border-hover: color-mix(in srgb, var(--accent) 32%, var(--stroke-strong));
+    --weather-card-shadow: 0 20px 44px color-mix(in srgb, rgba(2, 8, 23, 0.54) 70%, var(--accent-soft) 30%);
+    --weather-card-shadow-hover: 0 28px 58px color-mix(in srgb, rgba(2, 8, 23, 0.62) 68%, var(--accent-soft) 32%);
+    --weather-card-title: color-mix(in srgb, white 88%, var(--accent) 12%);
+    --weather-card-text: color-mix(in srgb, white 78%, var(--accent) 22%);
+    --weather-card-meta: color-mix(in srgb, white 64%, var(--accent) 36%);
+    --weather-card-temp: color-mix(in srgb, white 92%, var(--accent) 8%);
+    --weather-card-icon-bg: color-mix(in srgb, rgb(255 255 255 / 0.14) 76%, var(--accent) 24%);
+    --weather-card-icon-border: color-mix(in srgb, var(--accent) 18%, rgb(255 255 255 / 0.08));
+    --weather-card-icon-color: color-mix(in srgb, white 80%, var(--accent) 20%);
+    --weather-card-chevron-bg: color-mix(in srgb, rgb(255 255 255 / 0.1) 72%, var(--accent) 28%);
+    --weather-card-chevron-color: color-mix(in srgb, white 84%, var(--accent) 16%);
+    --weather-modal-hero-bg:
+      radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 26%, transparent), transparent 52%),
+      linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, var(--surface-elevated) 82%), color-mix(in srgb, var(--accent-2) 12%, var(--surface-strong) 88%));
+    --weather-modal-hero-border: color-mix(in srgb, var(--accent) 18%, var(--stroke));
+    --weather-modal-detail-bg: color-mix(in srgb, var(--surface-alt) 92%, var(--accent) 8%);
+    --weather-modal-detail-border: color-mix(in srgb, var(--accent) 12%, var(--stroke));
+    --weather-modal-detail-icon-bg: color-mix(in srgb, var(--accent) 12%, var(--surface-elevated) 88%);
+    --weather-modal-detail-icon-border: color-mix(in srgb, var(--accent) 16%, var(--stroke));
+    --weather-modal-source-bg: color-mix(in srgb, var(--surface-alt) 88%, var(--accent) 12%);
+    --weather-modal-source-border: color-mix(in srgb, var(--accent) 22%, var(--stroke));
   }
 }
 
@@ -5653,6 +5765,172 @@ footer::before {
   color: var(--muted);
 }
 
+button.weather-card.weather-card-link,
+button.weather-card.weather-card-link:hover,
+button.weather-card.weather-card-link:active {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--weather-card-border) !important;
+  background: var(--weather-card-bg) !important;
+  box-shadow: var(--weather-card-shadow) !important;
+  color: var(--weather-card-text) !important;
+}
+
+button.weather-card.weather-card-link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.18), transparent 46%),
+    linear-gradient(135deg, rgb(255 255 255 / 0.08), transparent 34%);
+  opacity: 0.82;
+}
+
+button.weather-card.weather-card-link > * {
+  position: relative;
+  z-index: 1;
+}
+
+button.weather-card.weather-card-link:hover,
+button.weather-card.weather-card-link:focus-visible {
+  border-color: var(--weather-card-border-hover) !important;
+  box-shadow: var(--weather-card-shadow-hover) !important;
+}
+
+button.weather-card.weather-card-link:active {
+  transform: translateY(0);
+  filter: saturate(0.98);
+}
+
+button.weather-card.weather-card-link:focus-visible {
+  outline: 2px solid var(--weather-card-border-hover);
+  outline-offset: 3px;
+}
+
+.weather-card .weather-card-main {
+  gap: 0.92rem;
+  align-items: center;
+}
+
+.weather-card .weather-copy {
+  gap: 0.22rem;
+}
+
+.weather-card .weather-title {
+  color: var(--weather-card-title) !important;
+  font-size: clamp(1.08rem, 1.45vw, 1.28rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.weather-card .weather-source {
+  color: var(--weather-card-text) !important;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.weather-card .weather-source-meta {
+  color: var(--weather-card-meta) !important;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.weather-card .weather-temperature {
+  color: var(--weather-card-temp) !important;
+  font-size: clamp(1.45rem, 2vw, 1.95rem);
+  font-weight: 800;
+}
+
+.weather-card .weather-icon,
+.weather-modal-hero .weather-icon {
+  background: var(--weather-card-icon-bg) !important;
+  color: var(--weather-card-icon-color) !important;
+  border: 1px solid var(--weather-card-icon-border) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
+}
+
+.weather-card .weather-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+}
+
+.weather-card .weather-card-chevron {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--weather-card-chevron-bg) !important;
+  color: var(--weather-card-chevron-color) !important;
+  border: 1px solid var(--weather-card-icon-border) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14);
+}
+
+.weather-card .weather-svg--arrow {
+  width: 20px;
+  height: 20px;
+}
+
+.weather-modal-hero {
+  border-color: var(--weather-modal-hero-border) !important;
+  background: var(--weather-modal-hero-bg) !important;
+}
+
+.weather-modal-hero-copy strong,
+.weather-modal-temp strong {
+  color: var(--weather-card-title) !important;
+}
+
+.weather-modal-hero-copy span,
+.weather-modal-temp span {
+  color: var(--weather-card-text) !important;
+}
+
+.weather-detail-card {
+  border-color: var(--weather-modal-detail-border) !important;
+  background: var(--weather-modal-detail-bg) !important;
+}
+
+.weather-detail-icon {
+  background: var(--weather-modal-detail-icon-bg) !important;
+  color: var(--weather-card-icon-color) !important;
+  border: 1px solid var(--weather-modal-detail-icon-border) !important;
+}
+
+.weather-detail-label {
+  color: var(--weather-card-meta) !important;
+}
+
+.weather-detail-value {
+  color: var(--weather-card-title) !important;
+}
+
+.weather-modal-source {
+  border-color: var(--weather-modal-source-border) !important;
+  background: var(--weather-modal-source-bg) !important;
+  color: var(--weather-card-text) !important;
+}
+
+.menu-inline-search .search-row .more-toggle-btn {
+  width: 52px !important;
+  min-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  justify-content: center !important;
+}
+
+.menu-inline-search .search-row .more-toggle-btn #menuToggleText {
+  display: none !important;
+}
+
+.menu-inline-search .search-row .more-toggle-icon {
+  width: auto !important;
+  min-width: 0 !important;
+  font-size: 1.18rem !important;
+}
+
 @keyframes uiSoftUp {
   from {
     opacity: 0;
@@ -5904,6 +6182,8 @@ footer::before {
 .vehicle-favorite-btn {
   color: color-mix(in srgb, #f59e0b 72%, var(--muted) 28%) !important;
   font-size: 1.45rem !important;
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", "Source Sans 3", sans-serif !important;
+  font-variant-emoji: text;
 }
 
 .vehicle-favorite-btn:hover,
@@ -6229,5 +6509,38 @@ body::before {
     radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--bg-glow-b) 78%, transparent), transparent 21%),
     radial-gradient(circle at 54% 100%, color-mix(in srgb, var(--bg-glow-c) 74%, transparent), transparent 35%);
   opacity: 0.9;
+}
+
+.vehicle-photo-info {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 0.72rem !important;
+  flex-wrap: wrap !important;
+}
+
+.vehicle-photo-counter {
+  justify-self: auto !important;
+  align-self: flex-start !important;
+}
+
+.vehicle-photo-meta {
+  width: auto !important;
+  max-width: min(100%, 34rem);
+  min-width: min(100%, 18rem);
+  flex: 0 1 34rem;
+}
+
+.vehicle-photo-meta-card {
+  width: 100%;
+}
+
+.menu-inline-search .search-row .more-toggle-btn,
+.menu-inline-search .search-row .more-toggle-btn:hover,
+.menu-inline-search .search-row .more-toggle-btn:active,
+.menu-inline-search .search-row .more-toggle-btn.active {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 

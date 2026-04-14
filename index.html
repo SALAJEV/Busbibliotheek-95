@@ -233,12 +233,12 @@
         <button id="halteSearchToggleBtn" class="btn more-secondary-btn" type="button" title="Halte zoeken" aria-label="Halte zoeken">Halte zoeken</button>
       </div>
     </section>
-    <section class="more-panel-section">
+    <section class="more-panel-section settings-panel-section">
       <div class="more-panel-section-head">
         <h4 id="settingsTitle">Instellingen</h4>
       </div>
       <div class="settings-grid">
-        <div>
+        <div class="settings-card">
           <label for="intervalSelect" id="intervalLabel">Update-interval</label>
           <select id="intervalSelect">
             <option value="10000" selected id="intervalOpt10">10 seconden</option>
@@ -246,7 +246,7 @@
             <option value="30000" id="intervalOpt30">30 seconden</option>
           </select>
         </div>
-        <div>
+        <div class="settings-card">
           <label for="themeSelect" id="themeLabel">Thema</label>
           <select id="themeSelect">
             <option value="auto" id="themeAutoOpt">Automatisch</option>
@@ -254,7 +254,7 @@
             <option value="dark" id="themeDarkOpt">Donker</option>
           </select>
         </div>
-        <div>
+        <div class="settings-card">
           <label for="colorThemeSelect" id="colorThemeLabel">Kleurthema</label>
           <select id="colorThemeSelect">
             <option value="classic" id="colorClassicOpt" selected>Standaard</option>
@@ -266,7 +266,7 @@
             <option value="purple" id="colorPurpleOpt">Paars</option>
           </select>
         </div>
-        <div>
+        <div class="settings-card">
           <label for="languageSelect" id="languageLabel">Taal</label>
           <select id="languageSelect">
             <option value="nl">Nederlands</option>
