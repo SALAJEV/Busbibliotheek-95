@@ -403,7 +403,7 @@ fun WebViewScreen(
                                 (context as Activity).runOnUiThread {
                                     Toast.makeText(context, context.getString(R.string.download_started), Toast.LENGTH_SHORT).show()
                                 }
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 (context as Activity).runOnUiThread {
                                     try {
                                         context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
@@ -461,7 +461,7 @@ fun WebViewScreen(
                         fun processDownload(base64Data: String, contentType: String) {
                             try {
                                 saveBase64Download(base64Data, null, contentType)
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 (context as Activity).runOnUiThread {
                                     Toast.makeText(context, context.getString(R.string.download_failed), Toast.LENGTH_SHORT).show()
                                 }
@@ -473,7 +473,7 @@ fun WebViewScreen(
                         fun processDownloadNamed(base64Data: String, fileName: String, contentType: String) {
                             try {
                                 saveBase64Download(base64Data, fileName, contentType)
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 (context as Activity).runOnUiThread {
                                     Toast.makeText(context, context.getString(R.string.download_failed), Toast.LENGTH_SHORT).show()
                                 }

@@ -6598,7 +6598,12 @@ body::before {
 
 @media (max-width: 700px) {
   .menu-overlay {
+    display: grid !important;
+    place-items: center !important;
+    align-content: center !important;
     justify-items: center !important;
+    min-height: 100dvh !important;
+    min-height: var(--app-height) !important;
     padding:
       max(0.7rem, env(safe-area-inset-top))
       max(0.6rem, env(safe-area-inset-right))
@@ -6607,12 +6612,13 @@ body::before {
   }
 
   #favoritesPanel.menu-sheet {
+    align-self: center !important;
     justify-self: center !important;
-    width: min(100%, calc(100vw - 1.2rem)) !important;
+    width: calc(100vw - 1.2rem) !important;
     max-width: 430px !important;
     height: auto !important;
     max-height: min(calc(var(--app-height) - 1.4rem), calc(100dvh - 1.4rem)) !important;
-    margin-inline: auto !important;
+    margin: auto !important;
   }
 }
 
