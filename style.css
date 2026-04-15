@@ -5979,10 +5979,16 @@ button.weather-card.weather-card-link:focus-visible {
   gap: 0.18rem;
 }
 
-.vehicle-favorite-btn,
-.vehicle-favorite-btn:hover,
-.vehicle-favorite-btn:active,
-.vehicle-favorite-btn.is-favorite {
+#favoriteInlineBtn.vehicle-favorite-btn,
+#favoriteInlineBtn.vehicle-favorite-btn:hover,
+#favoriteInlineBtn.vehicle-favorite-btn:active,
+#favoriteInlineBtn.vehicle-favorite-btn:focus-visible,
+#favoriteInlineBtn.vehicle-favorite-btn.is-favorite {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
   width: auto !important;
   min-width: 0 !important;
   height: auto !important;
@@ -5991,20 +5997,21 @@ button.weather-card.weather-card-link:focus-visible {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
+  background-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
   filter: none !important;
 }
 
-.vehicle-favorite-btn {
+#favoriteInlineBtn.vehicle-favorite-btn {
   color: color-mix(in srgb, #f59e0b 72%, var(--muted) 28%) !important;
   font-size: 1.45rem !important;
   font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", "Source Sans 3", sans-serif !important;
   font-variant-emoji: text;
 }
 
-.vehicle-favorite-btn:hover,
-.vehicle-favorite-btn.is-favorite {
+#favoriteInlineBtn.vehicle-favorite-btn:hover,
+#favoriteInlineBtn.vehicle-favorite-btn.is-favorite {
   color: #f59e0b !important;
 }
 

@@ -360,8 +360,8 @@ fun WebViewScreen(
                         cacheMode = WebSettings.LOAD_DEFAULT
                         loadWithOverviewMode = true
                         useWideViewPort = true
-                        setSupportZoom(false)
-                        builtInZoomControls = false
+                        setSupportZoom(true)
+                        builtInZoomControls = true
                         displayZoomControls = false
                         textZoom = 100
                         mediaPlaybackRequiresUserGesture = false
@@ -516,6 +516,25 @@ fun WebViewScreen(
                         }
                         override fun onPermissionRequest(request: PermissionRequest?) {
                             (context as Activity).runOnUiThread { request?.grant(request.resources) }
+                        }
+                        override fun onJsAlert(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                            android.app.AlertDialog.Builder(context)
+                                .setMessage(message)
+                                .setPositiveButton(android.R.string.ok) { _, _ -> result?.confirm() }
+                                .setOnCancelListener { result?.cancel() }
+                                .setCancelable(false)
+                                .show()
+                            return true
+                        }
+                        override fun onJsConfirm(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                            android.app.AlertDialog.Builder(context)
+                                .setMessage(message)
+                                .setPositiveButton(android.R.string.ok) { _, _ -> result?.confirm() }
+                                .setNegativeButton(android.R.string.cancel) { _, _ -> result?.cancel() }
+                                .setOnCancelListener { result?.cancel() }
+                                .setCancelable(false)
+                                .show()
+                            return true
                         }
                         override fun onShowFileChooser(webView: WebView?, filePathCallbackIn: ValueCallback<Array<Uri>>?, fileChooserParams: FileChooserParams?): Boolean {
                             filePathCallback?.onReceiveValue(null)
