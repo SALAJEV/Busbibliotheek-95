@@ -3532,10 +3532,10 @@ function getFallbackPhotoEntries(vehicleId, suffixesOverride = null) {
           seen.add(src);
           fallbackEntries.push(buildVehiclePhotoEntry(src, folderName, fallbackEntries.length));
         });
-        const legacySrc = buildAppAssetPath(`media/${encodeURIComponent(fileName)}`);
-        if (seen.has(legacySrc)) return;
-        seen.add(legacySrc);
-        fallbackEntries.push(buildVehiclePhotoEntry(legacySrc, "", fallbackEntries.length));
+        const rootMediaSrc = buildAppAssetPath(`media/${encodeURIComponent(fileName)}`);
+        if (seen.has(rootMediaSrc)) return;
+        seen.add(rootMediaSrc);
+        fallbackEntries.push(buildVehiclePhotoEntry(rootMediaSrc, "", fallbackEntries.length));
       });
     });
   });
@@ -4001,20 +4001,20 @@ function getWeatherCurrentSnapshot(weatherData) {
     : null;
   if (current) return current;
 
-  const legacyCurrent = weatherData.current_weather && typeof weatherData.current_weather === "object"
+  const fallbackCurrent = weatherData.current_weather && typeof weatherData.current_weather === "object"
     ? weatherData.current_weather
     : null;
-  if (!legacyCurrent) return null;
+  if (!fallbackCurrent) return null;
 
   return {
-    temperature_2m: typeof legacyCurrent.temperature === "number" ? legacyCurrent.temperature : null,
-    apparent_temperature: typeof legacyCurrent.apparent_temperature === "number" ? legacyCurrent.apparent_temperature : null,
-    is_day: legacyCurrent.is_day,
-    precipitation: typeof legacyCurrent.precipitation === "number" ? legacyCurrent.precipitation : null,
-    weather_code: legacyCurrent.weather_code ?? legacyCurrent.weathercode ?? null,
-    wind_speed_10m: typeof legacyCurrent.wind_speed === "number"
-      ? legacyCurrent.wind_speed
-      : (typeof legacyCurrent.windspeed === "number" ? legacyCurrent.windspeed : null)
+    temperature_2m: typeof fallbackCurrent.temperature === "number" ? fallbackCurrent.temperature : null,
+    apparent_temperature: typeof fallbackCurrent.apparent_temperature === "number" ? fallbackCurrent.apparent_temperature : null,
+    is_day: fallbackCurrent.is_day,
+    precipitation: typeof fallbackCurrent.precipitation === "number" ? fallbackCurrent.precipitation : null,
+    weather_code: fallbackCurrent.weather_code ?? fallbackCurrent.weathercode ?? null,
+    wind_speed_10m: typeof fallbackCurrent.wind_speed === "number"
+      ? fallbackCurrent.wind_speed
+      : (typeof fallbackCurrent.windspeed === "number" ? fallbackCurrent.windspeed : null)
   };
 }
 

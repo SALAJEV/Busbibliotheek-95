@@ -18,67 +18,10 @@
 <title>Busbibliotheek</title>
 <script>
   (function () {
-    var root = document.documentElement;
-    var addClass = function (className) {
-      if ((" " + root.className + " ").indexOf(" " + className + " ") >= 0) return;
-      root.className += (root.className ? " " : "") + className;
-    };
-    var removeClass = function (className) {
-      root.className = (" " + root.className + " ")
-        .replace(" " + className + " ", " ")
-        .replace(/\s+/g, " ")
-        .replace(/^\s+|\s+$/g, "");
-    };
-    var isFiniteNumber = function (value) {
-      return typeof value === "number" && isFinite(value);
-    };
-
-    addClass("preload");
-    addClass("legacy-browser");
-
-    var userAgent = window.navigator.userAgent || "";
-    var androidMatch = userAgent.match(/Android\s+(\d+(?:\.\d+)?)/i);
-    var androidVersion = androidMatch && androidMatch[1] ? parseFloat(androidMatch[1]) : NaN;
-    var forceLegacyAndroid = /Android/i.test(userAgent) && isFiniteNumber(androidVersion) && androidVersion <= 6;
-    var supportsModernApp = false;
-
-    try {
-      supportsModernApp =
-        !!window.Promise &&
-        !!window.fetch &&
-        !!window.URL &&
-        !!window.URLSearchParams &&
-        !!window.Map &&
-        !!window.Set &&
-        !!document.querySelector &&
-        !!window.history &&
-        !!window.history.pushState &&
-        !!window.matchMedia;
-      if (supportsModernApp) {
-        new Function("const x = 1; let y = (z) => z + x; return y?.(1) ?? 0;");
-      }
-    } catch (error) {
-      supportsModernApp = false;
-    }
-
-    if (forceLegacyAndroid) supportsModernApp = false;
-
-    if (supportsModernApp) {
-      removeClass("legacy-browser");
-      addClass("modern-browser");
-    } else {
-      removeClass("modern-browser");
-      addClass("legacy-browser");
-      removeClass("preload");
-    }
-
-    if (forceLegacyAndroid) addClass("legacy-android6");
-    window.__BB_SUPPORTS_MODERN_APP__ = supportsModernApp;
-    window.__BB_FORCE_LEGACY_ANDROID__ = forceLegacyAndroid;
+    document.documentElement.classList.add("preload");
   })();
 </script>
-<link id="legacyStylesheet" rel="stylesheet" href="legacy.css?v=20260410-1">
-<link id="appStylesheet" rel="stylesheet" href="style.css?v=20260416-4">
+<link id="appStylesheet" rel="stylesheet" href="style.css?v=20260417-2">
 <script>
   (function () {
     var attachStylesheetFallback = function (id, fallbackHref) {
@@ -93,24 +36,11 @@
         document.head.appendChild(fallbackLink);
       });
     };
-    attachStylesheetFallback("legacyStylesheet", "legacy.css");
     attachStylesheetFallback("appStylesheet", "style.css");
   })();
 </script>
 </head>
 <body>
-<div class="legacy-experience legacy-only">
-  <div class="legacy-card">
-    <img src="media/logo.png" alt="Busbibliotheek" class="legacy-logo">
-    <h1>Busbibliotheek</h1>
-    <p>Je browser is te oud voor de volledige live-app. Daarom krijg je hier een lichtere, stabiele versie zonder kapotte styling of vastlopende bediening.</p>
-    <p>Voor realtime zoeken, kaart en dialoogvensters werkt Busbibliotheek het best in een recentere browser of in de Android-app.</p>
-    <div class="legacy-actions">
-      <a class="legacy-btn" href="./">Startpagina herladen</a>
-      <a id="legacyApkDownloadBtn" class="legacy-btn legacy-btn-secondary" href="android/app/release/app-release.apk">Android-app downloaden</a>
-    </div>
-  </div>
-</div>
 <div class="app-shell">
 <div id="splash" role="img" aria-label="Busbibliotheek laden">
   <picture class="logo">
@@ -551,26 +481,16 @@
 </div>
 
 <script>
-  if (window.__BB_FORCE_LEGACY_ANDROID__) {
-    var legacyApkDownloadBtn = document.getElementById("legacyApkDownloadBtn");
-    if (legacyApkDownloadBtn) {
-      legacyApkDownloadBtn.removeAttribute("href");
-      legacyApkDownloadBtn.hidden = true;
-      legacyApkDownloadBtn.setAttribute("aria-hidden", "true");
-    }
-  }
-  if (window.__BB_SUPPORTS_MODERN_APP__) {
-    document.documentElement.className = document.documentElement.className.replace(/\bpreload\b/g, "").trim();
-    var translationsScript = document.createElement("script");
-    translationsScript.src = "translations.js?v=20260218-1";
-    translationsScript.onload = function () {
-      var appScript = document.createElement("script");
-      appScript.src = "app.js?v=20260417-1";
-      appScript.defer = true;
-      document.body.appendChild(appScript);
-    };
-    document.body.appendChild(translationsScript);
-  }
+  document.documentElement.className = document.documentElement.className.replace(/\bpreload\b/g, "").trim();
+  var translationsScript = document.createElement("script");
+  translationsScript.src = "translations.js?v=20260218-1";
+  translationsScript.onload = function () {
+    var appScript = document.createElement("script");
+    appScript.src = "app.js?v=20260417-2";
+    appScript.defer = true;
+    document.body.appendChild(appScript);
+  };
+  document.body.appendChild(translationsScript);
 </script>
 </body>
 </html>

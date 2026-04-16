@@ -4,38 +4,14 @@
    BOOT VISIBILITY
 ================================ */
 
-.legacy-only {
-  display: none;
-}
-
 .app-shell {
-  visibility: hidden;
-}
-
-html.modern-browser:not(.preload) .app-shell {
   visibility: visible;
+  position: relative;
+  z-index: 1;
 }
 
-html.legacy-browser .app-shell {
-  display: none !important;
-}
-
-html.legacy-browser .legacy-only {
-  display: block !important;
-}
-
-html.legacy-android6 .legacy-btn-secondary {
-  display: none !important;
-}
-
-/* If JavaScript is disabled, no support-detection classes are added.
-   In that case we intentionally fall back to the lightweight legacy view. */
-html:not(.modern-browser):not(.legacy-browser) .app-shell {
-  display: none !important;
-}
-
-html:not(.modern-browser):not(.legacy-browser) .legacy-only {
-  display: block !important;
+html.preload .app-shell {
+  visibility: hidden;
 }
 
 /* ===============================
@@ -5180,12 +5156,6 @@ body::after {
   background-size: var(--bg-pattern-size) !important;
   background-position: var(--bg-pattern-position, 0 0) !important;
   opacity: var(--bg-pattern-opacity, 0.14) !important;
-}
-
-.legacy-experience,
-.app-shell {
-  position: relative;
-  z-index: 1;
 }
 
 body,
