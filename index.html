@@ -77,8 +77,26 @@
     window.__BB_FORCE_LEGACY_ANDROID__ = forceLegacyAndroid;
   })();
 </script>
-<link rel="stylesheet" href="legacy.css?v=20260410-1">
-<link rel="stylesheet" href="style.css?v=20260416-3">
+<link id="legacyStylesheet" rel="stylesheet" href="legacy.css?v=20260410-1">
+<link id="appStylesheet" rel="stylesheet" href="style.css?v=20260416-4">
+<script>
+  (function () {
+    var attachStylesheetFallback = function (id, fallbackHref) {
+      var link = document.getElementById(id);
+      if (!link) return;
+      link.addEventListener("error", function () {
+        if (link.dataset.fallbackApplied === "1") return;
+        link.dataset.fallbackApplied = "1";
+        var fallbackLink = document.createElement("link");
+        fallbackLink.rel = "stylesheet";
+        fallbackLink.href = fallbackHref;
+        document.head.appendChild(fallbackLink);
+      });
+    };
+    attachStylesheetFallback("legacyStylesheet", "legacy.css");
+    attachStylesheetFallback("appStylesheet", "style.css");
+  })();
+</script>
 </head>
 <body>
 <div class="legacy-experience legacy-only">
@@ -547,7 +565,7 @@
     translationsScript.src = "translations.js?v=20260218-1";
     translationsScript.onload = function () {
       var appScript = document.createElement("script");
-      appScript.src = "app.js?v=20260416-4";
+      appScript.src = "app.js?v=20260416-6";
       appScript.defer = true;
       document.body.appendChild(appScript);
     };

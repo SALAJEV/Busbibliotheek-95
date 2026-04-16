@@ -130,6 +130,21 @@ const themeColorMetaEls = Array.from(document.querySelectorAll('meta[name="theme
 const colorSchemeMetaEl = document.querySelector('meta[name="color-scheme"]');
 const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
 const stalkModeMediaQuery = window.matchMedia("(min-width: 981px)");
+const platformUserAgent = window.navigator.userAgent || "";
+const appleTouchDesktopPlatform =
+  /Mac/i.test(window.navigator.platform || "") &&
+  (window.navigator.maxTouchPoints || 0) > 1;
+const isIosPlatform = /iPhone|iPad|iPod/i.test(platformUserAgent) || appleTouchDesktopPlatform;
+const isAndroidPlatform = /Android/i.test(platformUserAgent);
+const isAndroidWebView = isAndroidPlatform && /\bwv\b|Version\/[\d.]+/i.test(platformUserAgent);
+const isAndroidTvPlatform = isAndroidPlatform && /(TV|AFT|BRAVIA|GoogleTV|SmartTV|HbbTV)/i.test(platformUserAgent);
+const androidVersionMatch = platformUserAgent.match(/Android\s+(\d+(?:\.\d+)?)/i);
+const androidVersion = androidVersionMatch ? Number(androidVersionMatch[1]) : NaN;
+const isAndroid6OrLower = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion <= 6;
+const isAndroidAbove6 = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion > 6;
+let androidHostThemeMode = (document.documentElement.dataset.androidTheme || "").toLowerCase();
+const touchPointerMediaQuery = window.matchMedia ? window.matchMedia("(hover: none), (pointer: coarse)") : null;
+touchPointerMediaQuery?.addEventListener?.("change", syncPlatformBodyClasses);
 
 function isStandaloneDisplayMode() {
   if (window.matchMedia?.("(display-mode: standalone)")?.matches) return true;
@@ -1111,21 +1126,6 @@ let settings = {
   language: "nl",
   dashboardVehicleIds: []
 };
-const platformUserAgent = window.navigator.userAgent || "";
-const appleTouchDesktopPlatform =
-  /Mac/i.test(window.navigator.platform || "") &&
-  (window.navigator.maxTouchPoints || 0) > 1;
-const isIosPlatform = /iPhone|iPad|iPod/i.test(platformUserAgent) || appleTouchDesktopPlatform;
-const isAndroidPlatform = /Android/i.test(platformUserAgent);
-const isAndroidWebView = isAndroidPlatform && /\bwv\b|Version\/[\d.]+/i.test(platformUserAgent);
-const isAndroidTvPlatform = isAndroidPlatform && /(TV|AFT|BRAVIA|GoogleTV|SmartTV|HbbTV)/i.test(platformUserAgent);
-const androidVersionMatch = platformUserAgent.match(/Android\s+(\d+(?:\.\d+)?)/i);
-const androidVersion = androidVersionMatch ? Number(androidVersionMatch[1]) : NaN;
-const isAndroid6OrLower = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion <= 6;
-const isAndroidAbove6 = isAndroidPlatform && Number.isFinite(androidVersion) && androidVersion > 6;
-let androidHostThemeMode = (document.documentElement.dataset.androidTheme || "").toLowerCase();
-const touchPointerMediaQuery = window.matchMedia ? window.matchMedia("(hover: none), (pointer: coarse)") : null;
-touchPointerMediaQuery?.addEventListener?.("change", syncPlatformBodyClasses);
 const HALTE_CODE_REGEX = /^[1-5]\d{5}$/;
 const HALTE_SEARCH_LIMIT = 8;
 let halteSearchRequestToken = 0;

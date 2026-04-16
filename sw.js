@@ -1,14 +1,14 @@
-const CACHE_NAME = 'busbibliotheek-v65';
+const CACHE_NAME = 'busbibliotheek-v67';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/app.js',
-  '/app.js?v=20260416-4',
+  '/app.js?v=20260416-6',
   '/legacy.css',
   '/legacy.css?v=20260410-1',
   '/manifest.json',
   '/style.css',
-  '/style.css?v=20260416-3',
+  '/style.css?v=20260416-4',
   '/translations.js',
   '/translations.js?v=20260218-1',
   '/media/logo.png',
@@ -118,6 +118,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  const isSameOriginStaticAsset =
+    url.origin === self.location.origin &&
+    !url.pathname.includes('/api') &&
+    !url.pathname.startsWith('/media/');
+
+  const matchLocalAsset = () =>
+    caches.match(request).then(cached => {
+      if (cached) return cached;
+      if (isSameOriginStaticAsset) {
+        return caches.match(request, { ignoreSearch: true });
+      }
+      return undefined;
+    });
+
   // External calls: network first, fallback to cache
   if (url.hostname !== self.location.hostname) {
     event.respondWith(
@@ -137,7 +151,7 @@ self.addEventListener('fetch', event => {
     );
   } else { // Static assets: stale-while-revalidate
     event.respondWith(
-      caches.match(request).then(cached => {
+      matchLocalAsset().then(cached => {
         const networkFetch = fetch(request)
           .then(response => {
             if (response && response.status === 200) {
