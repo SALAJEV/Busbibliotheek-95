@@ -128,7 +128,14 @@
       <div class="header-actions">
         <button id="installBtn" title="App installeren op thuisscherm">Installeer App</button>
         <div class="favorites-top">
-          <button id="favoritesToggleBtn" class="icon-btn more-toggle-btn" type="button" title="Menu" aria-label="Menu" aria-controls="favoritesPanel" aria-expanded="false"><span class="more-toggle-icon" aria-hidden="true">⋮</span><span id="menuToggleText">Menu</span></button>
+          <button id="favoritesToggleBtn" class="icon-btn more-toggle-btn" type="button" title="Menu" aria-label="Menu" aria-controls="favoritesPanel" aria-expanded="false">
+            <svg class="more-toggle-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <path d="M6.5 7.25h11"></path>
+              <path d="M10 12h7.5"></path>
+              <path d="M13 16.75h4.5"></path>
+            </svg>
+            <span id="menuToggleText">Menu</span>
+          </button>
         </div>
       </div>
       <div class="header-visual" aria-hidden="true">
@@ -236,7 +243,7 @@
 
 <div id="favoritesBackdrop" class="menu-overlay" hidden aria-hidden="true">
   <div class="menu-overlay-scrim" data-menu-close="true"></div>
-  <div id="favoritesPanel" class="favorites-panel more-panel menu-sheet" role="dialog" aria-modal="true" aria-labelledby="morePanelTitle" aria-hidden="true" inert>
+  <div id="favoritesPanel" class="favorites-panel more-panel menu-sheet" role="dialog" aria-modal="true" aria-labelledby="morePanelTitle" aria-hidden="true" hidden inert>
     <div class="more-panel-header">
       <div>
         <h3 id="morePanelTitle">Meer</h3>
@@ -540,7 +547,7 @@
     translationsScript.src = "translations.js?v=20260218-1";
     translationsScript.onload = function () {
       var appScript = document.createElement("script");
-      appScript.src = "app.js?v=20260411-1";
+      appScript.src = "app.js?v=20260416-2";
       appScript.defer = true;
       document.body.appendChild(appScript);
     };

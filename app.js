@@ -141,6 +141,20 @@ function isTouchPlatform() {
   return Boolean(touchPointerMediaQuery?.matches || window.navigator.maxTouchPoints > 0);
 }
 
+function getViewportWidth() {
+  return window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || window.screen?.width || 0;
+}
+
+function getViewportHeight() {
+  return window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || window.screen?.height || 0;
+}
+
+function isTabletLikeViewport() {
+  const shortSide = Math.min(getViewportWidth(), getViewportHeight());
+  const longSide = Math.max(getViewportWidth(), getViewportHeight());
+  return shortSide >= 720 || (shortSide >= 600 && longSide >= 960);
+}
+
 function isAndroidHostApp() {
   try {
     return /BusbibliotheekApp\//i.test(platformUserAgent) || typeof window.Android?.downloadFile === "function";
@@ -151,9 +165,10 @@ function isAndroidHostApp() {
 
 function supportsEnhancedDialogs() {
   try {
-    if (isAndroidWebView) return false;
     if (!window.CSS || typeof window.CSS.supports !== "function") return false;
-    return window.CSS.supports("position", "fixed");
+    if (!window.CSS.supports("position", "fixed")) return false;
+    if (isAndroid6OrLower || isAndroidTvPlatform) return false;
+    return true;
   } catch (_) {
     return false;
   }
@@ -163,12 +178,20 @@ function syncPlatformBodyClasses() {
   if (!document.body) return;
   const isStandalone = isStandaloneDisplayMode();
   const isHostApp = isAndroidHostApp();
+  const isTablet = isTabletLikeViewport();
+  const isLandscape = getViewportWidth() > getViewportHeight();
   document.body.classList.toggle("platform-touch", isTouchPlatform());
+  document.body.classList.toggle("platform-ios", isIosPlatform);
   document.body.classList.toggle("platform-android", isAndroidPlatform);
   document.body.classList.toggle("platform-android-webview", isAndroidWebView);
   document.body.classList.toggle("platform-android-host-app", isHostApp);
   document.body.classList.toggle("platform-android-tv", isAndroidTvPlatform);
+  document.body.classList.toggle("platform-tablet", isTablet);
+  document.body.classList.toggle("platform-phone", !isTablet);
+  document.body.classList.toggle("platform-landscape", isLandscape);
+  document.body.classList.toggle("platform-portrait", !isLandscape);
   document.body.classList.toggle("platform-standalone", isStandalone);
+  document.body.classList.toggle("platform-ios-standalone", isIosPlatform && isStandalone);
   document.body.classList.toggle("platform-android-standalone", isAndroidPlatform && isStandalone);
   document.body.classList.toggle("dialog-fallback", !supportsEnhancedDialogs());
 }
@@ -228,6 +251,8 @@ window.matchMedia?.("(display-mode: fullscreen)")?.addEventListener?.("change", 
   syncPlatformBodyClasses();
   syncInstallButtonVisibility();
 });
+window.addEventListener("resize", syncPlatformBodyClasses, { passive: true });
+window.addEventListener("orientationchange", syncPlatformBodyClasses, { passive: true });
 
 const lastUpdateEl = document.getElementById("lastUpdate");
 const appTitleBtnEl = document.getElementById("appTitleBtn");
@@ -454,6 +479,10 @@ let favoriteDragSuppressUntil = 0;
 const overlayModalElements = [];
 const overlayModalRestoreFocusMap = new WeakMap();
 let interactiveOverlayStack = [];
+const usesOverlayCompatibilityMode = () =>
+  isAndroidHostApp() ||
+  isAndroidWebView ||
+  isAndroidTvPlatform;
 const KNOWN_PHOTOGRAPHER_FOLDERS = [
   "Busspotter 95",
   "Robin Van de Ven",
@@ -747,7 +776,14 @@ const PHOTO_LIBRARY_INDEX = {
 function registerOverlayModal(modalEl) {
   if (!modalEl || overlayModalElements.includes(modalEl)) return;
   modalEl.setAttribute("aria-hidden", String(modalEl.hidden));
-  if ("inert" in modalEl) modalEl.inert = !!modalEl.hidden;
+  if ("inert" in modalEl) {
+    if (usesOverlayCompatibilityMode()) {
+      modalEl.inert = false;
+      modalEl.removeAttribute("inert");
+    } else {
+      modalEl.inert = !!modalEl.hidden;
+    }
+  }
   overlayModalElements.push(modalEl);
 }
 
@@ -762,6 +798,15 @@ function registerOverlayModal(modalEl) {
   weatherModalEl,
   funnyModalEl
 ].forEach(registerOverlayModal);
+
+if ("inert" in favoritesPanelEl) {
+  if (usesOverlayCompatibilityMode()) {
+    favoritesPanelEl.inert = false;
+    favoritesPanelEl.removeAttribute("inert");
+  } else {
+    favoritesPanelEl.inert = true;
+  }
+}
 
 function isOverlayOpen(overlayEl) {
   if (!overlayEl) return false;
@@ -845,21 +890,37 @@ function syncOverlayModalBodyState() {
 function syncInteractiveOverlayState() {
   const activeOverlayEl = getTopInteractiveOverlay();
   document.body.classList.toggle("overlay-open", !!activeOverlayEl);
+  document.body.classList.toggle("overlay-compat-mode", usesOverlayCompatibilityMode());
 
   if (appShellEl) {
     Array.from(appShellEl.children).forEach((childEl) => {
       if (!(childEl instanceof HTMLElement) || !("inert" in childEl)) return;
-      childEl.inert = !!activeOverlayEl && childEl !== activeOverlayEl;
+      if (usesOverlayCompatibilityMode()) {
+        childEl.inert = false;
+        childEl.removeAttribute("inert");
+      } else {
+        childEl.inert = !!activeOverlayEl && childEl !== activeOverlayEl;
+      }
     });
   }
 
   overlayModalElements.forEach((modalEl) => {
     if (!modalEl || !("inert" in modalEl)) return;
+    if (usesOverlayCompatibilityMode()) {
+      modalEl.inert = false;
+      modalEl.removeAttribute("inert");
+      return;
+    }
     modalEl.inert = modalEl.hidden || modalEl !== activeOverlayEl;
   });
 
   if (favoritesPanelEl && "inert" in favoritesPanelEl) {
-    favoritesPanelEl.inert = !favoritesPanelOpen || activeOverlayEl !== favoritesBackdropEl;
+    if (usesOverlayCompatibilityMode()) {
+      favoritesPanelEl.inert = false;
+      favoritesPanelEl.removeAttribute("inert");
+    } else {
+      favoritesPanelEl.inert = !favoritesPanelOpen || activeOverlayEl !== favoritesBackdropEl;
+    }
   }
 }
 
@@ -876,8 +937,14 @@ function openOverlayModal(modalEl, options = {}) {
   );
   modalEl.hidden = false;
   modalEl.setAttribute("aria-hidden", "false");
+  modalEl.setAttribute("data-overlay-state", "open");
   modalEl.classList.add("is-open");
   modalEl.style.display = "grid";
+  if (usesOverlayCompatibilityMode()) {
+    modalEl.style.visibility = "visible";
+    modalEl.style.opacity = "1";
+    modalEl.style.pointerEvents = "auto";
+  }
   if ("inert" in modalEl) modalEl.inert = false;
   pushInteractiveOverlay(modalEl);
   syncOverlayModalBodyState();
@@ -892,7 +959,11 @@ function closeOverlayModal(modalEl, options = {}) {
   overlayModalRestoreFocusMap.delete(modalEl);
   modalEl.classList.remove("is-open");
   modalEl.setAttribute("aria-hidden", "true");
+  modalEl.removeAttribute("data-overlay-state");
   modalEl.style.removeProperty("display");
+  modalEl.style.removeProperty("visibility");
+  modalEl.style.removeProperty("opacity");
+  modalEl.style.removeProperty("pointer-events");
   modalEl.hidden = true;
   if ("inert" in modalEl) modalEl.inert = true;
   removeInteractiveOverlay(modalEl);
@@ -1041,6 +1112,10 @@ let settings = {
   dashboardVehicleIds: []
 };
 const platformUserAgent = window.navigator.userAgent || "";
+const appleTouchDesktopPlatform =
+  /Mac/i.test(window.navigator.platform || "") &&
+  (window.navigator.maxTouchPoints || 0) > 1;
+const isIosPlatform = /iPhone|iPad|iPod/i.test(platformUserAgent) || appleTouchDesktopPlatform;
 const isAndroidPlatform = /Android/i.test(platformUserAgent);
 const isAndroidWebView = isAndroidPlatform && /\bwv\b|Version\/[\d.]+/i.test(platformUserAgent);
 const isAndroidTvPlatform = isAndroidPlatform && /(TV|AFT|BRAVIA|GoogleTV|SmartTV|HbbTV)/i.test(platformUserAgent);
@@ -4133,10 +4208,8 @@ async function updateWeatherForCoordinates(latitude, longitude) {
 }
 
 function isIosInstallable() {
-  const ua = window.navigator.userAgent;
-  const isIos = /iPhone|iPad|iPod/.test(ua);
   const isStandalone = isStandaloneDisplayMode();
-  return isIos && !isStandalone;
+  return isIosPlatform && !isStandalone;
 }
 
 function loadSettings() {
@@ -4690,19 +4763,47 @@ function setFavoritesPanel(open) {
     syncInteractiveOverlayState();
     return;
   }
-  if (shouldOpen === favoritesPanelOpen) return;
+  if (shouldOpen === favoritesPanelOpen) {
+    if (!shouldOpen) {
+      favoritesPanelEl.setAttribute("aria-hidden", "true");
+      favoritesPanelEl.hidden = true;
+      favoritesBackdropEl.setAttribute("aria-hidden", "true");
+      favoritesBackdropEl.removeAttribute("data-overlay-state");
+      favoritesBackdropEl.style.removeProperty("display");
+      favoritesBackdropEl.style.removeProperty("visibility");
+      favoritesBackdropEl.style.removeProperty("pointer-events");
+      favoritesBackdropEl.hidden = true;
+      favoritesToggleBtn.setAttribute("aria-expanded", "false");
+      favoritesToggleBtn.classList.remove("active");
+      document.body.classList.remove("more-open");
+      removeInteractiveOverlay(favoritesBackdropEl);
+      syncInteractiveOverlayState();
+    }
+    return;
+  }
   favoritesPanelOpen = shouldOpen;
   if (favoritesPanelOpen) {
     favoritesPanelRestoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : favoritesToggleBtn;
     favoritesBackdropEl.hidden = false;
     favoritesBackdropEl.setAttribute("aria-hidden", "false");
+    favoritesBackdropEl.setAttribute("data-overlay-state", "open");
+    favoritesBackdropEl.style.display = "grid";
+    favoritesBackdropEl.style.visibility = "visible";
+    favoritesBackdropEl.style.pointerEvents = "auto";
+    favoritesPanelEl.hidden = false;
+    favoritesPanelEl.setAttribute("aria-hidden", "false");
     pushInteractiveOverlay(favoritesBackdropEl);
   } else {
+    favoritesPanelEl.setAttribute("aria-hidden", "true");
+    favoritesPanelEl.hidden = true;
     favoritesBackdropEl.setAttribute("aria-hidden", "true");
+    favoritesBackdropEl.removeAttribute("data-overlay-state");
+    favoritesBackdropEl.style.removeProperty("display");
+    favoritesBackdropEl.style.removeProperty("visibility");
+    favoritesBackdropEl.style.removeProperty("pointer-events");
     favoritesBackdropEl.hidden = true;
     removeInteractiveOverlay(favoritesBackdropEl);
   }
-  favoritesPanelEl.setAttribute("aria-hidden", String(!favoritesPanelOpen));
   favoritesToggleBtn.setAttribute("aria-expanded", String(favoritesPanelOpen));
   favoritesToggleBtn.classList.toggle("active", favoritesPanelOpen);
   document.body.classList.toggle("more-open", favoritesPanelOpen);
@@ -4777,6 +4878,20 @@ function closeInteractiveOverlay(overlayEl) {
   closeOverlayModal(overlayEl);
   return true;
 }
+
+function closeTopInteractiveOverlay() {
+  return closeInteractiveOverlay(getTopInteractiveOverlay());
+}
+
+window.__BB_HAS_ACTIVE_OVERLAY__ = () => !!getTopInteractiveOverlay();
+window.__BB_CLOSE_TOP_OVERLAY__ = () => closeTopInteractiveOverlay();
+window.__BB_CLOSE_ACTIVE_VIEW__ = () => {
+  if (isDashboardPanelOpen()) {
+    closeDashboardPanel({ historyMode: "replace" });
+    return true;
+  }
+  return false;
+};
 
 function trapInteractiveOverlayFocus(event, overlayEl) {
   if (!overlayEl || event.key !== "Tab") return false;

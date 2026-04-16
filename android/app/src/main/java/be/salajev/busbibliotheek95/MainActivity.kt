@@ -332,15 +332,46 @@ fun WebViewScreen(
     }
 
     BackHandler {
-        if (webViewInstance?.canGoBack() == true) {
-            webViewInstance?.goBack()
-        } else {
+        val webView = webViewInstance
+        if (webView == null) {
             val currentTime = System.currentTimeMillis()
             if (currentTime - lastBackPressTime < 2000) {
                 (context as Activity).finish()
             } else {
                 lastBackPressTime = currentTime
                 Toast.makeText(context, context.getString(R.string.exit_toast), Toast.LENGTH_SHORT).show()
+            }
+            return@BackHandler
+        }
+
+        webView.evaluateJavascript(
+            """
+                (function() {
+                  try {
+                    if (typeof window.__BB_CLOSE_TOP_OVERLAY__ === 'function' && window.__BB_CLOSE_TOP_OVERLAY__()) return 'overlay';
+                    if (typeof window.__BB_CLOSE_ACTIVE_VIEW__ === 'function' && window.__BB_CLOSE_ACTIVE_VIEW__()) return 'view';
+                    return 'none';
+                  } catch (error) {
+                    return 'error';
+                  }
+                })();
+            """.trimIndent()
+        ) { rawResult ->
+            val result = rawResult?.trim()?.removePrefix("\"")?.removeSuffix("\"")
+            if (result == "overlay" || result == "view") {
+                return@evaluateJavascript
+            }
+
+            if (webView.canGoBack()) {
+                webView.goBack()
+            } else {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastBackPressTime < 2000) {
+                    (context as Activity).finish()
+                } else {
+                    lastBackPressTime = currentTime
+                    Toast.makeText(context, context.getString(R.string.exit_toast), Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -350,6 +381,9 @@ fun WebViewScreen(
             factory = { ctx ->
                 WebView(ctx).apply {
                     setBackgroundColor(siteColor.toArgb())
+                    setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                    isClickable = true
+                    isEnabled = true
                     isFocusable = true
                     isFocusableInTouchMode = true
                     requestFocus(View.FOCUS_DOWN)
