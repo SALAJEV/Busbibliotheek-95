@@ -6541,51 +6541,32 @@ body::before {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--button-secondary-border)) !important;
-  background:
-    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.18), transparent 40%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface-strong) 93%, white 7%), color-mix(in srgb, var(--surface-alt) 84%, #09111f 16%)) !important;
-  color: color-mix(in srgb, white 84%, var(--accent) 16%) !important;
+  border: 1px solid color-mix(in srgb, var(--button-border) 88%, white 12%) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg) 88%, white 12%), color-mix(in srgb, var(--accent-2) 84%, var(--button-bg) 16%)) !important;
+  color: var(--button-text) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(7, 13, 28, 0.24),
-    0 12px 26px color-mix(in srgb, var(--accent-soft) 14%, rgba(15, 23, 42, 0.12)) !important;
+    0 12px 28px color-mix(in srgb, var(--accent-soft) 28%, transparent) !important;
 }
 
 .menu-inline-search .search-row .more-toggle-btn::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: calc(var(--search-inline-action-radius) - 1px);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
-  opacity: 0.95;
-  pointer-events: none;
+  content: none;
 }
 
 .menu-inline-search .search-row .more-toggle-btn:hover {
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--button-secondary-border)) !important;
-  background:
-    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.22), transparent 42%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface-strong) 82%, white 18%), color-mix(in srgb, var(--accent-soft) 38%, var(--surface-alt))) !important;
-  color: #ffffff !important;
+  border-color: color-mix(in srgb, var(--accent) 72%, white 8%) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg-hover) 88%, white 12%), color-mix(in srgb, var(--accent) 82%, var(--button-bg-hover) 18%)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(7, 13, 28, 0.18),
-    0 16px 32px color-mix(in srgb, var(--accent-soft) 20%, rgba(15, 23, 42, 0.16)) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px color-mix(in srgb, var(--accent-soft) 34%, transparent) !important;
   transform: translateY(-1px);
 }
 
 .menu-inline-search .search-row .more-toggle-btn:active,
 .menu-inline-search .search-row .more-toggle-btn.active {
-  border-color: color-mix(in srgb, var(--accent) 56%, var(--button-secondary-border)) !important;
-  background:
-    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.24), transparent 42%),
-    linear-gradient(145deg, color-mix(in srgb, var(--accent-soft) 58%, white 6%), color-mix(in srgb, var(--surface-alt) 70%, var(--accent))) !important;
-  color: #ffffff !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(7, 13, 28, 0.18),
-    0 18px 34px color-mix(in srgb, var(--accent-soft) 24%, rgba(15, 23, 42, 0.18)) !important;
+  border-color: color-mix(in srgb, var(--button-border) 90%, black 10%) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--button-bg) 90%, white 10%), var(--button-bg)) !important;
+  box-shadow: var(--button-shadow) !important;
   transform: translateY(0);
 }
 
@@ -6598,7 +6579,7 @@ body::before {
   height: 1.08rem !important;
   min-width: 1.08rem !important;
   line-height: 1 !important;
-  opacity: 0.96;
+  opacity: 1;
   transform: none !important;
 }
 
@@ -7221,31 +7202,6 @@ footer > *,
   width: 58%;
   height: 9px;
   background: rgba(255, 255, 255, 0.42);
-}
-
-.header-visual-card--secondary {
-  top: 28px;
-  left: 28px;
-  width: 116px;
-  height: 66px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--surface-strong) 96%, white 4%), color-mix(in srgb, var(--surface-alt) 88%, var(--accent-soft) 12%));
-  transform: rotate(8deg);
-}
-
-.header-visual-card--secondary::before {
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  height: 11px;
-  background: color-mix(in srgb, var(--accent-soft) 72%, rgba(255, 255, 255, 0.72));
-}
-
-.header-visual-card--secondary::after {
-  left: 14px;
-  bottom: 14px;
-  width: 48%;
-  height: 7px;
-  background: color-mix(in srgb, var(--accent) 18%, rgba(255, 255, 255, 0.7));
 }
 
 .results-wrap {
