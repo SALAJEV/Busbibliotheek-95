@@ -21,6 +21,7 @@ import android.provider.Settings
 import android.view.View
 import android.webkit.*
 import android.widget.Toast
+import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -118,9 +119,17 @@ class MainActivity : ComponentActivity() {
                 var siteChromeIsDark by remember { mutableStateOf(isDarkTheme) }
                 
                 SideEffect {
+                    val systemBarColor = siteColor.toArgb()
+                    val systemBarStyle = if (siteChromeIsDark) {
+                        SystemBarStyle.dark(systemBarColor)
+                    } else {
+                        SystemBarStyle.light(systemBarColor, systemBarColor)
+                    }
+                    enableEdgeToEdge(
+                        statusBarStyle = systemBarStyle,
+                        navigationBarStyle = systemBarStyle
+                    )
                     val window = (context as Activity).window
-                    window.statusBarColor = siteColor.toArgb()
-                    window.navigationBarColor = siteColor.toArgb()
                     WindowCompat.getInsetsController(window, window.decorView).apply {
                         isAppearanceLightStatusBars = !siteChromeIsDark
                         isAppearanceLightNavigationBars = !siteChromeIsDark
