@@ -4299,7 +4299,11 @@ function applyTranslations() {
   appTitleEl.textContent = getLabel("appTitle", "Busbibliotheek");
   if (splashTitleEl) splashTitleEl.textContent = getLabel("appTitle", "Busbibliotheek");
   appSubtitleEl.textContent = t("subtitle");
-  appContextLineEl.textContent = t("appContextLine");
+  if (appContextLineEl) {
+    appContextLineEl.textContent = "";
+    appContextLineEl.hidden = true;
+    appContextLineEl.setAttribute("aria-hidden", "true");
+  }
   if (splashCreditEl) splashCreditEl.textContent = getLabel("madeBy", "Made by @delijn_busspotter");
   installBtn.textContent = t("install");
   const moreLabel = getLabel("more", "Meer");

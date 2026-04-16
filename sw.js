@@ -1,14 +1,14 @@
-const CACHE_NAME = 'busbibliotheek-v63';
+const CACHE_NAME = 'busbibliotheek-v65';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/app.js',
-  '/app.js?v=20260411-1',
+  '/app.js?v=20260416-4',
   '/legacy.css',
   '/legacy.css?v=20260410-1',
   '/manifest.json',
   '/style.css',
-  '/style.css?v=20260411-2',
+  '/style.css?v=20260416-3',
   '/translations.js',
   '/translations.js?v=20260218-1',
   '/media/logo.png',

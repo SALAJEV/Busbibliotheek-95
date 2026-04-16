@@ -78,7 +78,7 @@
   })();
 </script>
 <link rel="stylesheet" href="legacy.css?v=20260410-1">
-<link rel="stylesheet" href="style.css?v=20260416-1">
+<link rel="stylesheet" href="style.css?v=20260416-3">
 </head>
 <body>
 <div class="legacy-experience legacy-only">
@@ -109,7 +109,7 @@
       </button>
       <div class="header-copy">
         <p id="appSubtitle">Zoek een voertuig en volg het in realtime.</p>
-        <p id="appContextLine" class="app-context-line">Over bussen van de Vlaamse vervoermaatschappij De Lijn.</p>
+        <p id="appContextLine" class="app-context-line" hidden aria-hidden="true"></p>
       </div>
       <div class="search-shell">
         <div class="search-row">
@@ -547,7 +547,7 @@
     translationsScript.src = "translations.js?v=20260218-1";
     translationsScript.onload = function () {
       var appScript = document.createElement("script");
-      appScript.src = "app.js?v=20260416-2";
+      appScript.src = "app.js?v=20260416-4";
       appScript.defer = true;
       document.body.appendChild(appScript);
     };
