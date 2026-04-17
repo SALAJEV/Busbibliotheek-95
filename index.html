@@ -21,7 +21,7 @@
     document.documentElement.classList.add("preload");
   })();
 </script>
-<link id="appStylesheet" rel="stylesheet" href="style.css?v=20260417-22">
+<link id="appStylesheet" rel="stylesheet" href="style.css?v=20260417-23">
 <script>
   (function () {
     var attachStylesheetFallback = function (id, fallbackHref) {
@@ -157,6 +157,9 @@
           <div id="vehiclePhotoMeta" class="vehicle-photo-meta" hidden aria-hidden="true"></div>
         </div>
         <p id="vehiclePhotoCaption" class="vehicle-photo-caption"></p>
+        <p id="vehiclePhotoEmptyState" class="vehicle-photo-empty" hidden aria-hidden="true">
+          <button id="vehiclePhotoUploadBtn" class="footer-link-btn" type="button">Jouw foto hier? Upload hier.</button>
+        </p>
       </div>
 
       <div id="compareCard" class="card compare-card" hidden aria-hidden="true">
@@ -479,6 +482,25 @@
   </div>
 </div>
 
+<div id="photoUploadModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="photoUploadModalTitle">
+  <div class="pdf-modal-card legal-modal-card">
+    <div class="pdf-modal-header">
+      <div>
+        <h3 id="photoUploadModalTitle">Foto uploaden</h3>
+        <p id="photoUploadModalSummary" class="pdf-modal-summary">Heb jij een foto van dit voertuig? Stuur ze door via het formulier.</p>
+      </div>
+      <button id="photoUploadModalCloseBtn" class="settings-close-btn" type="button" aria-label="Sluiten">&times;</button>
+    </div>
+    <div class="pdf-modal-body legal-modal-body">
+      <p id="photoUploadModalNote" class="install-guide-note">Het formulier opent in een nieuw tabblad zodat je jouw foto makkelijk kan doorsturen.</p>
+      <a id="photoUploadOpenLink" class="btn" href="https://forms.gle/MLzezhEKqxg6xagm9" target="_blank" rel="noopener noreferrer">Open uploadformulier</a>
+    </div>
+    <div class="pdf-modal-actions">
+      <button id="photoUploadModalDoneBtn" class="btn" type="button">Sluiten</button>
+    </div>
+  </div>
+</div>
+
 <div id="termsModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
   <div class="pdf-modal-card legal-modal-card">
     <div class="pdf-modal-header">
@@ -518,7 +540,7 @@
   translationsScript.src = "translations.js?v=20260218-1";
   translationsScript.onload = function () {
     var appScript = document.createElement("script");
-    appScript.src = "app.js?v=20260417-14";
+    appScript.src = "app.js?v=20260417-15";
     appScript.defer = true;
     document.body.appendChild(appScript);
   };

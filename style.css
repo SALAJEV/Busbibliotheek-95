@@ -3343,6 +3343,22 @@ tr + tr td {
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface-alt) 94%, transparent), color-mix(in srgb, var(--surface) 96%, transparent));
 }
 
+.vehicle-photo-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+.vehicle-photo-empty[hidden] {
+  display: none !important;
+}
+
+.vehicle-photo-empty .footer-link-btn {
+  font-size: inherit;
+  font-weight: 700;
+}
+
 .vehicle-photo-meta {
   display: grid;
   gap: 0.55rem;

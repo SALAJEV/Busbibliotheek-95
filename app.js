@@ -83,6 +83,7 @@ const BASE_URL = "https://pub-611b5bc156eb455ba86d9bcece9aea1c.r2.dev";
 const API_URL = "https://busbibliotheek95.pages.dev/api";
 const PYTHON_MAIN_DOWNLOAD_URL = "https://busbibliotheek95.pages.dev/python/script.py";
 const APK_DOWNLOAD_URL = `${window.location.origin}/android/app/release/app-release.apk`;
+const PHOTO_UPLOAD_FORM_URL = "https://forms.gle/MLzezhEKqxg6xagm9";
 const LEAFLET_CSS_URL = "https://unpkg.com/leaflet/dist/leaflet.css";
 const LEAFLET_JS_URL = "https://unpkg.com/leaflet/dist/leaflet.js";
 const NETWORK_CHECK_URL = `${window.location.origin}/manifest.json?network-check=1`;
@@ -299,12 +300,16 @@ const staticCardTitleEl = document.getElementById("staticCardTitle");
 const realtimeCardTitleEl = document.getElementById("realtimeCardTitle");
 const photoCardTitleEl = document.getElementById("photoCardTitle");
 const vehiclePhotoCardEl = document.getElementById("vehiclePhotoCard");
+const vehiclePhotoFrameEl = vehiclePhotoCardEl?.querySelector(".vehicle-photo-frame");
+const vehiclePhotoInfoEl = vehiclePhotoCardEl?.querySelector(".vehicle-photo-info");
 const vehiclePhotoImgEl = document.getElementById("vehiclePhotoImg");
 const vehiclePhotoPrevBtn = document.getElementById("vehiclePhotoPrevBtn");
 const vehiclePhotoNextBtn = document.getElementById("vehiclePhotoNextBtn");
 const vehiclePhotoCounterEl = document.getElementById("vehiclePhotoCounter");
 const vehiclePhotoMetaEl = document.getElementById("vehiclePhotoMeta");
 const vehiclePhotoCaptionEl = document.getElementById("vehiclePhotoCaption");
+const vehiclePhotoEmptyStateEl = document.getElementById("vehiclePhotoEmptyState");
+const vehiclePhotoUploadBtn = document.getElementById("vehiclePhotoUploadBtn");
 const disclaimerTitleEl = document.getElementById("disclaimerTitle");
 const disclaimerTextEl = document.getElementById("disclaimerText");
 const footerReviewBtn = document.getElementById("footerReviewBtn");
@@ -336,6 +341,13 @@ const reviewModalSummaryEl = document.getElementById("reviewModalSummary");
 const reviewModalCloseBtn = document.getElementById("reviewModalCloseBtn");
 const reviewModalDoneBtn = document.getElementById("reviewModalDoneBtn");
 const reviewMobileLinkEl = document.getElementById("reviewMobileLink");
+const photoUploadModalEl = document.getElementById("photoUploadModal");
+const photoUploadModalTitleEl = document.getElementById("photoUploadModalTitle");
+const photoUploadModalSummaryEl = document.getElementById("photoUploadModalSummary");
+const photoUploadModalNoteEl = document.getElementById("photoUploadModalNote");
+const photoUploadModalCloseBtn = document.getElementById("photoUploadModalCloseBtn");
+const photoUploadModalDoneBtn = document.getElementById("photoUploadModalDoneBtn");
+const photoUploadOpenLinkEl = document.getElementById("photoUploadOpenLink");
 const termsModalEl = document.getElementById("termsModal");
 const termsModalTitleEl = document.getElementById("termsModalTitle");
 const termsModalSummaryEl = document.getElementById("termsModalSummary");
@@ -834,6 +846,7 @@ function registerOverlayModal(modalEl) {
   appDialogModalEl,
   halteSearchModalEl,
   reviewModalEl,
+  photoUploadModalEl,
   termsModalEl,
   weatherModalEl,
   funnyModalEl
@@ -1050,6 +1063,7 @@ function closeTransientOverlays() {
   closeAppDialog(false, { restoreFocus: false });
   hideWeatherModal();
   hideReviewModal();
+  hidePhotoUploadModal();
   hideTermsModal();
   hideFunnyModal();
   hideHalteSearchModal();
@@ -1618,12 +1632,17 @@ function hideHalteSearchModal() {
   closeOverlayModal(halteSearchModalEl);
 }
 
-function showReviewModal() {
-  if (!reviewModalEl) return;
-  const shouldOpenExternally =
+function shouldOpenExternalFormExperience() {
+  return (
     isAndroidPlatform ||
     isTouchPlatform() ||
-    (window.matchMedia?.("(max-width: 700px)")?.matches ?? false);
+    (window.matchMedia?.("(max-width: 700px)")?.matches ?? false)
+  );
+}
+
+function showReviewModal() {
+  if (!reviewModalEl) return;
+  const shouldOpenExternally = shouldOpenExternalFormExperience();
 
   if (shouldOpenExternally && reviewMobileLinkEl?.href) {
     openExternalUrl(reviewMobileLinkEl.href, { preferSameTab: true });
@@ -1635,6 +1654,19 @@ function showReviewModal() {
 
 function hideReviewModal() {
   closeOverlayModal(reviewModalEl);
+}
+
+function showPhotoUploadModal() {
+  if (!photoUploadModalEl) return;
+  if (shouldOpenExternalFormExperience()) {
+    openExternalUrl(PHOTO_UPLOAD_FORM_URL, { preferSameTab: true });
+    return;
+  }
+  openOverlayModal(photoUploadModalEl, { focusTarget: photoUploadOpenLinkEl || photoUploadModalCloseBtn });
+}
+
+function hidePhotoUploadModal() {
+  closeOverlayModal(photoUploadModalEl);
 }
 
 function renderTermsModalContent() {
@@ -2873,7 +2905,48 @@ async function exportBusPdf(vehicleId, themeKey = "geel") {
 function updateVehiclePhotoTexts() {
   if (!photoCardTitleEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
   photoCardTitleEl.textContent = translateTemplate("photoCard", "Voertuigfoto");
+  if (vehiclePhotoUploadBtn) vehiclePhotoUploadBtn.textContent = getLabel("photoUploadCta", "Jouw foto hier? Upload hier.");
+  if (photoUploadModalTitleEl) photoUploadModalTitleEl.textContent = getLabel("photoUploadTitle", "Foto uploaden");
+  if (photoUploadModalSummaryEl) photoUploadModalSummaryEl.textContent = getLabel("photoUploadSummary", "Heb jij een foto van dit voertuig? Stuur ze door via het formulier.");
+  if (photoUploadModalNoteEl) photoUploadModalNoteEl.textContent = getLabel("photoUploadNote", "Het formulier opent in een nieuw tabblad zodat je jouw foto makkelijk kan doorsturen.");
+  if (photoUploadOpenLinkEl) {
+    photoUploadOpenLinkEl.textContent = getLabel("photoUploadOpen", "Open uploadformulier");
+    photoUploadOpenLinkEl.href = PHOTO_UPLOAD_FORM_URL;
+  }
   renderActiveVehiclePhoto();
+}
+
+function setVehiclePhotoEmptyStateVisible(visible) {
+  if (vehiclePhotoFrameEl) vehiclePhotoFrameEl.hidden = visible;
+  if (vehiclePhotoInfoEl) vehiclePhotoInfoEl.hidden = visible;
+  if (vehiclePhotoEmptyStateEl) {
+    vehiclePhotoEmptyStateEl.hidden = !visible;
+    vehiclePhotoEmptyStateEl.setAttribute("aria-hidden", String(!visible));
+  }
+}
+
+function showVehiclePhotoUploadPrompt(vehicleId) {
+  currentPhotoVehicleId = normalize(vehicleId);
+  currentVehiclePhotoEntries = [];
+  currentVehiclePhotoIndex = 0;
+  if (!vehiclePhotoCardEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
+  vehiclePhotoImgEl.onload = null;
+  vehiclePhotoImgEl.onerror = null;
+  vehiclePhotoImgEl.removeAttribute("src");
+  vehiclePhotoImgEl.alt = "";
+  vehiclePhotoCaptionEl.textContent = "";
+  vehiclePhotoCaptionEl.hidden = true;
+  if (vehiclePhotoMetaEl) {
+    vehiclePhotoMetaEl.hidden = true;
+    vehiclePhotoMetaEl.textContent = "";
+  }
+  if (vehiclePhotoCounterEl) {
+    vehiclePhotoCounterEl.hidden = true;
+    vehiclePhotoCounterEl.textContent = "";
+  }
+  setVehiclePhotoEmptyStateVisible(true);
+  vehiclePhotoCardEl.hidden = false;
+  vehiclePhotoCardEl.setAttribute("aria-hidden", "false");
 }
 
 function formatPhotoMetaDate(rawValue) {
@@ -3923,6 +3996,7 @@ function renderActiveVehiclePhoto() {
     return;
   }
 
+  setVehiclePhotoEmptyStateVisible(false);
   const safeIndex = Math.min(Math.max(currentVehiclePhotoIndex, 0), currentVehiclePhotoEntries.length - 1);
   currentVehiclePhotoIndex = safeIndex;
   const activeEntry = currentVehiclePhotoEntries[safeIndex];
@@ -4017,6 +4091,7 @@ function hideVehiclePhotoCard() {
     vehiclePhotoCounterEl.hidden = true;
     vehiclePhotoCounterEl.textContent = "";
   }
+  setVehiclePhotoEmptyStateVisible(false);
 }
 
 async function updateVehiclePhotoCard(vehicleId) {
@@ -4033,6 +4108,7 @@ async function updateVehiclePhotoCard(vehicleId) {
   currentVehiclePhotoIndex = 0;
   vehiclePhotoCardEl.hidden = true;
   vehiclePhotoCardEl.setAttribute("aria-hidden", "true");
+  setVehiclePhotoEmptyStateVisible(false);
   vehiclePhotoImgEl.removeAttribute("src");
   vehiclePhotoImgEl.alt = "";
   vehiclePhotoCaptionEl.textContent = "";
@@ -4052,7 +4128,7 @@ async function updateVehiclePhotoCard(vehicleId) {
   const photoEntries = await resolveVehiclePhotoEntries(normalizedVehicleId);
   if (lookupToken !== vehiclePhotoLookupToken) return;
   if (!photoEntries.length) {
-    hideVehiclePhotoCard();
+    showVehiclePhotoUploadPrompt(normalizedVehicleId);
     return;
   }
 
@@ -4567,6 +4643,8 @@ function applyTranslations() {
   if (reviewModalCloseBtn) reviewModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
   if (reviewModalDoneBtn) reviewModalDoneBtn.textContent = getLabel("close", "Sluiten");
   if (reviewMobileLinkEl) reviewMobileLinkEl.textContent = getLabel("reviewMobileOpen", "Open reviewformulier");
+  if (photoUploadModalCloseBtn) photoUploadModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
+  if (photoUploadModalDoneBtn) photoUploadModalDoneBtn.textContent = getLabel("close", "Sluiten");
   if (termsModalTitleEl) termsModalTitleEl.textContent = getLabel("footerTerms", "Gebruiksvoorwaarden");
   if (termsModalSummaryEl) termsModalSummaryEl.textContent = getLabel("termsSummary", "Korte standaardvoorwaarden voor het gebruik van Busbibliotheek.");
   if (termsModalCloseBtn) termsModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
@@ -5001,6 +5079,10 @@ function closeInteractiveOverlay(overlayEl) {
   }
   if (overlayEl === reviewModalEl) {
     hideReviewModal();
+    return true;
+  }
+  if (overlayEl === photoUploadModalEl) {
+    hidePhotoUploadModal();
     return true;
   }
   if (overlayEl === termsModalEl) {
@@ -5618,6 +5700,12 @@ reviewModalCloseBtn?.addEventListener("click", hideReviewModal);
 reviewModalDoneBtn?.addEventListener("click", hideReviewModal);
 reviewModalEl?.addEventListener("click", (event) => {
   if (event.target === reviewModalEl) hideReviewModal();
+});
+vehiclePhotoUploadBtn?.addEventListener("click", showPhotoUploadModal);
+photoUploadModalCloseBtn?.addEventListener("click", hidePhotoUploadModal);
+photoUploadModalDoneBtn?.addEventListener("click", hidePhotoUploadModal);
+photoUploadModalEl?.addEventListener("click", (event) => {
+  if (event.target === photoUploadModalEl) hidePhotoUploadModal();
 });
 termsModalCloseBtn?.addEventListener("click", hideTermsModal);
 termsModalDoneBtn?.addEventListener("click", hideTermsModal);
