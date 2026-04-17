@@ -23,7 +23,6 @@ let deferredPrompt = null;
 const installBtn = document.getElementById("footerInstallBtn");
 const dashboardToggleBtn = document.getElementById("dashboardToggleBtn");
 const halteSearchToggleBtn = document.getElementById("halteSearchToggleBtn");
-const iosInstallHintEl = document.getElementById("iosInstallHint");
 const settingsInfoBtn = document.getElementById("settingsInfoBtn");
 const appShellEl = document.querySelector(".app-shell");
 const favoritesBackdropEl = document.getElementById("favoritesBackdrop");
@@ -44,7 +43,7 @@ installBtn?.addEventListener("click", async () => {
     return;
   }
   if (isAndroidAbove6) {
-    confirmAndStartDownload({
+    await confirmAndStartDownload({
       downloadType: "apk",
       fileLabel: "Busbibliotheek.apk",
       onConfirm: () => startApkDownload()
@@ -55,15 +54,15 @@ installBtn?.addEventListener("click", async () => {
     console.log(`Gebruiker antwoord: ${outcome}`);
     deferredPrompt = null;
   } else if (isIosInstallable()) {
-    iosInstallHintEl.hidden = false;
+    showInstallGuideModal();
   } else if (isAndroidPlatform && !isStandaloneDisplayMode()) {
-    window.alert(getLabel("androidInstallHint", "Open het browsermenu op Android en kies 'Installeren' of 'Toevoegen aan startscherm'."));
+    await showAppAlert(getLabel("androidInstallHint", "Open het browsermenu op Android en kies 'Installeren' of 'Toevoegen aan startscherm'."));
   }
   syncInstallButtonVisibility();
 });
 window.addEventListener('appinstalled', () => {
   console.log('App succesvol geinstalleerd');
-  iosInstallHintEl.hidden = true;
+  hideInstallGuideModal();
   deferredPrompt = null;
   syncPlatformBodyClasses();
   syncInstallButtonVisibility();
@@ -216,6 +215,7 @@ function syncInstallButtonVisibility() {
   const shouldShow =
     !isStandaloneDisplayMode() &&
     !isAndroidWebView &&
+    !isAndroidHostApp() &&
     !isAndroidTvPlatform &&
     (isAndroidAbove6 || Boolean(deferredPrompt) || isIosInstallable());
   installBtn.hidden = !shouldShow;
@@ -240,7 +240,18 @@ function scheduleAndroidFocusedFieldIntoView() {
     const activeElement = document.activeElement;
     if (!(activeElement instanceof HTMLElement)) return;
     if (!activeElement.matches("input, textarea, select")) return;
-    activeElement.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+    const viewportHeight = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 0;
+    if (!viewportHeight) return;
+    const rect = activeElement.getBoundingClientRect();
+    const topInset = 18;
+    const bottomInset = 18;
+    const isFullyVisible = rect.top >= topInset && rect.bottom <= viewportHeight - bottomInset;
+    if (isFullyVisible) return;
+    activeElement.scrollIntoView({
+      block: rect.top < topInset ? "start" : "nearest",
+      inline: "nearest",
+      behavior: "smooth"
+    });
   }, 180);
 }
 
@@ -306,6 +317,19 @@ const infoModalSummaryEl = document.getElementById("infoModalSummary");
 const infoModalCloseBtn = document.getElementById("infoModalCloseBtn");
 const infoModalOkBtn = document.getElementById("infoModalOkBtn");
 const resetSiteDataBtn = document.getElementById("resetSiteDataBtn");
+const installGuideModalEl = document.getElementById("installGuideModal");
+const installGuideTitleEl = document.getElementById("installGuideTitle");
+const installGuideSummaryEl = document.getElementById("installGuideSummary");
+const installGuideBodyEl = document.getElementById("installGuideBody");
+const installGuideCloseBtn = document.getElementById("installGuideCloseBtn");
+const installGuideOkBtn = document.getElementById("installGuideOkBtn");
+const appDialogModalEl = document.getElementById("appDialogModal");
+const appDialogCardEl = document.getElementById("appDialogCard");
+const appDialogTitleEl = document.getElementById("appDialogTitle");
+const appDialogMessageEl = document.getElementById("appDialogMessage");
+const appDialogCloseBtn = document.getElementById("appDialogCloseBtn");
+const appDialogCancelBtn = document.getElementById("appDialogCancelBtn");
+const appDialogConfirmBtn = document.getElementById("appDialogConfirmBtn");
 const reviewModalEl = document.getElementById("reviewModal");
 const reviewModalTitleEl = document.getElementById("reviewModalTitle");
 const reviewModalSummaryEl = document.getElementById("reviewModalSummary");
@@ -492,6 +516,7 @@ let favoriteDragSuppressUntil = 0;
 const overlayModalElements = [];
 const overlayModalRestoreFocusMap = new WeakMap();
 let interactiveOverlayStack = [];
+let appDialogResolve = null;
 const usesOverlayCompatibilityMode = () =>
   isAndroidHostApp() ||
   isAndroidWebView ||
@@ -805,6 +830,8 @@ function registerOverlayModal(modalEl) {
   compareModalEl,
   dashboardSetupModalEl,
   infoModalEl,
+  installGuideModalEl,
+  appDialogModalEl,
   halteSearchModalEl,
   reviewModalEl,
   termsModalEl,
@@ -1019,6 +1046,8 @@ function closeTransientOverlays() {
   hidePdfModal();
   hideCompareModal();
   hideInfoModal();
+  hideInstallGuideModal();
+  closeAppDialog(false, { restoreFocus: false });
   hideWeatherModal();
   hideReviewModal();
   hideTermsModal();
@@ -1468,6 +1497,110 @@ function showInfoModal() {
 
 function hideInfoModal() {
   closeOverlayModal(infoModalEl);
+}
+
+function renderInstallGuideModalContent() {
+  if (!installGuideBodyEl) return;
+  const steps = [
+    getLabel("installGuideStep1", "Open deze site in Safari."),
+    getLabel("installGuideStep2", "Tik onderaan op 'Deel'."),
+    getLabel("installGuideStep3", "Scroll in het deelmenu en kies 'Zet op beginscherm'."),
+    getLabel("installGuideStep4", "Tik rechtsboven op 'Voeg toe'.")
+  ];
+  const note = getLabel("installGuideNote", "Gebruik je een andere browser op iPhone? Open deze pagina dan eerst in Safari.");
+  installGuideBodyEl.innerHTML = `
+    <div class="install-guide-copy">
+      <ol class="install-guide-steps">
+        ${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+      </ol>
+      <p class="install-guide-note">${escapeHtml(note)}</p>
+    </div>
+  `;
+}
+
+function showInstallGuideModal() {
+  if (!installGuideModalEl) {
+    void showAppAlert(getLabel("iosHint", "Op iPhone/iPad: tik op 'Deel' en kies 'Zet op beginscherm'."));
+    return;
+  }
+  renderInstallGuideModalContent();
+  openOverlayModal(installGuideModalEl, { focusTarget: installGuideCloseBtn });
+}
+
+function hideInstallGuideModal() {
+  closeOverlayModal(installGuideModalEl);
+}
+
+function resolveAppDialog(result = false) {
+  const resolve = appDialogResolve;
+  appDialogResolve = null;
+  if (typeof resolve === "function") resolve(result);
+}
+
+function closeAppDialog(result = false, options = {}) {
+  if (!appDialogModalEl) {
+    resolveAppDialog(result);
+    return;
+  }
+  if (appDialogModalEl.hidden) {
+    resolveAppDialog(result);
+    return;
+  }
+  closeOverlayModal(appDialogModalEl, {
+    restoreFocus: options.restoreFocus ?? true,
+    onAfterClose: () => resolveAppDialog(result)
+  });
+}
+
+function showAppDialog(options = {}) {
+  const {
+    kind = "alert",
+    title = getLabel(kind === "confirm" ? "dialogConfirmTitle" : "dialogInfoTitle", kind === "confirm" ? "Bevestiging" : "Melding"),
+    message = "",
+    confirmLabel = getLabel("dialogOk", "OK"),
+    cancelLabel = getLabel("cancel", "Annuleren")
+  } = options;
+
+  if (!appDialogModalEl || !appDialogTitleEl || !appDialogMessageEl || !appDialogConfirmBtn || !appDialogCancelBtn) {
+    if (kind === "confirm") return Promise.resolve(window.confirm(message));
+    window.alert(message);
+    return Promise.resolve(true);
+  }
+
+  if (appDialogResolve) resolveAppDialog(false);
+  if (!appDialogModalEl.hidden) {
+    closeOverlayModal(appDialogModalEl, { restoreFocus: false });
+  }
+
+  if (appDialogCardEl) appDialogCardEl.dataset.dialogKind = kind;
+  appDialogTitleEl.textContent = title;
+  appDialogMessageEl.textContent = message;
+  appDialogCancelBtn.hidden = kind !== "confirm";
+  appDialogCancelBtn.textContent = cancelLabel;
+  appDialogConfirmBtn.textContent = confirmLabel;
+
+  return new Promise((resolve) => {
+    appDialogResolve = resolve;
+    openOverlayModal(appDialogModalEl, {
+      focusTarget: appDialogConfirmBtn
+    });
+  });
+}
+
+function showAppAlert(message, options = {}) {
+  return showAppDialog({
+    kind: "alert",
+    message,
+    ...options
+  });
+}
+
+function showAppConfirm(message, options = {}) {
+  return showAppDialog({
+    kind: "confirm",
+    message,
+    ...options
+  });
 }
 
 function showHalteSearchModal() {
@@ -4310,7 +4443,6 @@ function applyTranslations() {
   if (morePanelTitleEl) morePanelTitleEl.textContent = moreLabel;
   if (morePanelSubtitleEl) morePanelSubtitleEl.textContent = getLabel("moreSubtitle", "Snelle functies en extra tools.");
   if (moreFunctionsTitleEl) moreFunctionsTitleEl.textContent = getLabel("moreFunctions", "Extra functies");
-  iosInstallHintEl.textContent = t("iosHint");
   searchBtn.title = t("search");
   searchBtn.setAttribute("aria-label", t("search"));
   voertuigInput.placeholder = t("vehiclePlaceholder");
@@ -4421,6 +4553,14 @@ function applyTranslations() {
   infoModalCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
   infoModalOkBtn.textContent = getLabel("close", "Sluiten");
   if (resetSiteDataBtn) resetSiteDataBtn.textContent = getLabel("resetSiteData", "Reset website");
+  if (installGuideTitleEl) installGuideTitleEl.textContent = getLabel("installGuideTitle", "Installeren op iPhone");
+  if (installGuideSummaryEl) installGuideSummaryEl.textContent = getLabel("installGuideSummary", "Voeg Busbibliotheek toe aan je beginscherm via het deelmenu van Safari.");
+  if (installGuideCloseBtn) installGuideCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
+  if (installGuideOkBtn) installGuideOkBtn.textContent = getLabel("close", "Sluiten");
+  if (appDialogTitleEl && appDialogModalEl?.hidden) appDialogTitleEl.textContent = getLabel("dialogInfoTitle", "Melding");
+  if (appDialogCloseBtn) appDialogCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
+  if (appDialogCancelBtn) appDialogCancelBtn.textContent = getLabel("cancel", "Annuleren");
+  if (appDialogConfirmBtn) appDialogConfirmBtn.textContent = getLabel("dialogOk", "OK");
   if (halteSearchCloseBtn) halteSearchCloseBtn.setAttribute("aria-label", getLabel("close", "Sluiten"));
   if (reviewModalTitleEl) reviewModalTitleEl.textContent = getLabel("footerReview", "Review afleggen");
   if (reviewModalSummaryEl) reviewModalSummaryEl.textContent = getLabel("reviewSummary", "Laat weten wat beter kan of wat je goed vindt aan Busbibliotheek.");
@@ -4438,6 +4578,7 @@ function applyTranslations() {
   if (!weatherModalEl?.hidden && lastWeatherData && lastWeatherCoordinates) {
     renderWeatherModal(lastWeatherData, lastWeatherCoordinates.latitude, lastWeatherCoordinates.longitude);
   }
+  if (!installGuideModalEl?.hidden) renderInstallGuideModalContent();
   if (!termsModalEl?.hidden) renderTermsModalContent();
   if (pageLoadingTextEl) pageLoadingTextEl.textContent = t("loading");
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
@@ -4874,6 +5015,14 @@ function closeInteractiveOverlay(overlayEl) {
     hideInfoModal();
     return true;
   }
+  if (overlayEl === installGuideModalEl) {
+    hideInstallGuideModal();
+    return true;
+  }
+  if (overlayEl === appDialogModalEl) {
+    closeAppDialog(false);
+    return true;
+  }
   if (overlayEl === compareModalEl) {
     hideCompareModal();
     return true;
@@ -4961,18 +5110,22 @@ function triggerDirectDownload(url, fileName) {
   downloadLink.remove();
 }
 
-function confirmAndStartDownload(options = {}) {
+async function confirmAndStartDownload(options = {}) {
   const {
     downloadType = "bestand",
     fileLabel = "",
     onConfirm = null
   } = options;
   const readableLabel = fileLabel || downloadType;
-  const confirmed = window.confirm(
+  const confirmed = await showAppConfirm(
     getLabel(
       `confirm${downloadType.charAt(0).toUpperCase()}${downloadType.slice(1)}Download`,
       `Download ${readableLabel} nu naar dit toestel?`
-    )
+    ),
+    {
+      title: getLabel("dialogConfirmTitle", "Bevestiging"),
+      confirmLabel: getLabel("dialogOk", "OK")
+    }
   );
   if (!confirmed) return false;
   if (typeof onConfirm === "function") onConfirm();
@@ -4981,16 +5134,22 @@ function confirmAndStartDownload(options = {}) {
 
 function startPythonDownload() {
   triggerDirectDownload(PYTHON_MAIN_DOWNLOAD_URL, "script.py");
-  window.alert(getLabel("pythonDownloadStarted", "De download van script.py is gestart."));
+  void showAppAlert(getLabel("pythonDownloadStarted", "De download van script.py is gestart."));
 }
 
 function startApkDownload() {
   triggerDirectDownload(APK_DOWNLOAD_URL, "Busbibliotheek.apk");
-  window.alert(getLabel("apkDownloadStarted", "De download van Busbibliotheek.apk is gestart."));
+  void showAppAlert(getLabel("apkDownloadStarted", "De download van Busbibliotheek.apk is gestart."));
 }
 
 async function resetSiteData() {
-  if (!window.confirm(getLabel("resetSiteDataConfirm", "Alles van Busbibliotheek op dit toestel resetten?"))) return;
+  if (!(await showAppConfirm(
+    getLabel("resetSiteDataConfirm", "Alles van Busbibliotheek op dit toestel resetten?"),
+    {
+      title: getLabel("dialogConfirmTitle", "Bevestiging"),
+      confirmLabel: getLabel("dialogOk", "OK")
+    }
+  ))) return;
 
   try {
     localStorage.removeItem(FAVORITES_KEY);
@@ -5281,9 +5440,6 @@ function initAppPreferences() {
   lastUpdateEl.hidden = true;
   lastUpdateEl.textContent = `${t("lastUpdate")}: -`;
 
-  if (isIosInstallable()) {
-    iosInstallHintEl.hidden = false;
-  }
   syncInstallButtonVisibility();
   initInactivityMonitor();
 }
@@ -5504,7 +5660,7 @@ pdfModalConfirmBtn?.addEventListener("click", async () => {
     hidePdfModal();
   } catch (error) {
     console.error("PDF downloaden mislukt", error);
-    window.alert(getLabel("pdfDownloadFailed", "De PDF kon niet worden gedownload. Probeer het opnieuw."));
+    await showAppAlert(getLabel("pdfDownloadFailed", "De PDF kon niet worden gedownload. Probeer het opnieuw."));
   } finally {
     pdfModalConfirmBtn.disabled = false;
     pdfModalConfirmBtn.textContent = oorspronkelijkeTekst;
@@ -5517,16 +5673,16 @@ compareModalConfirmBtn?.addEventListener("click", async () => {
   const resolved = resolveVehicleQuery(query, getVehicleInputResolvedId(compareVehicleInputEl));
   const resolvedId = resolved.vehicleId || normalize(query);
   if (!resolved.bus) {
-    window.alert(getLabel("compareNoSecondFound", "Geen tweede voertuig gevonden."));
+    await showAppAlert(getLabel("compareNoSecondFound", "Geen tweede voertuig gevonden."));
     return;
   }
   if (compareEditTarget === "compare" && resolvedId === currentVehicleId) {
-    window.alert(getLabel("compareChooseDifferent", "Kies een ander voertuig om te vergelijken."));
+    await showAppAlert(getLabel("compareChooseDifferent", "Kies een ander voertuig om te vergelijken."));
     return;
   }
   if (compareEditTarget === "base") {
     if (resolvedId === compareVehicleId) {
-      window.alert(getLabel("compareChooseDifferent", "Kies een ander voertuig om te vergelijken."));
+      await showAppAlert(getLabel("compareChooseDifferent", "Kies een ander voertuig om te vergelijken."));
       return;
     }
     const nextCompareId = compareVehicleId;
@@ -5599,6 +5755,17 @@ resetSiteDataBtn?.addEventListener("click", () => {
 });
 infoModalEl?.addEventListener("click", (event) => {
   if (event.target === infoModalEl) hideInfoModal();
+});
+installGuideCloseBtn?.addEventListener("click", hideInstallGuideModal);
+installGuideOkBtn?.addEventListener("click", hideInstallGuideModal);
+installGuideModalEl?.addEventListener("click", (event) => {
+  if (event.target === installGuideModalEl) hideInstallGuideModal();
+});
+appDialogCloseBtn?.addEventListener("click", () => closeAppDialog(false));
+appDialogCancelBtn?.addEventListener("click", () => closeAppDialog(false));
+appDialogConfirmBtn?.addEventListener("click", () => closeAppDialog(true));
+appDialogModalEl?.addEventListener("click", (event) => {
+  if (event.target === appDialogModalEl) closeAppDialog(false);
 });
 halteSearchCloseBtn?.addEventListener("click", hideHalteSearchModal);
 halteSearchModalEl?.addEventListener("click", (event) => {
@@ -6588,7 +6755,7 @@ async function zoekAlles(options = {}) {
   setFavoritesPanel(false);
   if (query.toLowerCase() === "python") {
     hideSuggestionList(suggestieLijst);
-    confirmAndStartDownload({
+    await confirmAndStartDownload({
       downloadType: "python",
       fileLabel: "script.py",
       onConfirm: () => startPythonDownload()
@@ -6598,7 +6765,7 @@ async function zoekAlles(options = {}) {
   }
   if (query.toLowerCase() === "android" || query.toLowerCase() === "apk") {
     hideSuggestionList(suggestieLijst);
-    confirmAndStartDownload({
+    await confirmAndStartDownload({
       downloadType: "apk",
       fileLabel: "Busbibliotheek.apk",
       onConfirm: () => startApkDownload()

@@ -1299,6 +1299,10 @@ body.dialog-fallback .funny-modal-card {
   align-items: center;
 }
 
+.halte-module-form .suggestion-input-shell {
+  min-width: 0;
+}
+
 .halte-module-form input {
   margin: 0;
 }
@@ -1988,7 +1992,6 @@ body.pdf-modal-open {
 }
 
 body.dashboard-open .header-bar,
-body.dashboard-open #iosInstallHint,
 body.dashboard-open .search-shell,
 body.dashboard-open .results-wrap,
 body.dashboard-open footer,
@@ -4206,6 +4209,21 @@ footer h3 {
   width: min(100%, 52rem);
 }
 
+.app-dialog-card {
+  width: min(100%, 30rem);
+}
+
+.app-dialog-body {
+  overflow: visible;
+  padding-right: 0;
+}
+
+.app-dialog-message {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.65;
+}
+
 .weather-modal-card {
   width: min(100%, 34rem);
 }
@@ -4335,6 +4353,34 @@ footer h3 {
   margin: 0 0 0.95rem;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.install-guide-copy {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.install-guide-steps {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 0.68rem;
+}
+
+.install-guide-steps li {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.install-guide-note {
+  margin: 0;
+  padding: 0.78rem 0.82rem;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 20%, var(--stroke));
+  background: color-mix(in srgb, var(--surface-alt) 95%, transparent);
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 .review-embed-shell {
@@ -6754,7 +6800,7 @@ body::before {
 
 @media (max-width: 560px) {
   #favoritesPanel .settings-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
@@ -6948,7 +6994,7 @@ h6,
   grid-template-columns: minmax(0, 1.18fr) minmax(260px, 0.74fr);
   align-items: stretch;
   gap: 1.2rem !important;
-  padding: 1.25rem 1.3rem 1.3rem !important;
+  padding: 1.18rem 1.3rem 1.08rem !important;
   border-radius: 30px !important;
   overflow: hidden;
   isolation: isolate;
@@ -7142,7 +7188,7 @@ footer > *,
 
 .header-visual {
   position: relative;
-  min-height: 214px;
+  min-height: 184px;
   border-radius: 26px;
   border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--stroke-strong));
   background:
@@ -7326,9 +7372,9 @@ footer > *,
 }
 
 .vehicle-title-row {
-  align-items: flex-start !important;
-  gap: 0.42rem !important;
-  margin-bottom: 0.34rem !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+  margin-bottom: 0.2rem !important;
 }
 
 .voertuignummer-display {
@@ -7341,38 +7387,39 @@ footer > *,
 #favoriteInlineBtn.vehicle-favorite-btn:active,
 #favoriteInlineBtn.vehicle-favorite-btn:focus-visible,
 #favoriteInlineBtn.vehicle-favorite-btn.is-favorite {
-  width: 42px !important;
-  min-width: 42px !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  padding: 0 !important;
-  margin-top: -0.08rem !important;
-  border-radius: 999px !important;
-  border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--stroke-strong)) !important;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 99%, white 1%), color-mix(in srgb, var(--surface-alt) 94%, transparent)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.56),
-    0 12px 24px color-mix(in srgb, var(--accent-soft) 14%, rgba(15, 23, 42, 0.06)) !important;
-  font-size: 1.02rem !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0.02rem 0.08rem !important;
+  margin-top: 0 !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 1.45rem !important;
+  line-height: 1 !important;
 }
 
 #favoriteInlineBtn.vehicle-favorite-btn:hover,
 #favoriteInlineBtn.vehicle-favorite-btn.is-favorite {
   color: #f59e0b !important;
-  background: linear-gradient(180deg, color-mix(in srgb, #fff7db 92%, white 8%), color-mix(in srgb, #ffefbd 82%, var(--surface-alt) 18%)) !important;
+  background: transparent !important;
 }
 
 .vehicle-type {
-  display: inline-flex;
-  width: fit-content;
-  padding: 0.34rem 0.72rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--stroke-strong));
-  background: color-mix(in srgb, var(--accent-soft) 34%, var(--surface-strong));
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  display: block;
+  width: auto;
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  background: none;
+  margin-bottom: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: color-mix(in srgb, var(--muted) 76%, var(--text) 24%);
 }
 
 .ig-btn-wrap {
@@ -7420,7 +7467,7 @@ footer > *,
 
 footer {
   position: relative;
-  margin-top: 1.35rem !important;
+  margin-top: auto !important;
   padding: 1.2rem 1.24rem 1.24rem !important;
   border-radius: 24px;
   border: 1px solid color-mix(in srgb, var(--accent) 12%, var(--stroke-strong));
@@ -7651,84 +7698,49 @@ footer h3 {
   }
 }
 
-/* Keep the Instagram CTA on-brand even after the shared button polish layer. */
+/* Keep the Instagram CTA aligned with the other action buttons. */
 .btn.btn--instagram,
 a.btn.btn--instagram,
 .ig-btn-wrap > .btn--instagram {
-  position: relative;
-  isolation: isolate;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.64rem;
-  min-height: 44px !important;
-  padding-inline: 0.98rem 1.06rem !important;
-  border-radius: 18px !important;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  background:
-    radial-gradient(circle at 14% 118%, rgba(255, 223, 128, 0.92) 0 16%, transparent 16.5%),
-    radial-gradient(circle at 84% 14%, rgba(255, 255, 255, 0.24) 0 8%, transparent 8.5%),
-    linear-gradient(135deg, #f7df96 0%, #ff8c58 24%, #d63584 57%, #4d60dc 100%) !important;
+  min-height: var(--button-height) !important;
+  padding: 0.52rem var(--button-padding-x) !important;
+  border-radius: var(--button-radius) !important;
+  border: 1px solid color-mix(in srgb, #fa7e1e 24%, var(--button-border)) !important;
+  background: linear-gradient(135deg, #feda75 0%, #fa7e1e 24%, #d62976 62%, #4f5bd5 100%) !important;
   color: #ffffff !important;
-  font-weight: 800;
-  letter-spacing: -0.012em;
-  line-height: 1.08;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -1px 0 rgba(73, 14, 60, 0.16),
-    0 12px 24px rgba(214, 36, 159, 0.2) !important;
-  text-shadow: 0 1px 1px rgba(58, 12, 44, 0.14);
-  transition:
-    transform 0.22s ease,
-    box-shadow 0.22s ease,
-    border-color 0.22s ease,
-    filter 0.22s ease !important;
-  animation: instagramButtonEntrance 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-shadow: none;
+  box-shadow: var(--button-shadow) !important;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease !important;
 }
 
 .btn.btn--instagram::after,
 a.btn.btn--instagram::after,
 .ig-btn-wrap > .btn--instagram::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(118deg, transparent 0 34%, rgba(255, 255, 255, 0.18) 45%, transparent 58%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 42%);
-  transform: translateX(-118%);
-  opacity: 0.92;
-  animation: instagramButtonSheen 4.8s ease-in-out infinite;
+  content: none !important;
 }
 
 .btn.btn--instagram:hover,
 a.btn.btn--instagram:hover,
 .ig-btn-wrap > .btn--instagram:hover {
-  border-color: rgba(255, 255, 255, 0.24) !important;
-  background:
-    radial-gradient(circle at 14% 118%, rgba(255, 235, 150, 0.96) 0 16.5%, transparent 17%),
-    radial-gradient(circle at 84% 14%, rgba(255, 255, 255, 0.28) 0 8.5%, transparent 9%),
-    linear-gradient(135deg, #fae7ac 0%, #ff7e59 22%, #de3f91 56%, #596ef3 100%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 -1px 0 rgba(77, 11, 60, 0.12),
-    0 16px 30px rgba(214, 36, 159, 0.26) !important;
+  border-color: color-mix(in srgb, #d62976 34%, white 8%) !important;
+  background: linear-gradient(135deg, #fee48b 0%, #fb8c2b 24%, #df3b82 62%, #6170ea 100%) !important;
+  box-shadow: var(--button-shadow-hover) !important;
   transform: translateY(-1px);
-  filter: saturate(1.04);
+  filter: none;
 }
 
 .btn.btn--instagram:active,
 a.btn.btn--instagram:active,
 .ig-btn-wrap > .btn--instagram:active {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  background:
-    radial-gradient(circle at 14% 118%, rgba(245, 208, 108, 0.94) 0 16%, transparent 16.5%),
-    radial-gradient(circle at 84% 14%, rgba(255, 255, 255, 0.16) 0 7%, transparent 7.5%),
-    linear-gradient(135deg, #f1d67f 0%, #ee6648 24%, #c52a7c 56%, #3d54d4 100%) !important;
+  border-color: color-mix(in srgb, #fa7e1e 24%, var(--button-border)) !important;
+  background: linear-gradient(135deg, #f4cf63 0%, #ef741c 24%, #c92d6d 62%, #4857c8 100%) !important;
   box-shadow:
-    inset 0 2px 8px rgba(67, 10, 51, 0.22),
-    0 8px 16px rgba(214, 36, 159, 0.18) !important;
+    inset 0 2px 4px rgba(0, 0, 0, 0.12),
+    0 6px 16px color-mix(in srgb, #d62976 18%, transparent) !important;
   transform: translateY(0);
 }
 
@@ -7742,52 +7754,9 @@ a.btn.btn--instagram:focus-visible,
 .btn.btn--instagram::before,
 a.btn.btn--instagram::before,
 .ig-btn-wrap > .btn--instagram::before {
-  width: 1.08rem;
-  height: 1.08rem;
-  opacity: 0.96;
-  position: relative;
-  z-index: 1;
-}
-
-.btn.btn--instagram .btn-label,
-a.btn.btn--instagram .btn-label,
-.ig-btn-wrap > .btn--instagram .btn-label {
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes instagramButtonEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes instagramButtonSheen {
-  0%,
-  62%,
-  100% {
-    transform: translateX(-118%);
-  }
-  16%,
-  30% {
-    transform: translateX(118%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .btn.btn--instagram,
-  a.btn.btn--instagram,
-  .ig-btn-wrap > .btn--instagram,
-  .btn.btn--instagram::after,
-  a.btn.btn--instagram::after,
-  .ig-btn-wrap > .btn--instagram::after {
-    animation: none !important;
-  }
+  width: 1rem;
+  height: 1rem;
+  opacity: 1;
 }
 
 /* Extra overlay stability for Android/iOS WebViews and host-app shells. */
@@ -7823,5 +7792,42 @@ body.overlay-compat-mode .pdf-modal-card button,
 body.overlay-compat-mode .pdf-modal-card [href],
 body.overlay-compat-mode .funny-modal-card button {
   touch-action: manipulation;
+}
+
+/* Keep the compact header search actions visually identical. */
+.menu-inline-search .search-row #searchBtn,
+.menu-inline-search .search-row #searchBtn:hover,
+.menu-inline-search .search-row #searchBtn:active,
+.menu-inline-search .search-row #favoritesToggleBtn.search-menu-btn,
+.menu-inline-search .search-row #favoritesToggleBtn.search-menu-btn:hover,
+.menu-inline-search .search-row #favoritesToggleBtn.search-menu-btn:active,
+.menu-inline-search .search-row #favoritesToggleBtn.search-menu-btn.active {
+  border: 1px solid color-mix(in srgb, var(--button-border) 88%, white 12%) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg) 88%, white 12%), color-mix(in srgb, var(--accent-2) 84%, var(--button-bg) 16%)) !important;
+  color: var(--button-text) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 12px 28px color-mix(in srgb, var(--accent-soft) 28%, transparent) !important;
+}
+
+.menu-inline-search .search-row #searchBtn:hover,
+.menu-inline-search .search-row #favoritesToggleBtn.search-menu-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 72%, white 8%) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg-hover) 88%, white 12%), color-mix(in srgb, var(--accent) 82%, var(--button-bg-hover) 18%)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px color-mix(in srgb, var(--accent-soft) 34%, transparent) !important;
+  transform: translateY(-1px);
+}
+
+.menu-inline-search .search-row #searchBtn:active,
+.menu-inline-search .search-row #favoritesToggleBtn.search-menu-btn:active,
+.menu-inline-search .search-row #favoritesToggleBtn.search-menu-btn.active {
+  border-color: color-mix(in srgb, var(--button-border) 88%, white 12%) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg) 88%, white 12%), color-mix(in srgb, var(--accent-2) 84%, var(--button-bg) 16%)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 12px 28px color-mix(in srgb, var(--accent-soft) 28%, transparent) !important;
+  transform: translateY(0);
 }
 

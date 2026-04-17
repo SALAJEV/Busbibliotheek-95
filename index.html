@@ -21,7 +21,7 @@
     document.documentElement.classList.add("preload");
   })();
 </script>
-<link id="appStylesheet" rel="stylesheet" href="style.css?v=20260417-12">
+<link id="appStylesheet" rel="stylesheet" href="style.css?v=20260417-22">
 <script>
   (function () {
     var attachStylesheetFallback = function (id, fallbackHref) {
@@ -95,8 +95,6 @@
       </div>
     </div>
   </div>
-  <div id="iosInstallHint" class="hint" hidden></div>
-
   <section id="dashboardPanel" class="dashboard-panel" hidden aria-hidden="true">
     <div class="dashboard-panel-header">
       <div>
@@ -401,6 +399,40 @@
   </div>
 </div>
 
+<div id="installGuideModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="installGuideTitle">
+  <div class="pdf-modal-card legal-modal-card">
+    <div class="pdf-modal-header">
+      <div>
+        <h3 id="installGuideTitle">Installeren op iPhone</h3>
+        <p id="installGuideSummary" class="pdf-modal-summary">Voeg Busbibliotheek toe aan je beginscherm via het deelmenu van Safari.</p>
+      </div>
+      <button id="installGuideCloseBtn" class="settings-close-btn" type="button" aria-label="Sluiten">&times;</button>
+    </div>
+    <div id="installGuideBody" class="pdf-modal-body legal-modal-body"></div>
+    <div class="pdf-modal-actions">
+      <button id="installGuideOkBtn" class="btn" type="button">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<div id="appDialogModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="appDialogTitle" aria-describedby="appDialogMessage">
+  <div id="appDialogCard" class="pdf-modal-card app-dialog-card">
+    <div class="pdf-modal-header">
+      <div>
+        <h3 id="appDialogTitle">Melding</h3>
+      </div>
+      <button id="appDialogCloseBtn" class="settings-close-btn" type="button" aria-label="Sluiten">&times;</button>
+    </div>
+    <div class="pdf-modal-body app-dialog-body">
+      <p id="appDialogMessage" class="app-dialog-message"></p>
+    </div>
+    <div class="pdf-modal-actions">
+      <button id="appDialogCancelBtn" class="more-secondary-btn" type="button">Annuleren</button>
+      <button id="appDialogConfirmBtn" class="btn" type="button">OK</button>
+    </div>
+  </div>
+</div>
+
 <div id="halteSearchModal" class="pdf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="haltModuleTitle">
   <div class="pdf-modal-card halte-search-modal-card">
     <div class="pdf-modal-header">
@@ -412,12 +444,14 @@
     </div>
     <div class="pdf-modal-body halte-module">
       <div class="halte-module-form">
-        <input type="text" id="haltecodeInput" inputmode="search" autocomplete="off" placeholder="Haltecode of naam">
+        <div class="suggestion-input-shell">
+          <input type="text" id="haltecodeInput" inputmode="search" autocomplete="off" placeholder="Haltecode of naam">
+          <ul id="haltSearchResultsList" class="inline-suggestion-list halte-suggestion-list" hidden></ul>
+        </div>
         <button id="haltecodeSearchBtn" class="btn" type="button">Zoek halte</button>
       </div>
       <p id="haltSearchHelp" class="halte-module-help">Als je op zoeken drukt, kom je op de site van De Lijn terecht.</p>
       <p id="haltecodeError" class="halte-module-error" hidden>Voer een haltecode of haltenaam in.</p>
-      <ul id="haltSearchResultsList" class="inline-suggestion-list halte-suggestion-list" hidden></ul>
     </div>
   </div>
 </div>
@@ -484,7 +518,7 @@
   translationsScript.src = "translations.js?v=20260218-1";
   translationsScript.onload = function () {
     var appScript = document.createElement("script");
-    appScript.src = "app.js?v=20260417-9";
+    appScript.src = "app.js?v=20260417-14";
     appScript.defer = true;
     document.body.appendChild(appScript);
   };
