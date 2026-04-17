@@ -7542,36 +7542,61 @@ a.btn.btn--instagram,
   align-items: center !important;
   justify-content: center !important;
   gap: 0.64rem;
-  min-height: 3.15rem;
-  padding-inline: 1.02rem 1.16rem !important;
+  min-height: 44px !important;
+  padding-inline: 0.98rem 1.06rem !important;
   border-radius: 18px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   background:
-    radial-gradient(circle at 16% 118%, rgba(255, 222, 118, 0.94) 0 17%, transparent 17.5%),
-    radial-gradient(circle at 82% 15%, rgba(255, 255, 255, 0.34) 0 9%, transparent 9.5%),
-    linear-gradient(135deg, #fdf0a7 0%, #ff8a4b 24%, #e0338b 56%, #4d63f0 100%) !important;
+    radial-gradient(circle at 14% 118%, rgba(255, 223, 128, 0.92) 0 16%, transparent 16.5%),
+    radial-gradient(circle at 84% 14%, rgba(255, 255, 255, 0.24) 0 8%, transparent 8.5%),
+    linear-gradient(135deg, #f7df96 0%, #ff8c58 24%, #d63584 57%, #4d60dc 100%) !important;
   color: #ffffff !important;
   font-weight: 800;
   letter-spacing: -0.012em;
+  line-height: 1.08;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1px 0 rgba(77, 11, 60, 0.18),
-    0 18px 34px rgba(214, 36, 159, 0.28) !important;
-  text-shadow: 0 1px 1px rgba(58, 12, 44, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(73, 14, 60, 0.16),
+    0 12px 24px rgba(214, 36, 159, 0.2) !important;
+  text-shadow: 0 1px 1px rgba(58, 12, 44, 0.14);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    filter 0.22s ease !important;
+  animation: instagramButtonEntrance 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.btn.btn--instagram::after,
+a.btn.btn--instagram::after,
+.ig-btn-wrap > .btn--instagram::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, transparent 0 34%, rgba(255, 255, 255, 0.18) 45%, transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 42%);
+  transform: translateX(-118%);
+  opacity: 0.92;
+  animation: instagramButtonSheen 4.8s ease-in-out infinite;
 }
 
 .btn.btn--instagram:hover,
 a.btn.btn--instagram:hover,
 .ig-btn-wrap > .btn--instagram:hover {
-  border-color: rgba(255, 255, 255, 0.26) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
   background:
-    radial-gradient(circle at 16% 118%, rgba(255, 230, 142, 0.98) 0 18%, transparent 18.5%),
-    radial-gradient(circle at 82% 15%, rgba(255, 255, 255, 0.38) 0 10%, transparent 10.5%),
-    linear-gradient(135deg, #fef5bc 0%, #ff7b58 22%, #e63a9b 56%, #5870ff 100%) !important;
+    radial-gradient(circle at 14% 118%, rgba(255, 235, 150, 0.96) 0 16.5%, transparent 17%),
+    radial-gradient(circle at 84% 14%, rgba(255, 255, 255, 0.28) 0 8.5%, transparent 9%),
+    linear-gradient(135deg, #fae7ac 0%, #ff7e59 22%, #de3f91 56%, #596ef3 100%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -1px 0 rgba(77, 11, 60, 0.14),
-    0 20px 38px rgba(214, 36, 159, 0.34) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(77, 11, 60, 0.12),
+    0 16px 30px rgba(214, 36, 159, 0.26) !important;
+  transform: translateY(-1px);
+  filter: saturate(1.04);
 }
 
 .btn.btn--instagram:active,
@@ -7579,12 +7604,13 @@ a.btn.btn--instagram:active,
 .ig-btn-wrap > .btn--instagram:active {
   border-color: rgba(255, 255, 255, 0.2) !important;
   background:
-    radial-gradient(circle at 16% 118%, rgba(246, 207, 103, 0.96) 0 17%, transparent 17.5%),
-    radial-gradient(circle at 82% 15%, rgba(255, 255, 255, 0.22) 0 8%, transparent 8.5%),
-    linear-gradient(135deg, #f4dd83 0%, #ef5b42 24%, #c82383 56%, #3550d9 100%) !important;
+    radial-gradient(circle at 14% 118%, rgba(245, 208, 108, 0.94) 0 16%, transparent 16.5%),
+    radial-gradient(circle at 84% 14%, rgba(255, 255, 255, 0.16) 0 7%, transparent 7.5%),
+    linear-gradient(135deg, #f1d67f 0%, #ee6648 24%, #c52a7c 56%, #3d54d4 100%) !important;
   box-shadow:
-    inset 0 2px 8px rgba(67, 10, 51, 0.26),
-    0 10px 20px rgba(214, 36, 159, 0.22) !important;
+    inset 0 2px 8px rgba(67, 10, 51, 0.22),
+    0 8px 16px rgba(214, 36, 159, 0.18) !important;
+  transform: translateY(0);
 }
 
 .btn.btn--instagram:focus-visible,
@@ -7600,6 +7626,49 @@ a.btn.btn--instagram::before,
   width: 1.08rem;
   height: 1.08rem;
   opacity: 0.96;
+  position: relative;
+  z-index: 1;
+}
+
+.btn.btn--instagram .btn-label,
+a.btn.btn--instagram .btn-label,
+.ig-btn-wrap > .btn--instagram .btn-label {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes instagramButtonEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes instagramButtonSheen {
+  0%,
+  62%,
+  100% {
+    transform: translateX(-118%);
+  }
+  16%,
+  30% {
+    transform: translateX(118%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.btn--instagram,
+  a.btn.btn--instagram,
+  .ig-btn-wrap > .btn--instagram,
+  .btn.btn--instagram::after,
+  a.btn.btn--instagram::after,
+  .ig-btn-wrap > .btn--instagram::after {
+    animation: none !important;
+  }
 }
 
 /* Extra overlay stability for Android/iOS WebViews and host-app shells. */

@@ -6781,7 +6781,7 @@ function toonVasteData(id){
   }
   const igUrl = 'https://www.instagram.com/explore/search/keyword/?q=' + encodeURIComponent(instagramPrefix + id);
   const links = [
-    `<a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener">${localWord("instagramSearch")}</a>`,
+    `<a class="btn btn--instagram" href="${igUrl}" target="_blank" rel="noopener"><span class="btn-label">${localWord("instagramSearch")}</span></a>`,
     `<button id="vehiclePdfBtn" class="btn btn--pdf" type="button" data-id="${safeFavoriteId}">${getLabel("pdfConfirm", "PDF downloaden")}</button>`,
     `<button id="vehicleCompareBtn" class="btn btn--compare" type="button" data-id="${safeFavoriteId}">${getLabel("compareConfirm", "Vergelijken")}</button>`
   ];
