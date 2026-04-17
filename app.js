@@ -7114,12 +7114,16 @@ async function updateRealtime(id){
       : `<span class="current-stop-link">${escapeHtml(currentStopName)}</span>`;
 
     realtimeEl.innerHTML=`
-      ${routeRowMarkup}
-      <div class="current-stop-row">
-        <span class="current-stop-label">${escapeHtml(t("currentStop"))}:</span>
-        ${currentStopValueMarkup}
+      <div class="realtime-summary-card">
+        ${routeRowMarkup}
+        <div class="realtime-meta-stack">
+          <div class="current-stop-row">
+            <span class="current-stop-label">${escapeHtml(t("currentStop"))}:</span>
+            ${currentStopValueMarkup}
+          </div>
+          <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
+        </div>
       </div>
-      <span class="delay-status ${delayClass}">${escapeHtml(msgDelay)}</span>
     `;
     void updateWeatherForCoordinates(Number(v.position.latitude), Number(v.position.longitude));
     mapEl.classList.remove("hidden");
