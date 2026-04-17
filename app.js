@@ -272,7 +272,6 @@ const lastUpdateEl = document.getElementById("lastUpdate");
 const appTitleBtnEl = document.getElementById("appTitleBtn");
 const appTitleEl = document.getElementById("appTitle");
 const appSubtitleEl = document.getElementById("appSubtitle");
-const appContextLineEl = document.getElementById("appContextLine");
 const splashTitleEl = document.getElementById("splashTitle");
 const splashCreditEl = document.getElementById("splashCredit");
 const menuToggleTextEl = document.getElementById("menuToggleText");
@@ -4301,11 +4300,6 @@ function applyTranslations() {
   appTitleEl.textContent = getLabel("appTitle", "Busbibliotheek");
   if (splashTitleEl) splashTitleEl.textContent = getLabel("appTitle", "Busbibliotheek");
   appSubtitleEl.textContent = t("subtitle").replace(/\.\s*$/, "");
-  if (appContextLineEl) {
-    appContextLineEl.textContent = "";
-    appContextLineEl.hidden = true;
-    appContextLineEl.setAttribute("aria-hidden", "true");
-  }
   if (splashCreditEl) splashCreditEl.textContent = getLabel("madeBy", "Made by @delijn_busspotter");
   if (installBtn) installBtn.textContent = t("install");
   const moreLabel = getLabel("more", "Meer");

@@ -6494,6 +6494,7 @@ body::before {
   display: flex !important;
   align-items: stretch !important;
   justify-content: center !important;
+  flex: 0 0 var(--search-inline-action-size);
   grid-column: 3;
   width: var(--search-inline-action-size);
   min-width: var(--search-inline-action-size);
@@ -6538,6 +6539,10 @@ body::before {
     0 14px 30px color-mix(in srgb, var(--accent-soft) 34%, transparent) !important;
 }
 
+.menu-inline-search .search-row #favoritesToggleBtn,
+.menu-inline-search .search-row #favoritesToggleBtn:hover,
+.menu-inline-search .search-row #favoritesToggleBtn:active,
+.menu-inline-search .search-row #favoritesToggleBtn.active,
 .menu-inline-search .search-row .more-toggle-btn,
 .menu-inline-search .search-row .more-toggle-btn:hover,
 .menu-inline-search .search-row .more-toggle-btn:active,
@@ -6545,6 +6550,8 @@ body::before {
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  margin: 0 !important;
+  aspect-ratio: 1 / 1;
   border: 1px solid color-mix(in srgb, var(--button-border) 88%, white 12%) !important;
   background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg) 88%, white 12%), color-mix(in srgb, var(--accent-2) 84%, var(--button-bg) 16%)) !important;
   color: var(--button-text) !important;
@@ -6553,10 +6560,12 @@ body::before {
     0 12px 28px color-mix(in srgb, var(--accent-soft) 28%, transparent) !important;
 }
 
+.menu-inline-search .search-row #favoritesToggleBtn::before,
 .menu-inline-search .search-row .more-toggle-btn::before {
   content: none;
 }
 
+.menu-inline-search .search-row #favoritesToggleBtn:hover,
 .menu-inline-search .search-row .more-toggle-btn:hover {
   border-color: color-mix(in srgb, var(--accent) 72%, white 8%) !important;
   background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg-hover) 88%, white 12%), color-mix(in srgb, var(--accent) 82%, var(--button-bg-hover) 18%)) !important;
@@ -6566,22 +6575,28 @@ body::before {
   transform: translateY(-1px);
 }
 
+.menu-inline-search .search-row #favoritesToggleBtn:active,
+.menu-inline-search .search-row #favoritesToggleBtn.active,
 .menu-inline-search .search-row .more-toggle-btn:active,
 .menu-inline-search .search-row .more-toggle-btn.active {
-  border-color: color-mix(in srgb, var(--button-border) 90%, black 10%) !important;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--button-bg) 90%, white 10%), var(--button-bg)) !important;
-  box-shadow: var(--button-shadow) !important;
+  border-color: color-mix(in srgb, var(--button-border) 88%, white 12%) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-bg) 88%, white 12%), color-mix(in srgb, var(--accent-2) 84%, var(--button-bg) 16%)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 12px 28px color-mix(in srgb, var(--accent-soft) 28%, transparent) !important;
   transform: translateY(0);
 }
 
+.menu-inline-search .search-row #favoritesToggleBtn #menuToggleText,
 .menu-inline-search .search-row .more-toggle-btn #menuToggleText {
   display: none !important;
 }
 
+.menu-inline-search .search-row #favoritesToggleBtn .more-toggle-icon,
 .menu-inline-search .search-row .more-toggle-icon {
-  width: 1.08rem !important;
-  height: 1.08rem !important;
-  min-width: 1.08rem !important;
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+  min-width: 1.05rem !important;
   line-height: 1 !important;
   opacity: 1;
   transform: none !important;
