@@ -302,7 +302,7 @@ const photoCardTitleEl = document.getElementById("photoCardTitle");
 const vehiclePhotoCardEl = document.getElementById("vehiclePhotoCard");
 const vehiclePhotoFrameEl = vehiclePhotoCardEl?.querySelector(".vehicle-photo-frame");
 const vehiclePhotoInfoEl = vehiclePhotoCardEl?.querySelector(".vehicle-photo-info");
-const vehiclePhotoImgEl = document.getElementById("vehiclePhotoImg");
+let vehiclePhotoImgEl = document.getElementById("vehiclePhotoImg");
 const vehiclePhotoPrevBtn = document.getElementById("vehiclePhotoPrevBtn");
 const vehiclePhotoNextBtn = document.getElementById("vehiclePhotoNextBtn");
 const vehiclePhotoCounterEl = document.getElementById("vehiclePhotoCounter");
@@ -2911,7 +2911,7 @@ async function exportBusPdf(vehicleId, themeKey = "geel") {
 }
 
 function updateVehiclePhotoTexts() {
-  if (!photoCardTitleEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
+  if (!photoCardTitleEl || !vehiclePhotoCaptionEl) return;
   photoCardTitleEl.textContent = translateTemplate("photoCard", "Voertuigfoto");
   updatePhotoUploadCopy(currentPhotoVehicleId);
   renderActiveVehiclePhoto();
@@ -2957,12 +2957,35 @@ function updatePhotoUploadCopy(vehicleId = currentPhotoVehicleId) {
   }
 }
 
+function ensureVehiclePhotoImageElement() {
+  if (vehiclePhotoImgEl?.isConnected) return vehiclePhotoImgEl;
+  if (!vehiclePhotoFrameEl) return null;
+  const imageEl = document.createElement("img");
+  imageEl.id = "vehiclePhotoImg";
+  imageEl.className = "vehicle-photo-image";
+  imageEl.alt = "";
+  imageEl.loading = "eager";
+  imageEl.decoding = "async";
+  vehiclePhotoFrameEl.insertBefore(imageEl, vehiclePhotoNextBtn || vehiclePhotoEmptyStateEl || null);
+  vehiclePhotoImgEl = imageEl;
+  return imageEl;
+}
+
+function clearVehiclePhotoImageElement(removeFromDom = false) {
+  if (!vehiclePhotoImgEl) return;
+  vehiclePhotoImgEl.onload = null;
+  vehiclePhotoImgEl.onerror = null;
+  vehiclePhotoImgEl.removeAttribute("src");
+  vehiclePhotoImgEl.alt = "";
+  if (removeFromDom) {
+    if (vehiclePhotoImgEl.isConnected) vehiclePhotoImgEl.remove();
+    vehiclePhotoImgEl = null;
+  }
+}
+
 function setVehiclePhotoEmptyStateVisible(visible) {
   if (vehiclePhotoFrameEl) vehiclePhotoFrameEl.classList.toggle("is-empty", !!visible);
-  if (vehiclePhotoImgEl) {
-    vehiclePhotoImgEl.hidden = !!visible;
-    vehiclePhotoImgEl.setAttribute("aria-hidden", String(!!visible));
-  }
+  if (visible) clearVehiclePhotoImageElement(true);
   if (visible) {
     if (vehiclePhotoPrevBtn) vehiclePhotoPrevBtn.hidden = true;
     if (vehiclePhotoNextBtn) vehiclePhotoNextBtn.hidden = true;
@@ -2979,11 +3002,8 @@ function showVehiclePhotoUploadPrompt(vehicleId) {
   currentPhotoVehicleId = normalize(vehicleId);
   currentVehiclePhotoEntries = [];
   currentVehiclePhotoIndex = 0;
-  if (!vehiclePhotoCardEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
-  vehiclePhotoImgEl.onload = null;
-  vehiclePhotoImgEl.onerror = null;
-  vehiclePhotoImgEl.removeAttribute("src");
-  vehiclePhotoImgEl.alt = "";
+  if (!vehiclePhotoCardEl || !vehiclePhotoCaptionEl) return;
+  clearVehiclePhotoImageElement(true);
   vehiclePhotoCaptionEl.textContent = "";
   vehiclePhotoCaptionEl.hidden = true;
   if (vehiclePhotoMetaEl) {
@@ -4035,9 +4055,9 @@ async function hydrateActiveVehiclePhotoLocation(entry, vehicleId, entryIndex) {
 }
 
 function renderActiveVehiclePhoto() {
-  if (!vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
+  if (!vehiclePhotoCaptionEl) return;
   if (!currentPhotoVehicleId || !currentVehiclePhotoEntries.length) {
-    vehiclePhotoImgEl.alt = "";
+    clearVehiclePhotoImageElement(true);
     vehiclePhotoCaptionEl.textContent = "";
     if (vehiclePhotoMetaEl) {
       vehiclePhotoMetaEl.hidden = true;
@@ -4048,12 +4068,14 @@ function renderActiveVehiclePhoto() {
   }
 
   setVehiclePhotoEmptyStateVisible(false);
+  const photoImgEl = ensureVehiclePhotoImageElement();
+  if (!photoImgEl) return;
   const safeIndex = Math.min(Math.max(currentVehiclePhotoIndex, 0), currentVehiclePhotoEntries.length - 1);
   currentVehiclePhotoIndex = safeIndex;
   const activeEntry = currentVehiclePhotoEntries[safeIndex];
   const copy = buildVehiclePhotoCopy(activeEntry, currentPhotoVehicleId);
-  vehiclePhotoImgEl.src = buildVehiclePhotoRequestUrl(activeEntry.src);
-  vehiclePhotoImgEl.alt = copy.alt;
+  photoImgEl.src = buildVehiclePhotoRequestUrl(activeEntry.src);
+  photoImgEl.alt = copy.alt;
   vehiclePhotoCaptionEl.textContent = copy.caption;
   vehiclePhotoCaptionEl.hidden = !copy.caption;
   renderVehiclePhotoMeta(copy);
@@ -4125,13 +4147,10 @@ function hideVehiclePhotoCard() {
   currentPhotoVehicleId = "";
   currentVehiclePhotoEntries = [];
   currentVehiclePhotoIndex = 0;
-  if (!vehiclePhotoCardEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
+  if (!vehiclePhotoCardEl || !vehiclePhotoCaptionEl) return;
   vehiclePhotoCardEl.hidden = true;
   vehiclePhotoCardEl.setAttribute("aria-hidden", "true");
-  vehiclePhotoImgEl.onload = null;
-  vehiclePhotoImgEl.onerror = null;
-  vehiclePhotoImgEl.removeAttribute("src");
-  vehiclePhotoImgEl.alt = "";
+  clearVehiclePhotoImageElement(true);
   vehiclePhotoCaptionEl.textContent = "";
   vehiclePhotoCaptionEl.hidden = true;
   if (vehiclePhotoMetaEl) {
@@ -4146,7 +4165,7 @@ function hideVehiclePhotoCard() {
 }
 
 async function updateVehiclePhotoCard(vehicleId) {
-  if (!vehiclePhotoCardEl || !vehiclePhotoImgEl || !vehiclePhotoCaptionEl) return;
+  if (!vehiclePhotoCardEl || !vehiclePhotoCaptionEl) return;
   const normalizedVehicleId = normalize(vehicleId);
   if (!normalizedVehicleId) {
     hideVehiclePhotoCard();
@@ -4160,12 +4179,9 @@ async function updateVehiclePhotoCard(vehicleId) {
   vehiclePhotoCardEl.hidden = true;
   vehiclePhotoCardEl.setAttribute("aria-hidden", "true");
   setVehiclePhotoEmptyStateVisible(false);
-  vehiclePhotoImgEl.removeAttribute("src");
-  vehiclePhotoImgEl.alt = "";
+  clearVehiclePhotoImageElement(true);
   vehiclePhotoCaptionEl.textContent = "";
   vehiclePhotoCaptionEl.hidden = true;
-  vehiclePhotoImgEl.onload = null;
-  vehiclePhotoImgEl.onerror = null;
 
   if (vehiclePhotoMetaEl) {
     vehiclePhotoMetaEl.hidden = true;
